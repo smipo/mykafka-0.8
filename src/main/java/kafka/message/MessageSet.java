@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A set of messages. A message set has a fixed serialized form, though the container
@@ -14,7 +15,10 @@ import java.util.Iterator;
  */
 public abstract class MessageSet implements Iterable<MessageAndOffset> {
 
-    public static int LogOverhead = 4;
+    public static int MessageSizeLength = 4;
+    public static int OffsetLength = 8;
+    public static int LogOverhead = MessageSizeLength + OffsetLength;
+    public static ByteBufferMessageSet Empty = new ByteBufferMessageSet(ByteBuffer.allocate(0));
 
 
     /**
@@ -29,38 +33,31 @@ public abstract class MessageSet implements Iterable<MessageAndOffset> {
     }
 
     /**
+     * The size of a list of messages
+     */
+    public static int messageSetSize(List<Message> messages) {
+        int size = 0;
+        Iterator<Message> iter = messages.iterator();
+        while(iter.hasNext()) {
+            Message message = iter.next();
+            size += entrySize(message);
+        }
+        return size;
+    }
+
+    /**
      * The size of a size-delimited entry in a message set
      */
     public static int entrySize(Message message){
         return LogOverhead + message.size();
     }
 
-    public static ByteBuffer createByteBuffer(CompressionCodec compressionCodec, Message...messages)throws IOException {
-        if (compressionCodec instanceof NoCompressionCodec) {
-            ByteBuffer buffer = ByteBuffer.allocate(MessageSet.messageSetSize(messages));
-            for (Message message : messages) {
-                message.serializeTo(buffer);
-            }
-            buffer.rewind();
-            return buffer;
-        } else {
-            if(messages.length == 0){
-                ByteBuffer buffer = ByteBuffer.allocate(MessageSet.messageSetSize(messages));
-                buffer.rewind();
-                return buffer;
-            }
-            Message message = CompressionFactory.compress(compressionCodec,messages);
-            ByteBuffer buffer = ByteBuffer.allocate(message.serializedSize());
-            message.serializeTo(buffer);
-            buffer.rewind();
-            return buffer;
-        }
-    }
+
 
     /** Write the messages in this set to the given channel starting at the given offset byte.
      * Less than the complete amount may be written, but no more than maxSize can be. The number
      * of bytes written is returned */
-    public abstract long writeTo(GatheringByteChannel channel, long offset, long maxSize) throws IOException;
+    public abstract long writeTo(GatheringByteChannel channel, long offset, int maxSize) throws IOException;
 
     /**
      * Provides an iterator over the messages in this set
@@ -70,7 +67,7 @@ public abstract class MessageSet implements Iterable<MessageAndOffset> {
     /**
      * Gives the total size of this message set in bytes
      */
-    public abstract long sizeInBytes();
+    public abstract int sizeInBytes();
 
     /**
      * Validate the checksum of all the messages in the set. Throws an InvalidMessageException if the checksum doesn't

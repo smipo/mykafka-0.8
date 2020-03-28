@@ -35,7 +35,7 @@ public class SegmentList<T> {
     /**
      * Delete the first n items from the list
      */
-    public  List<T> trunc(int newStart) {
+    public List<T> trunc(int newStart) {
         if(newStart < 0)
             throw new KafkaException("Starting index must be positive.");
         List<T> curr = contents.get();
@@ -73,7 +73,7 @@ public class SegmentList<T> {
     /**
      * Get a consistent view of the sequence
      */
-    public  List<T> view(){
+    public List<T> view(){
         if(contents.get() == null) return null;
         return contents.get();
     }

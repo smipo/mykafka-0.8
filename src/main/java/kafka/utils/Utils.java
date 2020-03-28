@@ -24,7 +24,7 @@ public class Utils {
      * @param buffer The buffer to write to
      * @param value The value to write
      */
-    public static void putUnsignedInt(ByteBuffer buffer, long value){
+    public static void writeUnsignedInt(ByteBuffer buffer, long value){
         buffer.putInt((int)(value & 0xffffffffL));
     }
 
@@ -35,7 +35,7 @@ public class Utils {
      * @param index The position in the buffer at which to begin writing
      * @param value The value to write
      */
-    public static void putUnsignedInt(ByteBuffer buffer, int index, long value){
+    public static void writeUnsignedInt(ByteBuffer buffer, int index, long value){
         buffer.putInt(index, (int)(value & 0xffffffffL));
     }
 
@@ -67,7 +67,7 @@ public class Utils {
      * @param buffer The buffer to read from
      * @return The integer read, as a long to avoid signedness
      */
-    public static long getUnsignedInt(ByteBuffer buffer){
+    public static long readUnsignedInt(ByteBuffer buffer){
         return buffer.getInt() & 0xffffffffL;
     }
     /**
@@ -77,7 +77,7 @@ public class Utils {
      * @param index the index from which to read the integer
      * @return The integer read, as a long to avoid signedness
      */
-    public static long  getUnsignedInt(ByteBuffer buffer, int index) {
+    public static long  readUnsignedInt(ByteBuffer buffer, int index) {
         return buffer.getInt(index) & 0xffffffffL;
     }
 
@@ -437,4 +437,34 @@ public class Utils {
         });
         return treeSet;
     }
+
+    /**
+     * Recursively delete the given file/directory and any subfiles (if any exist)
+     * @param file The root file at which to begin deleting
+     */
+    public static void rm(String file){
+        rm(new File(file));
+    }
+
+
+
+    /**
+     * Recursively delete the given file/directory and any subfiles (if any exist)
+     * @param file The root file at which to begin deleting
+     */
+    public static void rm(File file) {
+        if(file == null) {
+            return;
+        } else if(file.isDirectory()) {
+            File[] files = file.listFiles();
+            if(files != null) {
+                for(File f : files)
+                    rm(f);
+            }
+            file.delete();
+        } else {
+            file.delete();
+        }
+    }
+
 }

@@ -1,24 +1,35 @@
 package kafka.message;
 
-public class MessageAndMetadata<T> {
+public class MessageAndMetadata<K,V> {
 
-    private T message;
-    private String topic;
+    K key;
+    V message;
+    String topic;
+    int partition;
+    long offset;
 
-    public MessageAndMetadata(){
-
-    }
-
-    public MessageAndMetadata(T message, String topic) {
+    public MessageAndMetadata(K key, V message, String topic, int partition, long offset) {
+        this.key = key;
         this.message = message;
         this.topic = topic;
+        this.partition = partition;
+        this.offset = offset;
     }
 
-    public T message() {
+    public K key() {
+        return key;
+    }
+
+    public MessageAndMetadata key(K key) {
+        this.key = key;
+        return this;
+    }
+
+    public V message() {
         return message;
     }
 
-    public MessageAndMetadata message(T message) {
+    public MessageAndMetadata message(V message) {
         this.message = message;
         return this;
     }
@@ -29,6 +40,24 @@ public class MessageAndMetadata<T> {
 
     public MessageAndMetadata topic(String topic) {
         this.topic = topic;
+        return this;
+    }
+
+    public int partition() {
+        return partition;
+    }
+
+    public MessageAndMetadata partition(int partition) {
+        this.partition = partition;
+        return this;
+    }
+
+    public long offset() {
+        return offset;
+    }
+
+    public MessageAndMetadata offset(long offset) {
+        this.offset = offset;
         return this;
     }
 }

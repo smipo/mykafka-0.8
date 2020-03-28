@@ -5,9 +5,6 @@ public class MessageAndOffset {
     private Message message;
     private long offset;
 
-    public MessageAndOffset(){
-
-    }
 
     public MessageAndOffset(Message message,long offset){
         this.message = message;
@@ -30,5 +27,8 @@ public class MessageAndOffset {
     public MessageAndOffset offset(long offset) {
         this.offset = offset;
         return this;
+    }
+    public long nextOffset(){
+        return offset + 1;
     }
 }

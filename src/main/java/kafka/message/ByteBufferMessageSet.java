@@ -6,10 +6,17 @@ import kafka.common.MessageSizeTooLargeException;
 import kafka.utils.IteratorTemplate;
 import org.apache.log4j.Logger;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A sequence of messages stored in a byte buffer
@@ -25,42 +32,87 @@ public class ByteBufferMessageSet extends MessageSet {
 
     private static Logger logger = Logger.getLogger(ByteBufferMessageSet.class);
 
-    private ByteBuffer buffer;
-    private long initialOffset = 0L;
-    private int errorCode = ErrorMapping.NoError;
 
-    private long shallowValidByteCount = -1L;
+    private static ByteBuffer create(AtomicLong offsetCounter, CompressionCodec compressionCodec, Message ...messages) throws IOException{
+        if(messages.length == 0) {
+            return MessageSet.Empty.buffer();
+        } else if(compressionCodec instanceof  NoCompressionCodec) {
+            ByteBuffer buffer = ByteBuffer.allocate(MessageSet.messageSetSize(messages));
+            for(Message message : messages)
+                writeMessage(buffer, message, offsetCounter.getAndIncrement());
+            buffer.rewind();
+            return buffer;
+        } else {
+            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream(MessageSet.messageSetSize(messages));
+            DataOutputStream output = new DataOutputStream(CompressionFactory.getOutputStream(compressionCodec, byteArrayStream));
+            long offset = -1L;
+            try {
+                for(Message message : messages) {
+                    offset = offsetCounter.getAndIncrement();
+                    output.writeLong(offset);
+                    output.writeInt(message.size());
+                    output.write(message.buffer.array(), message.buffer.arrayOffset(), message.buffer.limit());
+                }
+            } finally {
+                output.close();
+            }
+            byte[] bytes = byteArrayStream.toByteArray();
+            Message message = new Message(bytes, compressionCodec);
+            ByteBuffer buffer = ByteBuffer.allocate(message.size() + MessageSet.LogOverhead);
+            writeMessage(buffer, message, offset);
+            buffer.rewind();
+            return  buffer;
+        }
+    }
+
+    public static ByteBufferMessageSet decompress(Message message) throws IOException{
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        InputStream inputStream = new ByteBufferBackedInputStream(message.payload());
+        byte[] intermediateBuffer = new byte[1024];
+        InputStream compressed = CompressionFactory.getInputStream(message.compressionCodec(), inputStream);
+        try {
+            int len;
+            while ((len = compressed.read(intermediateBuffer)) != -1){
+                outputStream.write(intermediateBuffer, 0, len);
+            }
+        } finally {
+            compressed.close();
+        }
+        ByteBuffer outputBuffer = ByteBuffer.allocate(outputStream.size());
+        outputBuffer.put(outputStream.toByteArray());
+        outputBuffer.rewind();
+        return new ByteBufferMessageSet(outputBuffer);
+    }
+
+    private static void writeMessage(ByteBuffer buffer, Message message, long offset) {
+        buffer.putLong(offset);
+        buffer.putInt(message.size());
+        buffer.put(message.buffer);
+        message.buffer.rewind();
+    }
+
+    private ByteBuffer buffer;
+
+    private int shallowValidByteCount = -1;
+
+
+    public ByteBufferMessageSet(CompressionCodec compressionCodec, Message...messages) throws IOException{
+        this(ByteBufferMessageSet.create(new AtomicLong(0), compressionCodec, messages));
+    }
+
+    public ByteBufferMessageSet(CompressionCodec compressionCodec, AtomicLong offsetCounter, Message...messages)throws IOException {
+        this(ByteBufferMessageSet.create(offsetCounter, compressionCodec, messages));
+    }
+
+    public ByteBufferMessageSet(Message...messages)throws IOException {
+        this(new NoCompressionCodec(), new AtomicLong(0), messages);
+    }
 
     public ByteBufferMessageSet(ByteBuffer buffer){
-        this(buffer,0L,ErrorMapping.NoError);
-    }
-
-    public ByteBufferMessageSet(CompressionCodec compressionCodec, Message ...messages) throws IOException{
-        this(MessageSet.createByteBuffer(compressionCodec, messages), 0L, ErrorMapping.NoError);
-    }
-    public ByteBufferMessageSet(Message...messages) throws IOException{
-        this(new NoCompressionCodec(), messages);
-    }
-
-    public ByteBufferMessageSet(ByteBuffer buffer,long initialOffset,int errorCode){
         this.buffer = buffer;
-        this.initialOffset = initialOffset;
-        this.errorCode = errorCode;
     }
 
-    public ByteBuffer getBuffer() {
-        return buffer;
-    }
-
-    public long getInitialOffset() {
-        return initialOffset;
-    }
-
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public ByteBuffer serialized() {
+    public ByteBuffer buffer() {
         return buffer;
     }
 
@@ -68,20 +120,21 @@ public class ByteBufferMessageSet extends MessageSet {
         return shallowValidBytes();
     }
 
-    private long shallowValidBytes(){
+    private int shallowValidBytes(){
         if(shallowValidByteCount < 0) {
+            int bytes = 0;
             Iterator<MessageAndOffset> iter = this.internalIterator(true);
             while(iter.hasNext()) {
                 MessageAndOffset messageAndOffset = iter.next();
-                shallowValidByteCount = messageAndOffset.offset();
+                bytes += MessageSet.entrySize(messageAndOffset.message());
             }
+            this.shallowValidByteCount = bytes;
         }
-        if(shallowValidByteCount < initialOffset) return 0;
-        else return shallowValidByteCount - initialOffset;
+      return shallowValidByteCount;
     }
 
     /** Write the messages in this set to the given channel */
-    public long writeTo(GatheringByteChannel channel, long offset, long size) throws IOException {
+    public long writeTo(GatheringByteChannel channel, long offset, int size) throws IOException {
         buffer.mark();
         long written = channel.write(buffer);
         buffer.reset();
@@ -113,108 +166,108 @@ public class ByteBufferMessageSet extends MessageSet {
 
        return new IteratorTemplate<MessageAndOffset>(){
             ByteBuffer topIter = buffer.slice();
-            long currValidBytes = initialOffset;
             Iterator<MessageAndOffset> innerIter = null;
-            long lastMessageSize = 0L;
 
             public boolean innerDone(){
                 return (innerIter==null || !innerIter.hasNext());
             }
 
             public MessageAndOffset makeNextOuter() {
-                if (topIter.remaining() < 4) {
+                if (topIter.remaining() < 12)
                     return allDone();
-                }
+                long offset = topIter.getLong();
                 int size = topIter.getInt();
-                lastMessageSize = size;
 
-                logger.info("Remaining bytes in iterator = " + topIter.remaining());
-                logger.info("size of data = " + size);
+                if(size < Message.MinHeaderSize)
+                    throw new InvalidMessageException("Message found with corrupt size (" + size + ")");
 
-                if(size < 0 || topIter.remaining() < size) {
-                    if (currValidBytes == initialOffset || size < 0)
-                        throw new InvalidMessageSizeException("invalid message size: " + size + " only received bytes: " +
-                                topIter.remaining() + " at " + currValidBytes + "( possible causes (1) a single message larger than " +
-                                "the fetch size; (2) log corruption )");
+                // we have an incomplete message
+                if(topIter.remaining() < size)
                     return allDone();
-                }
+
                 ByteBuffer message = topIter.slice();
                 message.limit(size);
                 topIter.position(topIter.position() + size);
                 Message newMessage = new Message(message);
-                if(!newMessage.isValid())
-                    throw new InvalidMessageException("message is invalid, compression codec: " + newMessage.compressionCodec()
-                            + " size: " + size + " curr offset: " + currValidBytes + " init offset: " + initialOffset);
 
                 if(isShallow){
-                    currValidBytes += 4 + size;
-                    logger.trace("shallow iterator currValidBytes = " + currValidBytes);
-                    return new MessageAndOffset(newMessage, currValidBytes);
+                    return new MessageAndOffset(newMessage, offset);
                 }
                 else{
                     if(newMessage.compressionCodec() instanceof NoCompressionCodec){
-                        logger.debug("Message is uncompressed. Valid byte count = %d".format(String.valueOf(currValidBytes)));
-                        innerIter = null;
-                        currValidBytes += 4 + size;
-                        logger.trace("currValidBytes = " + currValidBytes);
-                        return new MessageAndOffset(newMessage, currValidBytes);
+                         innerIter = null;
+                        return new MessageAndOffset(newMessage, offset);
                     }else{
-                        logger.debug("Message is compressed. Valid byte count = %d".format(String.valueOf(currValidBytes)));
-                        try {
-                            innerIter = CompressionFactory.decompress(newMessage).internalIterator(false);
-                        }catch (IOException e){
-                            logger.error("message decompress Error:",e);
-                            throw new RuntimeException("message decompress Error:"+e.getMessage());
+                        try{
+                            innerIter = ByteBufferMessageSet.decompress(newMessage).internalIterator(false);
+                        }catch (IOException e) {
+                            logger.error("ByteBufferMessageSet iterator error:",e);
                         }
-
-                        if (!innerIter.hasNext()) {
-                            currValidBytes += 4 + lastMessageSize;
+                        if(!innerIter.hasNext())
                             innerIter = null;
-                        }
-                        return  makeNext();
+                       return makeNext();
                     }
                 }
             }
 
             public MessageAndOffset makeNext() {
                 if(isShallow){
-                    return makeNextOuter();
-                }
-                else{
-                    boolean isInnerDone = innerDone();
-                    logger.debug("makeNext() in internalIterator: innerDone = " + isInnerDone);
-                    if(isInnerDone){
-                        return makeNextOuter();
-                    }else{
-                        MessageAndOffset messageAndOffset = innerIter.next();
-                        if (!innerIter.hasNext())
-                            currValidBytes += 4 + lastMessageSize;
-                        return new MessageAndOffset(messageAndOffset.message(), currValidBytes);
-                    }
+                   return makeNextOuter();
+                } else {
+                    if(innerDone())
+                        return  makeNextOuter();
+                    else
+                        return  innerIter.next();
                 }
             }
         };
     }
 
-    public long sizeInBytes(){
+    /**
+     * Update the offsets for this message set. This method attempts to do an in-place conversion
+     * if there is no compression, but otherwise recopies the messages
+     */
+    public ByteBufferMessageSet assignOffsets(AtomicLong offsetCounter, CompressionCodec codec) throws IOException{
+        if(codec instanceof NoCompressionCodec) {
+            // do an in-place conversion
+            int position = 0;
+            buffer.mark();
+            while(position < sizeInBytes() - MessageSet.LogOverhead) {
+                buffer.position(position);
+                buffer.putLong(offsetCounter.getAndIncrement());
+                position += MessageSet.LogOverhead + buffer.getInt();
+            }
+            buffer.reset();
+            return this;
+        } else {
+            // messages are compressed, crack open the messageset and recompress with correct offset
+            List<Message> list = new ArrayList<>();
+            Iterator<MessageAndOffset> iterator = this.internalIterator(false);
+            while (iterator.hasNext()){
+                MessageAndOffset messageAndOffset = iterator.next();
+                list.add(messageAndOffset.message());
+            }
+            Message[] messages = new Message[list.size()];
+            return new ByteBufferMessageSet(codec, offsetCounter, list.toArray(messages));
+        }
+    }
+
+    public int sizeInBytes(){
         return buffer.limit();
     }
 
 
-
     @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof ByteBufferMessageSet){
-            ByteBufferMessageSet that = (ByteBufferMessageSet)obj;
-            return errorCode == that.errorCode && buffer.equals(that.buffer) && initialOffset == that.initialOffset;
-        }
-        return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ByteBufferMessageSet that = (ByteBufferMessageSet) o;
+        return Objects.equals(buffer, that.buffer);
     }
-
 
     @Override
     public int hashCode(){
-        return 31 + (17 * errorCode) + buffer.hashCode() + (int)initialOffset;
+        return buffer.hashCode();
     }
 
 }
