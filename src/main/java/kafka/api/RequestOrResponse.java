@@ -2,6 +2,7 @@ package kafka.api;
 
 import kafka.network.RequestChannel;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public abstract class RequestOrResponse {
@@ -13,9 +14,9 @@ public abstract class RequestOrResponse {
         this.correlationId = correlationId;
     }
 
-    public abstract int sizeInBytes();
+    public abstract int sizeInBytes() throws IOException;
 
-    public abstract void writeTo(ByteBuffer buffer);
+    public abstract void writeTo(ByteBuffer buffer) throws IOException;
 
     public abstract void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request);
 }

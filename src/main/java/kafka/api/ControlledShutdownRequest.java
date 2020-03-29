@@ -4,6 +4,7 @@ import kafka.common.ErrorMapping;
 import kafka.network.BoundedByteBufferSend;
 import kafka.network.RequestChannel;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class ControlledShutdownRequest  extends RequestOrResponse {
@@ -31,7 +32,7 @@ public class ControlledShutdownRequest  extends RequestOrResponse {
         this(ControlledShutdownRequest.CurrentVersion, correlationId, brokerId);
     }
 
-    public void writeTo(ByteBuffer buffer) {
+    public void writeTo(ByteBuffer buffer)throws IOException {
         buffer.putShort(versionId);
         buffer.putInt(correlationId);
         buffer.putInt(brokerId);
@@ -55,7 +56,7 @@ public class ControlledShutdownRequest  extends RequestOrResponse {
     }
 
     public void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request) {
-        val errorResponse = ControlledShutdownResponse(correlationId, ErrorMapping.codeFor(e.getCause().getClass().getName()), Set.empty[TopicAndPartition])
+        ControlledShutdownResponse errorResponse = new ControlledShutdownResponse(correlationId, ErrorMapping.codeFor(e.getCause().getClass().getName()), Set.empty[TopicAndPartition])
         requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }
 }
