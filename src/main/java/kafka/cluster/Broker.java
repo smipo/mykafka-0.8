@@ -1,26 +1,50 @@
 package kafka.cluster;
 
+import kafka.api.ApiUtils;
+import kafka.common.BrokerNotAvailableException;
+import kafka.common.KafkaException;
+import kafka.utils.JacksonUtils;
 import kafka.utils.Utils;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class Broker {
 
 
-    public static Broker createBroker(int id, String brokerInfoString) {
-        String[] brokerInfo = brokerInfoString.split(":");
-        return new Broker(id, brokerInfo[0], brokerInfo[1], Integer.parseInt(brokerInfo[2]));
+    public  static  Broker createBroker(int id,String brokerInfoString) {
+        if(brokerInfoString == null)
+            throw new BrokerNotAvailableException("Broker id %s does not exist".format(id + ""));
+        try {
+            if(brokerInfoString == null || brokerInfoString.isEmpty()){
+                throw new BrokerNotAvailableException("Broker id %d does not exist".format(id + ""));
+            }else {
+                Map<String,Object> brokerInfo = JacksonUtils.strToMap(brokerInfoString);
+                String host = brokerInfo.get("host").toString();
+                int port = Integer.parseInt(brokerInfo.get("port").toString());
+                return new Broker(id, host, port);
+            }
+        } catch(Throwable t) {
+            throw new KafkaException("Failed to parse the broker info from zookeeper: " + brokerInfoString, t);
+        }
+    }
+
+    public static Broker readFrom(ByteBuffer buffer) throws UnsupportedEncodingException {
+        int id = buffer.getInt();
+        String host = ApiUtils.readShortString(buffer);
+        int port = buffer.getInt();
+        return new Broker(id, host, port);
     }
 
     protected int id;
-    protected String creatorId;
     protected String host;
     protected int port;
 
     public Broker( int id,
-                   String creatorId,
                    String host,
                    int port){
         this.id = id;
-        this.creatorId = creatorId;
         this.host = host;
         this.port = port;
     }
@@ -29,9 +53,6 @@ public class Broker {
         return id;
     }
 
-    public String creatorId() {
-        return creatorId;
-    }
 
     public String host() {
         return host;
@@ -41,13 +62,19 @@ public class Broker {
         return port;
     }
 
-    @Override
-    public String toString(){
-        return "id:" + id + ",creatorId:" + creatorId + ",host:" + host + ",port:" + port;
+    public void writeTo(ByteBuffer buffer) throws UnsupportedEncodingException {
+        buffer.putInt(id);
+        ApiUtils.writeShortString(buffer, host);
+        buffer.putInt(port);
     }
 
-    public String  getZKString(){
-        return creatorId + ":" + host + ":" + port;
+    @Override
+    public String toString(){
+        return "id:" + id  + ",host:" + host + ",port:" + port;
+    }
+
+    public String  getConnectionString(){
+        return host + ":" + port;
     }
     @Override
     public boolean equals(Object obj){

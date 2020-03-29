@@ -27,24 +27,39 @@ public class ErrorMapping{
 
   public static final  ByteBuffer EmptyByteBuffer = ByteBuffer.allocate(0);
 
-  public static final int UnknownCode = -1;
-  public static final int NoError = 0;
-  public static final int OffsetOutOfRangeCode = 1;
-  public static final int InvalidMessageCode = 2;
-  public static final int WrongPartitionCode = 3;
-  public static final int InvalidFetchSizeCode = 4;
+  public static final short UnknownCode = -1;
+  public static final short NoError = 0;
+  public static final short OffsetOutOfRangeCode = 1;
+  public static final short InvalidMessageCode = 2;
+  public static final short WrongPartitionCode = 3;
+  public static final short InvalidFetchSizeCode = 4;
+  public static final short LeaderNotAvailableCode  = 5;
+  public static final short NotLeaderForPartitionCode  = 6;
+  public static final short RequestTimedOutCode = 7;
+  public static final short BrokerNotAvailableCode = 8;
+  public static final short ReplicaNotAvailableCode = 9;
+  public static final short MessageSizeTooLargeCode = 10;
+  public static final short StaleControllerEpochCode = 11;
 
-  public static Map<String,Integer> errorMap = new HashMap<>();
+
+  public static Map<String,Short> errorMap = new HashMap<>();
   static {
     errorMap.put(OffsetOutOfRangeException.class.getName(),OffsetOutOfRangeCode);
     errorMap.put(InvalidMessageException.class.getName(),InvalidMessageCode);
     errorMap.put(InvalidPartitionException.class.getName(),WrongPartitionCode);
     errorMap.put(InvalidMessageSizeException.class.getName(),InvalidFetchSizeCode);
+
+    errorMap.put(NotLeaderForPartitionException.class.getName(),LeaderNotAvailableCode);
+    errorMap.put(LeaderNotAvailableException.class.getName(),NotLeaderForPartitionCode);
+    errorMap.put(RequestTimedOutException.class.getName(),RequestTimedOutCode);
+    errorMap.put(BrokerNotAvailableException.class.getName(),BrokerNotAvailableCode);
+    errorMap.put(ReplicaNotAvailableException.class.getName(),ReplicaNotAvailableCode);
+    errorMap.put(MessageSizeTooLargeException.class.getName(),MessageSizeTooLargeCode);
+    errorMap.put(ControllerMovedException.class.getName(),StaleControllerEpochCode);
   }
 
-  public static int codeFor(String className){
-
-    Integer code = errorMap.get(className);
+  public static short codeFor(String className){
+    Short code = errorMap.get(className);
     if(code == null) return UnknownCode;
     return code;
   }

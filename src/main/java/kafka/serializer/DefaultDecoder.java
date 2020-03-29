@@ -1,10 +1,9 @@
 package kafka.serializer;
 
-import kafka.message.Message;
 
-public class DefaultDecoder implements Decoder<Message>{
+public class DefaultDecoder implements Decoder<byte[]>{
 
-    public  Message toEvent(Message message){
-        return message;
+    public byte[] fromBytes(byte[] bytes){
+        return bytes;
     }
 }

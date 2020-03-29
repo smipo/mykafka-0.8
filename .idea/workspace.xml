@@ -2,32 +2,34 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/InvalidOffsetException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/KafkaStorageException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/log/LogSegment.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/log/OffsetIndex.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/log/OffsetPosition.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Os.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ApiUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ControlledShutdownRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/api/RequestOrResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/BrokerNotAvailableException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/ControllerMovedException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/LeaderNotAvailableException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/NotLeaderForPartitionException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/ReplicaNotAvailableException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/RequestTimedOutException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/TopicAndPartition.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/TopicExistsException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/network/RequestChannel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/NullEncoder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/JacksonUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/common/KafkaException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/common/KafkaException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/Log.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/Log.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/SegmentList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/SegmentList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/ByteBufferMessageSet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/ByteBufferMessageSet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/CompressionCodec.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/CompressionCodec.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/CompressionFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/CompressionFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/FileMessageSet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/FileMessageSet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/GZIPCompressionCodec.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/GZIPCompressionCodec.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/Message.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/MessageAndMetadata.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/MessageAndMetadata.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/MessageAndOffset.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/MessageAndOffset.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/MessageSet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/MessageSet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/NoCompressionCodec.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/NoCompressionCodec.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/SnappyCompressionCodec.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/SnappyCompressionCodec.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/RequestKeys.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/RequestKeys.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/cluster/Broker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/cluster/Broker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/common/ErrorMapping.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/common/ErrorMapping.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/serializer/Decoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/Decoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/serializer/DefaultDecoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/DefaultDecoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/serializer/DefaultEncoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/DefaultEncoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/serializer/Encoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/Encoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/serializer/StringDecoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/StringDecoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/serializer/StringEncoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/serializer/StringEncoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,29 +103,66 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1585142727282</updated>
-      <workItem from="1585347847639" duration="19197000" />
+      <workItem from="1585347847639" duration="19507000" />
+      <workItem from="1585400577592" duration="17903000" />
     </task>
+    <task id="LOCAL-00001" summary="改写日志">
+      <created>1585392066242</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1585392066243</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="改写日志" />
+    <option name="LAST_COMMIT_MESSAGE" value="改写日志" />
+  </component>
   <component name="WindowStateProjectService">
-    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser" timestamp="1585388638292">
+    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser" timestamp="1585468684912">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1585388638292" />
+    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1585468684912" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes/0.0.1536.824@0.0.1536.824" timestamp="1585378574061" />
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1585392065571">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1585392065571" />
     <state x="270" y="54" key="SettingsEditor" timestamp="1585349074544">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="270" y="54" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1585349074544" />
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1585376546714">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1585392178212">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1585376546714" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1585392178212" />
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1585400580709">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1585400580709" />
+    <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1585440203920">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1536.824@0.0.1536.824" timestamp="1585440203920" />
+    <state x="447" y="145" width="642" height="534" key="find.popup" timestamp="1585446901272">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="447" y="145" width="642" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1585446901272" />
+    <state x="425" y="187" key="run.anything.popup" timestamp="1585402200501">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="425" y="187" key="run.anything.popup/0.0.1536.824@0.0.1536.824" timestamp="1585402200501" />
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1585467940264">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1585467940264" />
   </component>
 </project>

@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import static kafka.utils.Preconditions.checkArgument;
@@ -467,4 +468,68 @@ public class Utils {
         }
     }
 
+    /**
+     * Merge JSON fields of the format "key" : value/object/array.
+     */
+    public static String mergeJsonFields(List<String> objects){
+        StringBuilder builder = new StringBuilder();
+        builder.append("{ ");
+        builder.append(String.join(",", objects.stream().map(String::trim).collect(Collectors.toList())));
+        builder.append(" }");
+        return builder.toString();
+    }
+
+    /**
+     * Format a Map[String, String] as JSON object.
+     */
+    public static List<String> mapToJsonFields(Map<String, String> jsonDataMap, boolean valueInQuotes) {
+        List<String> jsonFields = new ArrayList<>();
+        StringBuilder builder = new StringBuilder();
+        for(Map.Entry<String, String> entry : jsonDataMap.entrySet()){
+            String key = entry.getKey();
+            String value = entry.getValue();
+            builder.append("\"" + key + "\":");
+            if (valueInQuotes)
+                builder.append("\"" + value + "\"");
+            else
+                builder.append(value);
+            jsonFields.add(builder.toString());
+            builder = new StringBuilder(); ;
+        }
+        return jsonFields;
+    }
+
+    /**
+     * Format a Map[String, String] as JSON object.
+     */
+    public static String mapToJson(Map<String, String> jsonDataMap, boolean valueInQuotes){
+       return mergeJsonFields(mapToJsonFields(jsonDataMap, valueInQuotes));
+    }
+
+    /**
+     * This method gets comma separated values which contains key,value pairs and returns a map of
+     * key value pairs. the format of allCSVal is key1:val1, key2:val2 ....
+     */
+    public static  Map<String,String> parseCsvMap(String str) {
+        Map<String,String> map = new HashMap<>();
+        if("".equals(str))
+            return map;
+        for(String s:str.split("\\s*,\\s*")){
+            String[] arr = s.split("\\s*:\\s*");
+            map.put(arr[0],arr[1]);
+        }
+       return map;
+    }
+
+    /**
+     * Parse a comma separated string into a sequence of strings.
+     * Whitespace surrounding the comma will be removed.
+     */
+    public static  List<String> parseCsvList(String csvList) {
+        if(csvList == null || csvList.isEmpty())
+            return new ArrayList<>();
+        else {
+            return  Arrays.asList(csvList.split("\\s*,\\s*")).stream().filter(v -> !v.equals("")).collect(Collectors.toList());
+        }
+    }
 }
