@@ -1,14 +1,11 @@
 package kafka.consumer;
 
 import kafka.api.FetchRequest;
-import kafka.api.MultiFetchRequest;
-import kafka.api.MultiFetchResponse;
 import kafka.api.OffsetRequest;
 import kafka.message.ByteBufferMessageSet;
 import kafka.network.BoundedByteBufferReceive;
 import kafka.network.BoundedByteBufferSend;
 import kafka.network.Receive;
-import kafka.network.Request;
 import kafka.utils.Pair;
 import org.apache.log4j.Logger;
 

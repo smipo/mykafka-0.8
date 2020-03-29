@@ -13,9 +13,9 @@ public abstract class RequestOrResponse {
         this.correlationId = correlationId;
     }
 
-    abstract int sizeInBytes();
+    public abstract int sizeInBytes();
 
-    abstract void writeTo(ByteBuffer buffer);
+    public abstract void writeTo(ByteBuffer buffer);
 
-    abstract void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request);
+    public abstract void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request);
 }

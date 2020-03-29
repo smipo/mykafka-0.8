@@ -2,7 +2,6 @@ package kafka.javaapi;
 
 import kafka.api.RequestKeys;
 import kafka.javaapi.message.ByteBufferMessageSet;
-import kafka.network.Request;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

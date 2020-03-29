@@ -1,6 +1,5 @@
 package kafka.producer;
 
-import kafka.api.MultiProducerRequest;
 import kafka.api.ProducerRequest;
 import kafka.api.RequestKeys;
 import kafka.message.ByteBufferMessageSet;
@@ -15,8 +14,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Random;
-
-import static com.sun.corba.se.impl.naming.cosnaming.TransientNameServer.trace;
 
 public class SyncProducer {
 

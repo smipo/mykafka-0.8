@@ -1,19 +1,16 @@
 package kafka.consumer;
 
 import kafka.api.FetchRequest;
-import kafka.api.MultiFetchResponse;
 import kafka.api.OffsetRequest;
 import kafka.cluster.Broker;
 import kafka.cluster.Partition;
 import kafka.common.ErrorMapping;
 import kafka.message.ByteBufferMessageSet;
-import kafka.utils.Pair;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;

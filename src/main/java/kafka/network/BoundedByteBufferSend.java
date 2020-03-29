@@ -1,5 +1,7 @@
 package kafka.network;
 
+import kafka.api.RequestOrResponse;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
@@ -12,11 +14,11 @@ public class BoundedByteBufferSend extends Send {
 
     private volatile boolean complete = false;
 
-    public BoundedByteBufferSend(Request request) throws IOException  {
-        this(request.sizeInBytes() + 2);
-        buffer.putShort(request.id());
-        request.writeTo(buffer);
-        buffer.rewind();
+    public BoundedByteBufferSend(RequestOrResponse request) throws IOException  {
+        this(request.sizeInBytes() + (request.requestId != null ? 2 : 0));
+        if(request.requestId != null){
+            buffer.putShort(request.requestId);
+        }
     }
     public BoundedByteBufferSend(int size) {
         this(ByteBuffer.allocate(size));
@@ -41,10 +43,10 @@ public class BoundedByteBufferSend extends Send {
     @Override
     public long writeTo(GatheringByteChannel channel) throws IOException {
         expectIncomplete();
-        ByteBuffer[] buffers = new ByteBuffer[2];
-        buffers[0] = sizeBuffer;
-        buffers[1] = buffer;
-        long written = channel.write(buffers);
+        ByteBuffer[] srcs = new ByteBuffer[2];
+        srcs[0] = sizeBuffer;
+        srcs[1] = buffer;
+        long written = channel.write(srcs);
         // if we are done, mark it off
         if(!buffer.hasRemaining())
             complete = true;

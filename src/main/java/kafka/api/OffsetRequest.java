@@ -1,7 +1,6 @@
 package kafka.api;
 
 import kafka.common.ErrorMapping;
-import kafka.network.Request;
 import kafka.network.Send;
 import kafka.utils.Utils;
 

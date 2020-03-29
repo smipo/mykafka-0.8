@@ -1,12 +1,11 @@
 package kafka.api;
 
-import kafka.network.Request;
 import kafka.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class FetchRequest extends Request {
+public class FetchRequest extends RequestOrResponse {
 
     String topic;
     int partition;
@@ -17,7 +16,7 @@ public class FetchRequest extends Request {
             int partition,
             long offset,
             int maxSize){
-        super(RequestKeys.Fetch);
+        super(RequestKeys.FetchKey);
         this.topic= topic;
         this.partition = partition;
         this.offset = offset;

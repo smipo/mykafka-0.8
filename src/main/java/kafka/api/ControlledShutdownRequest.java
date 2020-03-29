@@ -8,17 +8,27 @@ import java.nio.ByteBuffer;
 
 public class ControlledShutdownRequest  extends RequestOrResponse {
 
+    public static short CurrentVersion = 0;
+    public static String DefaultClientId = "";
+
+    public static ControlledShutdownRequest  readFrom(ByteBuffer buffer){
+        short versionId = buffer.getShort();
+        int correlationId = buffer.getInt();
+        int brokerId = buffer.getInt();
+        return new ControlledShutdownRequest(versionId, correlationId, brokerId);
+    }
+
     short versionId;
     int brokerId;
 
-    public ControlledShutdownRequest( int correlationId, short versionId, int correlationId1, int brokerId) {
+    public ControlledShutdownRequest( short versionId, int correlationId,int brokerId) {
         super(RequestKeys.ControlledShutdownKey, correlationId);
         this.versionId = versionId;
         this.brokerId = brokerId;
     }
 
     public ControlledShutdownRequest(int correlationId, int brokerId) {
-        this(ControlledShutdownRequest.CurrentVersion, correlationId, brokerId)
+        this(ControlledShutdownRequest.CurrentVersion, correlationId, brokerId);
     }
 
     public void writeTo(ByteBuffer buffer) {
@@ -46,6 +56,6 @@ public class ControlledShutdownRequest  extends RequestOrResponse {
 
     public void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request) {
         val errorResponse = ControlledShutdownResponse(correlationId, ErrorMapping.codeFor(e.getCause().getClass().getName()), Set.empty[TopicAndPartition])
-        requestChannel.sendResponse(new Response(request, new BoundedByteBufferSend (errorResponse)));
+        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }
 }

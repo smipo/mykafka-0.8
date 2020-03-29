@@ -1,11 +1,14 @@
 package kafka.network;
 
+import kafka.common.KafkaException;
 import kafka.utils.Utils;
 import org.apache.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.List;
@@ -18,53 +21,56 @@ public class SocketServer {
 
     private static Logger logger = Logger.getLogger(SocketServer.class);
 
+    int brokerId;
+    String host;
+    int maxQueuedRequests;
     int port;
     int numProcessorThreads;
-    int monitoringPeriodSecs;
-    private Handler handlerFactory;
     int sendBufferSize;
-    int receiveBufferSize;
+    int recvBufferSize;
     int maxRequestSize = Integer.MAX_VALUE;
 
-    public SocketServer(int port,
-            int numProcessorThreads,
-            int monitoringPeriodSecs,
-             Handler handlerFactory,
-            int sendBufferSize,
-            int receiveBufferSize,
-            int maxRequestSize )throws IOException{
+    public SocketServer(int brokerId, String host, int maxQueuedRequests, int port, int numProcessorThreads,  int sendBufferSize, int recvBufferSize, int maxRequestSize) {
+        this.brokerId = brokerId;
+        this.host = host;
+        this.maxQueuedRequests = maxQueuedRequests;
         this.port = port;
         this.numProcessorThreads = numProcessorThreads;
-        this.monitoringPeriodSecs = monitoringPeriodSecs;
-        this.handlerFactory = handlerFactory;
         this.sendBufferSize = sendBufferSize;
-        this.receiveBufferSize = receiveBufferSize;
+        this.recvBufferSize = recvBufferSize;
         this.maxRequestSize = maxRequestSize;
 
         processors = new Processor[numProcessorThreads];
-        acceptor = new Acceptor(port, processors, sendBufferSize, receiveBufferSize);
+        requestChannel = new RequestChannel(numProcessorThreads, maxQueuedRequests);
     }
 
     private Processor[] processors;
-    private Acceptor acceptor;
+    private volatile Acceptor acceptor;
+    RequestChannel requestChannel ;
+    long milliseconds = System.currentTimeMillis();
 
     /**
      * Start the socket server
      */
     public void startup() throws IOException,InterruptedException{
         for(int i = 0 ;i < numProcessorThreads; i++) {
-            processors[i] = new Processor(handlerFactory,  maxRequestSize);
+            processors[i] = new Processor(i, milliseconds, maxRequestSize, requestChannel);
             Utils.newThread("kafka-processor-" + i, processors[i], false).start();
         }
+        // register the processor threads for notification of responses
+        requestChannel.addResponseListener(processors);
+        // start accepting connections
+        this.acceptor = new Acceptor(host, port, processors, sendBufferSize, recvBufferSize);
         Utils.newThread("kafka-acceptor", acceptor, false).start();
         acceptor.awaitStartup();
+        logger.info("Started");
     }
 
     /**
      * Shutdown the socket server
      */
     public void shutdown() throws InterruptedException{
-        acceptor.shutdown();
+        if(acceptor != null) acceptor.shutdown();
         for(Processor processor : processors)
             processor.shutdown();
     }
@@ -73,7 +79,7 @@ public class SocketServer {
     /**
      * A base class with some helper variables and methods
      */
-    abstract class AbstractServerThread implements Runnable {
+    public abstract class AbstractServerThread implements Runnable {
 
         protected Selector selector ;
         private CountDownLatch startupLatch = new CountDownLatch(1);
@@ -103,7 +109,7 @@ public class SocketServer {
         /**
          * Record that the thread startup is complete
          */
-        protected void startupComplete()  {
+        public void startupComplete()  {
             alive.set(true);
             startupLatch.countDown();
         }
@@ -111,15 +117,22 @@ public class SocketServer {
         /**
          * Record that the thread shutdown is complete
          */
-        protected void shutdownComplete() {
+        public void shutdownComplete() {
             shutdownLatch.countDown();
         }
 
         /**
          * Is the server still running?
          */
-        protected boolean isRunning() {
+        public boolean isRunning() {
             return alive.get();
+        }
+
+        /**
+         * Wakeup the thread for selection.
+         */
+        public Selector  wakeup() {
+            return selector.wakeup();
         }
     }
 
@@ -129,26 +142,28 @@ public class SocketServer {
      */
     class Acceptor extends AbstractServerThread {
 
+        private String host;
         private int port;
         private Processor[] processors;
         private int sendBufferSize;
         private int receiveBufferSize;
 
-        public Acceptor(int port,Processor[] processors,int sendBufferSize,int receiveBufferSize)throws IOException {
+        public Acceptor( String host,int port,Processor[] processors,int sendBufferSize,int receiveBufferSize)throws IOException {
             super();
+            this.host = host;
             this.port = port;
             this.processors = processors;
             this.sendBufferSize = sendBufferSize;
             this.receiveBufferSize = receiveBufferSize;
+            this.serverChannel = openServerSocket(host,  port);
         }
+
+        ServerSocketChannel serverChannel;
         /**
          * Accept loop that checks for new connection attempts
          */
         public void run() {
             try{
-                ServerSocketChannel serverChannel = ServerSocketChannel.open();
-                serverChannel.configureBlocking(false);
-                serverChannel.socket().bind(new InetSocketAddress(port));
                 serverChannel.register(selector, SelectionKey.OP_ACCEPT);
                 logger.info("Awaiting connections on port " + port);
                 startupComplete();
@@ -187,6 +202,25 @@ public class SocketServer {
         }
 
         /*
+         * Create a server socket to listen for connections on.
+         */
+      public ServerSocketChannel openServerSocket(String host, int port) throws IOException{
+          InetSocketAddress socketAddress ;
+            if(host == null || host.trim().isEmpty())
+                socketAddress = new InetSocketAddress(port);
+            else
+                socketAddress = new InetSocketAddress(host, port);
+            ServerSocketChannel serverChannel = ServerSocketChannel.open();
+            serverChannel.configureBlocking(false);
+            try {
+                serverChannel.socket().bind(socketAddress);
+                logger.info("Awaiting socket connections on %s:%d.".format(socketAddress.getHostName(), port));
+            } catch (SocketException e){
+                    throw new KafkaException("Socket server failed to bind to %s:%d: %s.".format(socketAddress.getHostName(), port, e.getMessage()), e);
+            }
+            return serverChannel;
+        }
+        /*
          * Accept a new connection
          */
         public void accept(SelectionKey key, Processor processor) throws IOException{
@@ -209,17 +243,20 @@ public class SocketServer {
      * Thread that processes all requests from a single connection. There are N of these running in parallel
      * each of which has its own selectors
      */
-    class Processor extends AbstractServerThread{
+   public class Processor extends AbstractServerThread{
 
-        private Handler handlerMapping;
+        private int id;
+        private long milliseconds;
         private int maxRequestSize;
+        private RequestChannel requestChannel;
 
         private ConcurrentLinkedQueue<SocketChannel> newConnections = new ConcurrentLinkedQueue<SocketChannel>();
 
-        public Processor(Handler handlerMapping,int maxRequestSize) throws IOException{
-            super();
-            this.handlerMapping = handlerMapping;
+        public Processor(int id, long milliseconds,int maxRequestSize, RequestChannel requestChannel) throws IOException {
+            this.id = id;
+            this.milliseconds = milliseconds;
             this.maxRequestSize = maxRequestSize;
+            this.requestChannel = requestChannel;
         }
 
         public void run() {
@@ -228,6 +265,8 @@ public class SocketServer {
                 while (isRunning()) {
                     // setup any new connections that have been queued up
                     configureNewConnections();
+                    // register any new responses for writing
+                    processNewResponses();
                     int ready = selector.select(500);
                     if (ready > 0) {
                         Set<SelectionKey> keys = selector.selectedKeys();
@@ -259,13 +298,47 @@ public class SocketServer {
                         }
                     }
                 }
-                logger.debug("Closing selector.");
-                selector.close();
             }catch (IOException e){
                 logger.error("Error IOException in Processor" , e);
             }
+            logger.debug("Closing selector.");
+            try{
+                selector.close();
+            }catch (IOException e){
+                logger.error("Error selector close" , e);
+            }
+
             shutdownComplete();
         }
+
+        private void processNewResponses() throws IOException{
+            RequestChannel.Response curr = requestChannel.receiveResponse(id);
+            while(curr != null) {
+                SelectionKey key = (SelectionKey)curr.request.requestKey;
+                try {
+                    if(curr.responseAction instanceof RequestChannel.NoOpAction){
+                        logger.trace("Socket server received empty response to send, registering for read: " + curr);
+                        key.interestOps(SelectionKey.OP_READ);
+                        key.attach(null);
+                    }else if(curr.responseAction instanceof RequestChannel.SendAction){
+                        logger.trace("Socket server received response to send, registering for write: " + curr);
+                        key.interestOps(SelectionKey.OP_WRITE);
+                        key.attach(curr);
+                    }else if(curr.responseAction instanceof RequestChannel.CloseConnectionAction){
+                        logger.trace("Closing socket connection actively according to the response code.");
+                        close(key);
+                    }else{
+                        throw new KafkaException("No mapping found for response code " + curr.responseAction);
+                    }
+                } catch (CancelledKeyException e){
+                    logger.debug("Ignoring response for closed socket.");
+                    close(key);
+                } finally {
+                    curr = requestChannel.receiveResponse(id);
+                }
+            }
+        }
+
 
         private void close(SelectionKey key) throws IOException{
             SocketChannel channel = (SocketChannel)key.channel();
@@ -297,21 +370,11 @@ public class SocketServer {
             }
         }
 
-        /**
-         * Handle a completed request producing an optional response
-         */
-        private Send handle(SelectionKey key, Receive request) throws Exception{
-            //Todo
-            //if(handlerMapping == null) return null;
-            short requestTypeId = request.buffer().getShort();
-            Send send = handlerMapping.handler(requestTypeId, request);
-            return send;
-        }
 
         /*
          * Process reads from ready sockets
          */
-        private void read (SelectionKey key) throws Exception{
+        private void read(SelectionKey key) throws Exception{
             SocketChannel socketChannel = channelFor(key);
             Receive request = null;
             if (key.attachment() == null) {
@@ -327,14 +390,12 @@ public class SocketServer {
                 close(key);
                 return;
             } else if (request.complete()) {
-                Send maybeResponse = handle(key, request);
+                SocketAddress address = socketChannel.socket().getRemoteSocketAddress();
+                RequestChannel.Request req = new RequestChannel.Request( id,  key,  request.buffer(), milliseconds, address);
+                requestChannel.sendRequest(req);
                 key.attach(null);
-                if(maybeResponse != null){
-                    key.attach(maybeResponse);
-                    key.interestOps(SelectionKey.OP_WRITE);
-                }else{
-                    key.interestOps(SelectionKey.OP_READ);
-                }
+                // explicitly reset interest ops to not READ, no need to wake up the selector just yet
+                key.interestOps(key.interestOps() & (~SelectionKey.OP_READ));
             } else {
                 // more reading to be done
                 key.interestOps(SelectionKey.OP_READ);
@@ -345,7 +406,7 @@ public class SocketServer {
         /*
          * Process writes to ready sockets
          */
-        private void write (SelectionKey key) throws Exception{
+        private void write(SelectionKey key) throws Exception{
             Send response = (Send)key.attachment();
             SocketChannel socketChannel = channelFor(key);
             long written = response.writeTo(socketChannel);
