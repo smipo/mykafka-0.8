@@ -50,9 +50,15 @@ public class TopicMetadata {
     }
 
 
+    public String getTopic() {
+        return topic;
+    }
 
+    public List<PartitionMetadata> getPartitionsMetadata() {
+        return partitionsMetadata;
+    }
 
-   public static class PartitionMetadata{
+    public static class PartitionMetadata{
 
        public static PartitionMetadata readFrom(ByteBuffer buffer, Map<Integer, Broker> brokers) {
            short errorCode = ApiUtils.readShortInRange(buffer, "error code", (short) -1, Short.MAX_VALUE);
@@ -121,5 +127,21 @@ public class TopicMetadata {
            buffer.putInt(isr.size());
            isr.forEach(r -> buffer.putInt(r.id()));
        }
-   }
+
+        public int getPartitionId() {
+            return partitionId;
+        }
+
+        public Broker getLeader() {
+            return leader;
+        }
+
+        public List<Broker> getReplicas() {
+            return replicas;
+        }
+
+        public List<Broker> getIsr() {
+            return isr;
+        }
+    }
 }

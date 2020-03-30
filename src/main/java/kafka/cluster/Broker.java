@@ -67,7 +67,9 @@ public class Broker {
         ApiUtils.writeShortString(buffer, host);
         buffer.putInt(port);
     }
-
+    public int sizeInBytes() throws UnsupportedEncodingException{
+        return ApiUtils.shortStringLength(host) /* host name */ + 4 /* port */ + 4; /* broker id*/
+    }
     @Override
     public String toString(){
         return "id:" + id  + ",host:" + host + ",port:" + port;

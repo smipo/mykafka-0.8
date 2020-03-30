@@ -18,5 +18,7 @@ public abstract class RequestOrResponse {
 
     public abstract void writeTo(ByteBuffer buffer) throws IOException;
 
-    public abstract void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request);
+    public  void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request)throws IOException,InterruptedException{
+
+    }
 }

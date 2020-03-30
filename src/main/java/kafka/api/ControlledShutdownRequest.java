@@ -55,7 +55,7 @@ public class ControlledShutdownRequest  extends RequestOrResponse {
         return controlledShutdownRequest.toString();
     }
 
-    public void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request) {
+    public void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request) throws IOException,InterruptedException{
         ControlledShutdownResponse errorResponse = new ControlledShutdownResponse(correlationId, ErrorMapping.codeFor(e.getCause().getClass().getName()), Set.empty[TopicAndPartition])
         requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }

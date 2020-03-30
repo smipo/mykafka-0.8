@@ -1,10 +1,13 @@
 package kafka.api;
 
+import kafka.common.ErrorMapping;
+import kafka.network.BoundedByteBufferSend;
 import kafka.network.RequestChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TopicMetadataRequest extends RequestOrResponse{
 
@@ -46,8 +49,11 @@ public class TopicMetadataRequest extends RequestOrResponse{
                 4 + /* number of topics */
                 sum;/* topics */
     }
-    public  void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request){
-
+    public  void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request) throws IOException,InterruptedException{
+        List<TopicMetadata> topicMetadata = topics.stream().map(topic ->  new TopicMetadata(topic,null,ErrorMapping.codeFor(e.getClass().getName())))
+                .collect(Collectors.toList());
+        TopicMetadataResponse errorResponse = new TopicMetadataResponse(correlationId,topicMetadata);
+        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }
 
 }
