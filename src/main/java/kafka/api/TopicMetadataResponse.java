@@ -4,12 +4,32 @@ import kafka.cluster.Broker;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TopicMetadataResponse extends RequestOrResponse{
+
+
+    public static  TopicMetadataResponse readFrom(ByteBuffer buffer) throws IOException{
+        int correlationId = buffer.getInt();
+        int brokerCount = buffer.getInt();
+        List<Broker> brokers = new ArrayList<>();
+        for(int i = 0;i <brokerCount ;i++){
+            Broker broker = Broker.readFrom(buffer);
+            brokers.add(broker);
+        }
+        Map<Integer, Broker> brokerMap = brokers.stream().collect(Collectors.toMap(Broker::id, broker -> broker));
+        int topicCount = buffer.getInt();
+        List<TopicMetadata> topicsMetadata = new ArrayList<>();
+        for(int i = 0;i < topicCount ;i++){
+            TopicMetadata topicMetadata = TopicMetadata.readFrom(buffer, brokerMap);
+            topicsMetadata.add(topicMetadata);
+        }
+       return new TopicMetadataResponse(correlationId,topicsMetadata);
+    }
 
     List<TopicMetadata> topicsMetadata;
 

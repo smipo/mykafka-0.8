@@ -6,6 +6,7 @@ import kafka.network.RequestChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,22 @@ public class TopicMetadataRequest extends RequestOrResponse{
     public static short CurrentVersion = 0;
     public static String DefaultClientId = "";
 
+    /**
+     * TopicMetadataRequest has the following format -
+     * number of topics (4 bytes) list of topics (2 bytes + topic.length per topic) detailedMetadata (2 bytes) timestamp (8 bytes) count (4 bytes)
+     */
+
+    public static TopicMetadataRequest readFrom(ByteBuffer buffer) throws IOException{
+        short versionId = buffer.getShort();
+        int correlationId = buffer.getInt();
+        String clientId = ApiUtils.readShortString(buffer);
+        int numTopics = ApiUtils.readIntInRange(buffer, "number of topics", 0, Integer.MAX_VALUE);
+        List<String> topics = new ArrayList<>();
+        for(int i = 0;i < numTopics;i++){
+            topics.add(ApiUtils.readShortString(buffer));
+        }
+        return new TopicMetadataRequest(versionId, correlationId, clientId, topics);
+    }
     short versionId;
     String clientId;
     List<String> topics;

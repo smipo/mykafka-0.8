@@ -6,6 +6,7 @@ import kafka.network.RequestChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 
 public class ControlledShutdownRequest  extends RequestOrResponse {
 
@@ -56,7 +57,7 @@ public class ControlledShutdownRequest  extends RequestOrResponse {
     }
 
     public void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request) throws IOException,InterruptedException{
-        ControlledShutdownResponse errorResponse = new ControlledShutdownResponse(correlationId, ErrorMapping.codeFor(e.getCause().getClass().getName()), Set.empty[TopicAndPartition])
+        ControlledShutdownResponse errorResponse = new ControlledShutdownResponse(correlationId, ErrorMapping.codeFor(e.getCause().getClass().getName()), new HashSet<>());
         requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }
 }
