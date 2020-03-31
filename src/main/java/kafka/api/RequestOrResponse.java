@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public abstract class RequestOrResponse {
+
+    public static int OrdinaryConsumerId = -1;
+    public static int DebuggingConsumerId = -2;
+
     public Short requestId;
     public  int correlationId;
 

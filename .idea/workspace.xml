@@ -2,12 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/mykafka-0.8.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/api/FetchResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/ControlledShutdownResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ControlledShutdownResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/FetchRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/FetchRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/RequestOrResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/RequestOrResponse.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,10 +125,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1585474622721" />
-    <state x="718" y="162" key="#com.intellij.ide.util.MemberChooser" timestamp="1585631219407">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser" timestamp="1585689865400">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1585604618534" />
+    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1585689865400" />
     <state x="718" y="162" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1585631219407" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
