@@ -1,17 +1,21 @@
 package kafka.api;
 
+import kafka.common.ErrorMapping;
 import kafka.common.TopicAndPartition;
 import kafka.consumer.ConsumerConfig;
+import kafka.message.MessageSet;
 import kafka.network.RequestChannel;
 import kafka.utils.Pair;
 import kafka.utils.Utils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FetchRequest extends RequestOrResponse {
 
@@ -21,6 +25,27 @@ public class FetchRequest extends RequestOrResponse {
     public static int DefaultCorrelationId = 0;
 
 
+    public static FetchRequest readFrom(ByteBuffer buffer) throws UnsupportedEncodingException {
+        short versionId = buffer.getShort();
+        int correlationId = buffer.getInt();
+        String clientId = ApiUtils.readShortString(buffer);
+        int replicaId = buffer.getInt();
+        int maxWait = buffer.getInt();
+        int minBytes = buffer.getInt();
+        int topicCount = buffer.getInt();
+        Map<TopicAndPartition, PartitionFetchInfo> requestInfo = new HashMap<>();
+        for (int i = 1; i < topicCount; i++) {
+            String topic = ApiUtils.readShortString(buffer);
+            int partitionCount = buffer.getInt();
+            for (int j = 1; j < partitionCount; j++) {
+                int partitionId = buffer.getInt();
+                long offset = buffer.getLong();
+                int fetchSize = buffer.getInt();
+                requestInfo.put(new TopicAndPartition(topic, partitionId), new PartitionFetchInfo(offset, fetchSize));
+            }
+        }
+        return new FetchRequest(correlationId,versionId, clientId, replicaId, maxWait, minBytes, requestInfo);
+    }
     short versionId ;
     String clientId ;
     int replicaId ;
@@ -104,12 +129,12 @@ public class FetchRequest extends RequestOrResponse {
     }
 
     public  void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request)throws IOException,InterruptedException{
-        val fetchResponsePartitionData = requestInfo.map {
-            case (topicAndPartition, data) =>
-                (topicAndPartition, FetchResponsePartitionData(ErrorMapping.codeFor(e.getClass.asInstanceOf[Class[Throwable]]), -1, MessageSet.Empty))
+        Map<TopicAndPartition, FetchResponse.FetchResponsePartitionData> data = new HashMap<>();
+        for(Map.Entry<TopicAndPartition, PartitionFetchInfo> entry : requestInfo.entrySet()){
+            data.put(entry.getKey(),new FetchResponse.FetchResponsePartitionData(ErrorMapping.codeFor(e.getClass().getName()),-1, MessageSet.Empty));
         }
-        val errorResponse = new FetchResponse(correlationId, fetchResponsePartitionData);
-        requestChannel.sendResponse(new RequestChannel.Response(request, new FetchResponseSend(errorResponse)))
+        FetchResponse errorResponse = new FetchResponse(correlationId, data);
+        requestChannel.sendResponse(new RequestChannel.Response(request, new FetchResponse.FetchResponseSend(errorResponse)));
     }
 
     /**
@@ -131,12 +156,61 @@ public class FetchRequest extends RequestOrResponse {
         long offset;
         int fetchSize;
 
+        public PartitionFetchInfo(long offset, int fetchSize) {
+            this.offset = offset;
+            this.fetchSize = fetchSize;
+        }
+
         public long getOffset() {
             return offset;
         }
 
         public int getFetchSize() {
             return fetchSize;
+        }
+    }
+
+    public static class FetchRequestBuilder{
+        private AtomicInteger correlationId = new AtomicInteger(0);
+        private short versionId = FetchRequest.CurrentVersion;
+        private String clientId = "";
+        private int replicaId = RequestOrResponse.OrdinaryConsumerId;
+        private int maxWait = FetchRequest.DefaultMaxWait;
+        private int minBytes = FetchRequest.DefaultMinBytes;
+        private Map<TopicAndPartition, PartitionFetchInfo> requestMap = new HashMap<>();
+
+        public FetchRequestBuilder addFetch(String topic, int partition, long offset, int fetchSize)  {
+            requestMap.put(new TopicAndPartition(topic, partition), new PartitionFetchInfo(offset, fetchSize));
+            return this;
+        }
+
+        public FetchRequestBuilder clientId(String clientId) {
+            this.clientId = clientId;
+            return this;
+        }
+
+        /**
+         * Only for internal use. Clients shouldn't set replicaId.
+         */
+        private FetchRequestBuilder replicaId(int replicaId){
+            this.replicaId = replicaId;
+            return this;
+        }
+
+        public FetchRequestBuilder maxWait(int maxWait) {
+            this.maxWait = maxWait;
+            return this;
+        }
+
+        public FetchRequestBuilder minBytes(int minBytes) {
+            this.minBytes = minBytes;
+            return this;
+        }
+
+        public FetchRequest build()  {
+            FetchRequest fetchRequest = new FetchRequest(correlationId.getAndIncrement(),versionId, clientId, replicaId, maxWait, minBytes, requestMap);
+            requestMap.clear();
+            return fetchRequest;
         }
     }
 }
