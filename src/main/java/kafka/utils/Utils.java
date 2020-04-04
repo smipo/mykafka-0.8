@@ -333,6 +333,23 @@ public class Utils {
         return thread;
     }
 
+    /**
+     * Create a new thread
+     * @param runnable The work for the thread to do
+     * @param daemon Should the thread block JVM shutdown?
+     * @return The unstarted thread
+     */
+    public static  Thread newThread(Runnable runnable, boolean daemon){
+        Thread thread = new Thread(runnable);
+        thread.setDaemon(daemon);
+        thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            public  void uncaughtException(Thread t, Throwable e) {
+                logger.error("Uncaught exception in thread '" + t.getName() + "':", e);
+            }
+        });
+       return thread;
+    }
+
     public static boolean propertyExists(String prop) {
         if(prop == null)
             return false;
@@ -531,5 +548,35 @@ public class Utils {
         else {
             return  Arrays.asList(csvList.split("\\s*,\\s*")).stream().filter(v -> !v.equals("")).collect(Collectors.toList());
         }
+    }
+
+    /**
+     * Format a Seq[String] as JSON array.
+     */
+    public static String seqToJson(List<String> jsonData, boolean valueInQuotes){
+        StringBuilder builder = new StringBuilder();
+        builder.append("[ ");
+        if (valueInQuotes){
+            for(int i = 0;i < jsonData.size();i++){
+                String json = jsonData.get(i);
+                if(i == jsonData.size() - 1){
+                    builder.append("\"" + json + "\"");
+                }else{
+                    builder.append("\"" + json + "\""+", ");
+                }
+            }
+        }
+        else{
+            for(int i = 0;i < jsonData.size();i++){
+                String json = jsonData.get(i);
+                if(i == jsonData.size() - 1){
+                    builder.append(json);
+                }else{
+                    builder.append(json +", ");
+                }
+            }
+        }
+        builder.append(" ]");
+        return builder.toString();
     }
 }

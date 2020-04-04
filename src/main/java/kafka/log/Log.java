@@ -703,6 +703,9 @@ public class Log {
             this.nextOffset.set(newOffset);
         }
     }
+    public String topicName() {
+        return name.substring(0, name.lastIndexOf("-"));
+    }
 
     public String getTopicName() {
         return name.substring(0, name.lastIndexOf("-"));

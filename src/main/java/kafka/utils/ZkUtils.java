@@ -1,18 +1,23 @@
 package kafka.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import kafka.api.LeaderAndIsrRequest;
 import kafka.cluster.Broker;
 import kafka.cluster.Cluster;
 import kafka.common.KafkaException;
+import kafka.common.NoEpochForPartitionException;
 import kafka.consumer.TopicCount;
 import kafka.consumer.TopicCountFactory;
+import kafka.controller.LeaderIsrAndControllerEpoch;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkMarshallingError;
 import org.I0Itec.zkclient.exception.ZkNoNodeException;
 import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.I0Itec.zkclient.serialize.ZkSerializer;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.data.Stat;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,10 +46,11 @@ public class ZkUtils {
     }
 
     public static int getController(ZkClient zkClient) {
-        readDataMaybeNull(zkClient, ControllerPath)._1 match {
-            case Some(controller) => KafkaController.parseControllerId(controller)
-            case None => throw new KafkaException("Controller doesn't exist")
+        String controller = readDataMaybeNull(zkClient, ControllerPath).getKey();
+        if(controller == null){
+            throw new KafkaException("Controller doesn't exist");
         }
+        KafkaController.parseControllerId(controller);
     }
 
     public static String getTopicPartitionPath(String topic, int partitionId){
@@ -60,53 +66,61 @@ public class ZkUtils {
         return brokerIds.stream().map(Integer::parseInt).collect(Collectors.toList());
     }
 
-    public static Broker getAllBrokersInCluster(ZkClient zkClient) {
+    public static List<Broker> getAllBrokersInCluster(ZkClient zkClient) {
         List<String> brokerIds = ZkUtils.getChildrenParentMayNotExist(zkClient, ZkUtils.BrokerIdsPath);
-        brokerIds.map(_.toInt).map(getBrokerInfo(zkClient, _)).filter(_.ispublic static Stringined).map(_.get)
-    }
-
-    public static LeaderIsrAndControllerEpoch getLeaderIsrAndEpochForPartition(ZkClient zkClient,String topic, int partition){
-        val leaderAndIsrPath = getTopicPartitionLeaderAndIsrPath(topic, partition)
-        val leaderAndIsrInfo = readDataMaybeNull(zkClient, leaderAndIsrPath)
-        val leaderAndIsrOpt = leaderAndIsrInfo._1
-        val stat = leaderAndIsrInfo._2
-        leaderAndIsrOpt match {
-            case Some(leaderAndIsrStr) => parseLeaderAndIsr(leaderAndIsrStr, topic, partition, stat)
-            case None => None
-        }
-    }
-
-    public static LeaderAndIsr getLeaderAndIsrForPartition(ZkClient zkClient,String topic, int partition) {
-        getLeaderIsrAndEpochForPartition(zkClient, topic, partition).map(_.leaderAndIsr)
-    }
-
-    public static LeaderIsrAndControllerEpoch parseLeaderAndIsr(String leaderAndIsrStr, String topic, int partition,Stat stat) {
-        Json.parseFull(leaderAndIsrStr) match {
-            case Some(m) =>
-                val leaderIsrAndEpochInfo = m.asInstanceOf[Map[String, Any]]
-                val leader = leaderIsrAndEpochInfo.get("leader").get.asInstanceOf[Int]
-                val epoch = leaderIsrAndEpochInfo.get("leader_epoch").get.asInstanceOf[Int]
-                val isr = leaderIsrAndEpochInfo.get("isr").get.asInstanceOf[List[Int]]
-                val controllerEpoch = leaderIsrAndEpochInfo.get("controller_epoch").get.asInstanceOf[Int]
-                val zkPathVersion = stat.getVersion
-                debug("Leader %d, Epoch %d, Isr %s, Zk path version %d for partition [%s,%d]".format(leader, epoch,
-                        isr.toString(), zkPathVersion, topic, partition))
-                Some(LeaderIsrAndControllerEpoch(LeaderAndIsr(leader, epoch, isr, zkPathVersion), controllerEpoch))
-            case None => None
-        }
-    }
-
-    public static Integer getLeaderForPartition(ZkClient zkClient,String topic, int partition){
-        val leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition))._1
-        leaderAndIsrOpt match {
-            case Some(leaderAndIsr) =>
-                Json.parseFull(leaderAndIsr) match {
-                case Some(m) =>
-                    Some(m.asInstanceOf[Map[String, Any]].get("leader").get.asInstanceOf[Int])
-                case None => None
+        List<Broker> brokers = new ArrayList<>();
+        for(String brokerId:brokerIds){
+            Broker broker = getBrokerInfo(zkClient, Integer.parseInt(brokerId));
+            if(broker != null){
+                brokers.add(broker);
             }
-            case None => None
         }
+        return brokers;
+    }
+
+    public static LeaderIsrAndControllerEpoch getLeaderIsrAndEpochForPartition(ZkClient zkClient, String topic, int partition)throws IOException{
+        String leaderAndIsrPath = getTopicPartitionLeaderAndIsrPath(topic, partition);
+        Pair<String,Stat> leaderAndIsrInfo = readDataMaybeNull(zkClient, leaderAndIsrPath);
+        String leaderAndIsrOpt = leaderAndIsrInfo.getKey();
+        Stat stat = leaderAndIsrInfo.getValue();
+        if(leaderAndIsrOpt != null){
+            return parseLeaderAndIsr(leaderAndIsrOpt, topic, partition, stat);
+        }
+        return null;
+    }
+
+    public static LeaderAndIsrRequest.LeaderAndIsr getLeaderAndIsrForPartition(ZkClient zkClient, String topic, int partition) throws IOException{
+        LeaderIsrAndControllerEpoch isrAndControllerEpoch = getLeaderIsrAndEpochForPartition(zkClient, topic, partition);
+        if(isrAndControllerEpoch != null){
+            return isrAndControllerEpoch.leaderAndIsr;
+        }
+        return null;
+    }
+
+    public static LeaderIsrAndControllerEpoch parseLeaderAndIsr(String leaderAndIsrStr, String topic, int partition, Stat stat) throws IOException {
+        if(leaderAndIsrStr == null || leaderAndIsrStr.isEmpty()){
+            return null;
+        }
+        Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(leaderAndIsrStr);
+        int leader = Integer.parseInt(leaderIsrAndEpochInfo.get("leader").toString());
+        int epoch = Integer.parseInt(leaderIsrAndEpochInfo.get("leader_epoch").toString());
+        List<Integer> isr = ( List<Integer>)leaderIsrAndEpochInfo.get("isr");
+        int controllerEpoch = Integer.parseInt(leaderIsrAndEpochInfo.get("controller_epoch").toString());
+        int zkPathVersion = stat.getVersion();
+        logger.debug("Leader %d, Epoch %d, Isr %s, Zk path version %d for partition [%s,%d]".format(leader + "", epoch,
+                isr , zkPathVersion, topic, partition));
+        return new LeaderIsrAndControllerEpoch(new LeaderAndIsrRequest.LeaderAndIsr(leader, epoch, isr, zkPathVersion), controllerEpoch);
+    }
+
+    public static Integer getLeaderForPartition(ZkClient zkClient,String topic, int partition)throws IOException{
+        String leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition)).getKey();
+        if(leaderAndIsrOpt != null){
+            Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(leaderAndIsrOpt);
+            String res = leaderIsrAndEpochInfo.get("leader") == null?null:leaderIsrAndEpochInfo.get("leader").toString();
+            if(res == null) return null;
+            return Integer.parseInt(res);
+        }
+        return null;
     }
 
     /**
@@ -114,94 +128,150 @@ public class ZkUtils {
      * leader fails after updating epoch in the leader path and before updating epoch in the ISR path, effectively some
      * other broker will retry becoming leader with the same new epoch value.
      */
-    public static int getEpochForPartition(ZkClient zkClient,String topic, int partition) {
-        val leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition))._1
-        leaderAndIsrOpt match {
-            case Some(leaderAndIsr) =>
-                Json.parseFull(leaderAndIsr) match {
-                case None => throw new NoEpochForPartitionException("No epoch, leaderAndISR data for partition [%s,%d] is invalid".format(topic, partition))
-                case Some(m) => m.asInstanceOf[Map[String, Any]].get("leader_epoch").get.asInstanceOf[Int]
-            }
-            case None => throw new NoEpochForPartitionException("No epoch, ISR path for partition [%s,%d] is empty"
-                    .format(topic, partition))
+    public static int getEpochForPartition(ZkClient zkClient,String topic, int partition) throws IOException{
+        String leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition)).getKey();
+        if(leaderAndIsrOpt == null){
+            throw new NoEpochForPartitionException("No epoch, ISR path for partition [%s,%d] is empty"
+                    .format(topic, partition));
         }
+        Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(leaderAndIsrOpt);
+        String res = leaderIsrAndEpochInfo.get("leader_epoch") == null?null:leaderIsrAndEpochInfo.get("leader_epoch").toString();
+        if(res == null) throw new NoEpochForPartitionException("No epoch, leaderAndISR data for partition [%s,%d] is invalid".format(topic, partition));
+        return Integer.parseInt(res);
     }
 
     /**
      * Gets the in-sync replicas (ISR) for a specific topic and partition
      */
-    public static String getInSyncReplicasForPartition(ZkClient zkClient,String topic, int partition): Seq[Int] = {
-        val leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition))._1
-        leaderAndIsrOpt match {
-            case Some(leaderAndIsr) =>
-                Json.parseFull(leaderAndIsr) match {
-                case Some(m) => m.asInstanceOf[Map[String, Any]].get("isr").get.asInstanceOf[Seq[Int]]
-                case None => Seq.empty[Int]
-            }
-            case None => Seq.empty[Int]
+    public static List<Integer> getInSyncReplicasForPartition(ZkClient zkClient,String topic, int partition) throws IOException{
+        String leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition)).getKey();
+        if(leaderAndIsrOpt == null){
+            return new ArrayList<>();
         }
+        Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(leaderAndIsrOpt);
+        return  leaderIsrAndEpochInfo.get("isr") == null?new ArrayList<>(): (List<Integer>)leaderIsrAndEpochInfo.get("isr");
     }
 
     /**
      * Gets the assigned replicas (AR) for a specific topic and partition
      */
-    public static List<Integer> getReplicasForPartition(ZkClient zkClient,String topic, int partition) {
-        val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(topic))._1
-        jsonPartitionMapOpt match {
-            case Some(jsonPartitionMap) =>
-                Json.parseFull(jsonPartitionMap) match {
-                case Some(m) => m.asInstanceOf[Map[String, Any]].get("partitions") match {
-                    case Some(replicaMap) => replicaMap.asInstanceOf[Map[String, Seq[Int]]].get(partition.toString) match {
-                        case Some(seq) => seq
-                        case None => Seq.empty[Int]
-                    }
-                    case None => Seq.empty[Int]
-                }
-                case None => Seq.empty[Int]
-            }
-            case None => Seq.empty[Int]
+    public static List<Integer> getReplicasForPartition(ZkClient zkClient,String topic, int partition) throws IOException{
+        String jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(topic)).getKey();
+        if(jsonPartitionMapOpt == null){
+            return new ArrayList<>();
         }
+        Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(jsonPartitionMapOpt);
+        Object partitions = leaderIsrAndEpochInfo.get("partitions");
+        if(partitions == null){
+            return new ArrayList<>();
+        }
+        Map<String,List<Integer>> replicaMap = ( Map<String,List<Integer>>)partitions;
+        List<Integer> replicas = replicaMap.get(String.valueOf(partition));
+        if(replicas == null){
+            return new ArrayList<>();
+        }
+        return replicas;
     }
 
-    public static boolean isPartitionOnBroker(ZkClient zkClient,String topic, int partition,int  brokerId){
-        val replicas = getReplicasForPartition(zkClient, topic, partition);
-        debug("The list of replicas for partition [%s,%d] is %s".format(topic, partition, replicas))
-        replicas.contains(brokerId.toString)
+    public static boolean isPartitionOnBroker(ZkClient zkClient,String topic, int partition,int  brokerId)throws IOException{
+        List<Integer> replicas = getReplicasForPartition(zkClient, topic, partition);
+        logger.debug("The list of replicas for partition [%s,%d] is %s".format(topic, partition, replicas));
+        return replicas.contains(String.valueOf(brokerId));
     }
 
     public static void registerBrokerInZk(ZkClient zkClient,int id,String host, int port, int timeout, int jmxPort) {
-        val brokerIdPath = ZkUtils.BrokerIdsPath + "/" + id
-        val timestamp = "\"" + SystemTime.milliseconds.toString + "\""
-        val brokerInfo =
-                Utils.mergeJsonFields(Utils.mapToJsonFields(Map("host" -> host), valueInQuotes = true) ++
-                Utils.mapToJsonFields(Map("version" -> 1.toString, "jmx_port" -> jmxPort.toString, "port" -> port.toString, "timestamp" -> timestamp),
-        valueInQuotes = false))
-        val expectedBroker = new Broker(id, host, port)
-
+        String brokerIdPath = ZkUtils.BrokerIdsPath + "/" + id;
+        String timestamp = "\"" + System.currentTimeMillis() + "\"";
+        Map<String, String> jsonDataMap1 = new HashMap<>();
+        jsonDataMap1.put("host",host);
+        Map<String, String> jsonDataMap2 = new HashMap<>();
+        jsonDataMap2.put("version","1");
+        jsonDataMap2.put("jmx_port",String.valueOf(jmxPort));
+        jsonDataMap2.put("port",String.valueOf(port));
+        jsonDataMap2.put("timestamp",timestamp);
+        List<String> l1 = Utils.mapToJsonFields(jsonDataMap1, true);
+        List<String> l2 = Utils.mapToJsonFields(jsonDataMap2, false);
+        l1.addAll(l2);
+        String brokerInfo = Utils.mergeJsonFields(l1);
+        Broker expectedBroker = new Broker(id, host, port);
         try {
             createEphemeralPathExpectConflictHandleZKBug(zkClient, brokerIdPath, brokerInfo, expectedBroker,
-                    (brokerString: String, broker: Any) => Broker.createBroker(broker.asInstanceOf[Broker].id, brokerString).equals(broker.asInstanceOf[Broker]),
-                    timeout)
+                    timeout);
 
-        } catch {
-            case e: ZkNodeExistsException =>
-                throw new RuntimeException("A broker is already registered on the path " + brokerIdPath
-                        + ". This probably " + "indicates that you either have configured a brokerid that is already in use, or "
-                        + "else you have shutdown this broker and restarted it faster than the zookeeper "
-                        + "timeout so it appears to be re-registering.")
+        } catch (ZkNodeExistsException | InterruptedException e){
+            throw new RuntimeException("A broker is already registered on the path " + brokerIdPath
+                    + ". This probably " + "indicates that you either have configured a brokerid that is already in use, or "
+                    + "else you have shutdown this broker and restarted it faster than the zookeeper "
+                    + "timeout so it appears to be re-registering.");
         }
-        info("Registered broker %d at path %s with address %s:%d.".format(id, brokerIdPath, host, port))
+        logger.info("Registered broker %d at path %s with address %s:%d.".format(String.valueOf(id), brokerIdPath, host, port));
     }
 
+    /**
+     * Create an ephemeral node with the given path and data.
+     * Throw NodeExistsException if node already exists.
+     * Handles the following ZK session timeout bug:
+     *
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-1740
+     *
+     * Upon receiving a NodeExistsException, read the data from the conflicted path and
+     * trigger the checker function comparing the read data and the expected data,
+     * If the checker function returns true then the above bug might be encountered, back off and retry;
+     * otherwise re-throw the exception
+     */
+    public static void createEphemeralPathExpectConflictHandleZKBug(ZkClient zkClient,String path, String data, Object expectedCallerData,  int backoffTime) throws InterruptedException {
+        while (true) {
+            try {
+                createEphemeralPathExpectConflict(zkClient, path, data);
+                return;
+            } catch (ZkNodeExistsException e){
+                // An ephemeral node may still exist even after its corresponding session has expired
+                // due to a Zookeeper bug, in this case we need to retry writing until the previous node is deleted
+                // and hence the write succeeds without ZkNodeExistsException
+                String r = ZkUtils.readDataMaybeNull(zkClient, path).getKey();
+                if(r != null) {
+                    Broker b = (Broker)expectedCallerData;
+                    if (Broker.createBroker(b.id(), r).equals(b)){
+                        logger.info("I wrote this conflicted ephemeral node [%s] at %s a while back in a different session, ".format(data, path)
+                                + "hence I will backoff for this node to be deleted by Zookeeper and retry");
+
+                        Thread.sleep(backoffTime);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+        }
+    }
     public static String getConsumerPartitionOwnerPath(String group,String topic,int partition) {
         ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(group, topic);
         return topicDirs.consumerOwnerDir + "/" + partition;
     }
 
-    public static String leaderAndIsrZkData(LeaderAndIsr leaderAndIsr, int controllerEpoch) {
-        val isrInfo = Utils.seqToJson(leaderAndIsr.isr.map(_.toString), valueInQuotes = false)
-        Utils.mapToJson(Map("version" -> 1.toString, "leader" -> leaderAndIsr.leader.toString, "leader_epoch" -> leaderAndIsr.leaderEpoch.toString,
-                "controller_epoch" -> controllerEpoch.toString, "isr" -> isrInfo), valueInQuotes = false)
+    public static String leaderAndIsrZkData(LeaderAndIsrRequest.LeaderAndIsr leaderAndIsr, int controllerEpoch) {
+        String isrInfo = Utils.seqToJson(leaderAndIsr.isr.stream().map(x -> String.valueOf(x)).collect(Collectors.toList()), false);
+        Map<String, String> jsonDataMap = new HashMap<>();
+        jsonDataMap.put("version","1");
+        jsonDataMap.put("leader",String.valueOf(leaderAndIsr.leader));
+        jsonDataMap.put("leader_epoch",String.valueOf(leaderAndIsr.leaderEpoch));
+        jsonDataMap.put("controller_epoch",String.valueOf(controllerEpoch));
+        jsonDataMap.put("isr",isrInfo);
+        return Utils.mapToJson(jsonDataMap, false);
+    }
+
+    /**
+     * This API takes in a broker id, queries zookeeper for the broker metadata and returns the metadata for that broker
+     * or throws an exception if the broker dies before the query to zookeeper finishes
+     * @param brokerId The broker id
+     * @param zkClient The zookeeper client connection
+     * @return An optional Broker object encapsulating the broker metadata
+     */
+    public static Broker getBrokerInfo(ZkClient zkClient,int brokerId) {
+        String brokerInfo = ZkUtils.readDataMaybeNull(zkClient, ZkUtils.BrokerIdsPath + "/" + brokerId).getKey();
+        if(brokerInfo != null){
+            return Broker.createBroker(brokerId, brokerInfo);
+        }
+        return null;
     }
 
     /**
@@ -309,7 +379,7 @@ public class ZkUtils {
 
     public static void deletePathRecursive(ZkClient client, String path) {
         try {
-        client.deleteRecursive(path);
+            client.deleteRecursive(path);
         } catch (ZkNoNodeException e){
             // this can happen during a connection loss event, return normally
             logger.info(path + " deleted during connection loss; this is ok");
@@ -320,8 +390,9 @@ public class ZkUtils {
         return client.readData(path);
     }
 
-    public static String readDataMaybeNull(ZkClient client, String path){
-        return client.readData(path, true);
+    public static Pair<String,Stat> readDataMaybeNull(ZkClient client, String path){
+        Stat stat = new Stat();
+        return new Pair<>(client.readData(path, stat),stat);
     }
 
     public static List<String>  getChildren(ZkClient client, String path){
@@ -375,14 +446,6 @@ public class ZkUtils {
         return ret;
     }
 
-
-    public static void setupPartition(ZkClient zkClient, int brokerId, String host,int port,String topic,int nParts) {
-        String brokerIdPath = BrokerIdsPath + "/" + brokerId;
-        Broker broker = new Broker(brokerId, String.valueOf(brokerId), host, port);
-        createEphemeralPathExpectConflict(zkClient, brokerIdPath, broker.getZKString());
-        String brokerPartTopicPath = BrokerTopicsPath + "/" + topic + "/" + brokerId;
-        createEphemeralPathExpectConflict(zkClient, brokerPartTopicPath, String.valueOf(nParts));
-    }
 
     public static void deletePartition(ZkClient zkClient, int brokerId, String topic) {
         String brokerIdPath = BrokerIdsPath + "/" + brokerId;
@@ -445,7 +508,7 @@ public class ZkUtils {
         public Object deserialize(byte[] bytes) throws ZkMarshallingError{
             try{
                 if (bytes == null)
-                   return null;
+                    return null;
                 else
                     return new String(bytes, "UTF-8");
             }catch (UnsupportedEncodingException e){

@@ -16,7 +16,7 @@ public class JacksonUtils {
         return mapper.writeValueAsString(obj);
     }
 
-    public static Map<String,Object> strToMap(String str) throws JsonProcessingException, JsonMappingException {
+    public static Map<String,Object> strToMap(String str) throws JsonProcessingException {
         return  mapper.readValue(str, Map.class);
     }
 }
