@@ -1,15 +1,22 @@
 package kafka.api;
 
 import kafka.common.ErrorMapping;
-import kafka.network.Send;
-import kafka.utils.Utils;
+import kafka.common.TopicAndPartition;
+import kafka.network.BoundedByteBufferSend;
+import kafka.network.RequestChannel;
+import kafka.utils.Pair;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class OffsetRequest  extends Request {
+public class OffsetRequest extends RequestOrResponse {
+
+    public static final short CurrentVersion = 0;
+    public static final String DefaultClientId = "";
 
     public static final String SmallestTimeString = "smallest";
     public static final String LargestTimeString = "largest";
@@ -17,103 +24,107 @@ public class OffsetRequest  extends Request {
     public static final long EarliestTime = -2L;
 
 
-    public static OffsetRequest readFrom(ByteBuffer buffer) throws UnsupportedEncodingException {
-        String topic = Utils.readShortString(buffer, "UTF-8");
-        int partition = buffer.getInt();
-        long offset = buffer.getLong();
-        int maxNumOffsets = buffer.getInt();
-        return new OffsetRequest(topic, partition, offset, maxNumOffsets);
-    }
-
-    public static ByteBuffer serializeOffsetArray(long[] offsets){
-        int size = 4 + 8 * offsets.length;
-        ByteBuffer buffer = ByteBuffer.allocate(size);
-        buffer.putInt(offsets.length);
-        for (int i = 0;i < offsets.length;i++)
-            buffer.putLong(offsets[i]);
-        buffer.rewind();
-        return  buffer;
-    }
-
-    public static long[] deserializeOffsetArray(ByteBuffer buffer){
-        int size = buffer.getInt();
-        long[] offsets = new long[size];
-        for (int i = 0;i < offsets.length;i++)
-            offsets[i] = buffer.getLong();
-        return offsets;
-    }
-
-    public String topic;
-    public int partition;
-    public long time;
-    public int maxNumOffsets;
-
-    public OffsetRequest(  String topic,
-            int partition,
-            long time,
-            int maxNumOffsets){
-        super(RequestKeys.Offsets);
-        this.topic = topic;
-        this.partition = partition;
-        this.time = time;
-        this.maxNumOffsets = maxNumOffsets;
-    }
-
-    public void writeTo(ByteBuffer buffer)throws UnsupportedEncodingException {
-        Utils.writeShortString(buffer, topic, "UTF-8");
-        buffer.putInt(partition);
-        buffer.putLong(time);
-        buffer.putInt(maxNumOffsets);
-    }
-
-    public int sizeInBytes(){
-       return 2 + topic.length() + 4 + 8 + 4;
-    }
-
-    public String toString(){
-        return "OffsetRequest(topic:" + topic + ", part:" + partition + ", time:" + time +
-                ", maxNumOffsets:" + maxNumOffsets + ")";
-    }
-
-
-    public static class OffsetArraySend extends Send{
-
-        long[] offsets;
-
-        private int size;
-        private ByteBuffer header = ByteBuffer.allocate(6);
-        private volatile boolean complete;
-        private ByteBuffer contentBuffer;
-
-        public OffsetArraySend(long[] offsets){
-            this.offsets = offsets;
-            this.contentBuffer = OffsetRequest.serializeOffsetArray(offsets);
-            //todo
-            int sum = 4;
-            for(long offset:offsets ){
-                sum += 8;
+    public static OffsetRequest readFrom(ByteBuffer buffer) throws IOException{
+        short versionId = buffer.getShort();
+        int correlationId = buffer.getInt();
+        String clientId = ApiUtils.readShortString(buffer);
+        int replicaId = buffer.getInt();
+        int topicCount = buffer.getInt();
+        Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo = new HashMap<>();
+        for(int i = 0;i < topicCount;i++){
+            String topic = ApiUtils.readShortString(buffer);
+            int partitionCount = buffer.getInt();
+            for(int j = 0;j < partitionCount;j++){
+                int partitionId = buffer.getInt();
+                long time = buffer.getLong();
+                int maxNumOffsets = buffer.getInt();
+                requestInfo.put(new TopicAndPartition(topic, partitionId),new  PartitionOffsetRequestInfo(time, maxNumOffsets));
             }
-            this.size = sum;
-            this.header.putInt(size + 2);
-            this.header.putShort((short) ErrorMapping.NoError);
-            this.header.rewind();
         }
+        return new OffsetRequest(correlationId, requestInfo,versionId,clientId , replicaId);
+    }
 
-        public  long writeTo(GatheringByteChannel channel) throws IOException{
-            expectIncomplete();
-            int written = 0;
-            if(header.hasRemaining())
-                written += channel.write(header);
-            if(!header.hasRemaining() && contentBuffer.hasRemaining())
-                written += channel.write(contentBuffer);
+    public static class PartitionOffsetRequestInfo {
+        public long time;
+        public int maxNumOffsets;
 
-            if(!contentBuffer.hasRemaining())
-                complete = true;
-            return written;
+        public PartitionOffsetRequestInfo(long time, int maxNumOffsets) {
+            this.time = time;
+            this.maxNumOffsets = maxNumOffsets;
         }
+    }
 
-        public  boolean complete(){
-            return complete;
+    public Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo;
+    public short versionId;
+    public String clientId;
+    public int replicaId;
+
+    public OffsetRequest(int correlationId, Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo, short versionId, String clientId, int replicaId) {
+        super(RequestKeys.OffsetsKey, correlationId);
+        this.requestInfo = requestInfo;
+        this.versionId = versionId;
+        this.clientId = clientId;
+        this.replicaId = replicaId;
+
+        for (Map.Entry<TopicAndPartition, PartitionOffsetRequestInfo> entry : requestInfo.entrySet()) {
+            List<Pair<TopicAndPartition, PartitionOffsetRequestInfo>> list = requestInfoGroupedByTopic.get(entry.getKey().topic());
+            if (list == null) {
+                list = new ArrayList<>();
+                requestInfoGroupedByTopic.put(entry.getKey().topic(), list);
+            }
+            list.add(new Pair<>(entry.getKey(), entry.getValue()));
         }
+    }
+
+    public OffsetRequest(Map<TopicAndPartition, PartitionOffsetRequestInfo> requestInfo, int correlationId, int replicaId) {
+        this(correlationId, requestInfo, OffsetRequest.CurrentVersion, OffsetRequest.DefaultClientId, replicaId);
+    }
+
+    Map<String, List<Pair<TopicAndPartition, PartitionOffsetRequestInfo>>> requestInfoGroupedByTopic = new HashMap<>();
+
+    public void writeTo(ByteBuffer buffer) throws IOException {
+        buffer.putShort(versionId);
+        buffer.putInt(correlationId);
+        ApiUtils.writeShortString(buffer, clientId);
+        buffer.putInt(replicaId);
+        buffer.putInt(requestInfoGroupedByTopic.size()); // topic count
+
+        for (Map.Entry<String, List<Pair<TopicAndPartition, PartitionOffsetRequestInfo>>> entry : requestInfoGroupedByTopic.entrySet()) {
+            List<Pair<TopicAndPartition, PartitionOffsetRequestInfo>> partitionInfos = entry.getValue();
+            ApiUtils.writeShortString(buffer, entry.getKey());
+            buffer.putInt(partitionInfos.size()); // partition count
+            for (Pair<TopicAndPartition, PartitionOffsetRequestInfo> pair : partitionInfos) {
+                buffer.putInt(pair.getKey().partition());
+                buffer.putLong(pair.getValue().time);
+                buffer.putInt(pair.getValue().maxNumOffsets);
+            }
+        }
+    }
+
+    public int sizeInBytes() throws IOException {
+        int size = 2 + /* versionId */
+                4 + /* correlationId */
+                ApiUtils.shortStringLength(clientId) +
+                4 + /* replicaId */
+                4; /* topic count */
+        for (Map.Entry<String, List<Pair<TopicAndPartition, PartitionOffsetRequestInfo>>> entry : requestInfoGroupedByTopic.entrySet()) {
+            size += ApiUtils.shortStringLength(entry.getKey()) +
+                    4 + /* partition count */
+                    entry.getValue().size() * (
+                            4 + /* partition */
+                                    8 + /* time */
+                                    4 /* maxNumOffsets */
+                    );
+        }
+        return size;
+    }
+
+    public  void handleError(Throwable e, RequestChannel requestChannel, RequestChannel.Request request)throws IOException,InterruptedException{
+        Map<TopicAndPartition, OffsetResponse.PartitionOffsetsResponse> partitionErrorAndOffsets = new HashMap<>();
+        for (Map.Entry<TopicAndPartition, PartitionOffsetRequestInfo> entry : requestInfo.entrySet()) {
+            partitionErrorAndOffsets.put(entry.getKey(),new OffsetResponse.PartitionOffsetsResponse(ErrorMapping.codeFor(e.getClass().getName()), null));
+        }
+        OffsetResponse errorResponse = new OffsetResponse(correlationId, partitionErrorAndOffsets);
+        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }
 }

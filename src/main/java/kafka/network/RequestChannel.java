@@ -1,5 +1,9 @@
 package kafka.network;
 
+import kafka.api.RequestKeys;
+import kafka.api.RequestOrResponse;
+
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -75,14 +79,19 @@ public class RequestChannel {
         public Object requestKey;
         private ByteBuffer buffer;
         public  long startTimeMs;
-        public SocketAddress remoteAddress = new InetSocketAddress(0);
+        public SocketAddress remoteAddress ;
+        public short requestId ;
+        public RequestOrResponse requestObj;
 
-        public Request(int processor, Object requestKey, ByteBuffer buffer, long startTimeMs, SocketAddress remoteAddress) {
+        public Request(int processor, Object requestKey, ByteBuffer buffer, long startTimeMs, SocketAddress remoteAddress) throws IOException {
             this.processor = processor;
             this.requestKey = requestKey;
             this.buffer = buffer;
             this.startTimeMs = startTimeMs;
             this.remoteAddress = remoteAddress;
+
+            requestId = buffer.getShort();
+            requestObj = RequestKeys.deserializerForKey(requestId,buffer);
         }
     }
 
