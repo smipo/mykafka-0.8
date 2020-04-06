@@ -3,8 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/ReplicaStateMachine.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ReplicaStateMachine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/Three.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Three.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,6 +90,7 @@
       <workItem from="1585627543433" duration="2099000" />
       <workItem from="1585748472848" duration="7017000" />
       <workItem from="1585926371904" duration="71638000" />
+      <workItem from="1586211427196" duration="2777000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -182,10 +183,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1585484613165" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1586167496798">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1586181794759">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1586167496798" />
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1586181794759" />
     <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -199,10 +200,10 @@
     </state>
     <state x="270" y="54" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1585349074544" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1585628591064" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586167499164">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586181798550">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586167499164" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586181798550" />
     <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1585926371555">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
