@@ -2,23 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/Callback.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ControlledShutdownLeaderSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ControllerChannelManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ControllerContext.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/NoOpLeaderSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/OfflinePartitionLeaderSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/PartitionLeaderSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/PartitionStateMachine.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/PreferredReplicaPartitionLeaderSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ReassignedPartitionLeaderSelector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ReplicaStateMachine.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/server/LeaderElector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ZookeeperLeaderElector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ShutdownableThread.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/AdministrationException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/StateChangeFailedException.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/KafkaScheduler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/KafkaScheduler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -104,7 +91,7 @@
       <workItem from="1585578113561" duration="3444000" />
       <workItem from="1585627543433" duration="2099000" />
       <workItem from="1585748472848" duration="7017000" />
-      <workItem from="1585926371904" duration="61212000" />
+      <workItem from="1585926371904" duration="69847000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -141,7 +128,14 @@
       <option name="project" value="LOCAL" />
       <updated>1585997030962</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="杂乱">
+      <created>1586151140684</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1586151140684</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -162,17 +156,18 @@
     <MESSAGE value="没心情 杂乱" />
     <MESSAGE value="改写api完成" />
     <MESSAGE value="改写LogManager" />
-    <option name="LAST_COMMIT_MESSAGE" value="改写LogManager" />
+    <MESSAGE value="杂乱" />
+    <option name="LAST_COMMIT_MESSAGE" value="杂乱" />
   </component>
   <component name="WindowStateProjectService">
     <state x="361" y="71" key="#Auto_Import" timestamp="1585474622721">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1585474622721" />
-    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser" timestamp="1586144382644">
+    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser" timestamp="1586154193303">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1586144382644" />
+    <state x="574" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1586154193303" />
     <state x="718" y="162" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1585631219407" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
@@ -182,10 +177,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1585484613165" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1585997030009">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1586151139744">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1585997030008" />
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1586151139744" />
     <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -199,10 +194,10 @@
     </state>
     <state x="270" y="54" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1585349074544" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1585628591064" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1585997032051">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586151206102">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1585997032051" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586151206102" />
     <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1585926371555">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -219,9 +214,9 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="425" y="187" key="run.anything.popup/0.0.1536.824@0.0.1536.824" timestamp="1585967530776" />
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1586044045208">
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1586160802829">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1586044045208" />
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1586160802829" />
   </component>
 </project>

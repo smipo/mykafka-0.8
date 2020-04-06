@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import kafka.api.LeaderAndIsrRequest;
 import kafka.cluster.Broker;
 import kafka.cluster.Cluster;
+import kafka.common.AdministrationException;
 import kafka.common.KafkaException;
 import kafka.common.NoEpochForPartitionException;
 import kafka.common.TopicAndPartition;
@@ -488,7 +489,7 @@ public class ZkUtils {
                 }
             }
         }
-       return ret;
+        return ret;
     }
 
     public static Map<String, List<String>> getConsumersPerTopic(ZkClient zkClient,String group)  {
@@ -537,18 +538,18 @@ public class ZkUtils {
         return ret;
     }
 
-   public static List<Pair<String,Integer>> getPartitionsAssignedToBroker(ZkClient zkClient, List<String> topics,int brokerId) throws JsonProcessingException {
-       List<Pair<String,Integer>> res = new ArrayList<>();
-       Map<String,Map<Integer, List<Integer>>> topicsAndPartitions = getPartitionAssignmentForTopics(zkClient, topics);
-       for (Map.Entry<String,Map<Integer, List<Integer>>> entry : topicsAndPartitions.entrySet()) {
-           String topic = entry.getKey();
-           Map<Integer, List<Integer>> partitionMap = entry.getValue();
-           Map<Integer, List<Integer>> relevantPartitionsMap = partitionMap.entrySet().stream().filter(m -> m.getValue().contains(brokerId)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-           for (Map.Entry<Integer, List<Integer>> entry2 : relevantPartitionsMap.entrySet()) {
-               res.add(new Pair<>(topic,entry2.getKey()));
-           }
-       }
-       return res;
+    public static List<Pair<String,Integer>> getPartitionsAssignedToBroker(ZkClient zkClient, List<String> topics,int brokerId) throws JsonProcessingException {
+        List<Pair<String,Integer>> res = new ArrayList<>();
+        Map<String,Map<Integer, List<Integer>>> topicsAndPartitions = getPartitionAssignmentForTopics(zkClient, topics);
+        for (Map.Entry<String,Map<Integer, List<Integer>>> entry : topicsAndPartitions.entrySet()) {
+            String topic = entry.getKey();
+            Map<Integer, List<Integer>> partitionMap = entry.getValue();
+            Map<Integer, List<Integer>> relevantPartitionsMap = partitionMap.entrySet().stream().filter(m -> m.getValue().contains(brokerId)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            for (Map.Entry<Integer, List<Integer>> entry2 : relevantPartitionsMap.entrySet()) {
+                res.add(new Pair<>(topic,entry2.getKey()));
+            }
+        }
+        return res;
     }
 
     public static Set<KafkaController.PartitionAndReplica> getAllReplicasOnBroker(ZkClient zkClient, List<String> topics,List<Integer> brokerIds) throws JsonProcessingException {
@@ -564,6 +565,101 @@ public class ZkUtils {
             }
         }
         return res;
+    }
+
+    /**
+     * Conditional update the persistent path data, return (true, newVersion) if it succeeds, otherwise (the current
+     * version is not the expected version, etc.) return (false, -1). If path doesn't exist, throws ZkNoNodeException
+     */
+    public static Pair<Boolean,Integer> conditionalUpdatePersistentPathIfExists(ZkClient client,String path,String data,int expectVersion){
+        try {
+            Stat stat = client.writeDataReturnStat(path, data, expectVersion);
+            logger.debug("Conditional update of path %s with value %s and expected version %d succeeded, returning the new version: %d"
+                    .format(path, data, expectVersion, stat.getVersion()));
+            return new Pair(true, stat.getVersion());
+        } catch(ZkNoNodeException e) {
+            throw e;
+        }catch(Exception e1) {
+            logger.error("Conditional update of path %s with data %s and expected version %d failed due to %s".format(path, data,
+                    expectVersion, e1.getMessage()));
+            return new Pair(false, -1);
+        }
+    }
+
+    public static List<String> getAllTopics(ZkClient zkClient) {
+        List<String> topics = ZkUtils.getChildrenParentMayNotExist(zkClient, BrokerTopicsPath);
+        if(topics == null)
+            return new ArrayList<>();
+        else
+            return topics;
+    }
+
+    public static Map<TopicAndPartition, KafkaController.ReassignedPartitionsContext> getPartitionsBeingReassigned(ZkClient zkClient) throws JsonProcessingException {
+        // read the partitions and their new replica list
+        String jsonPartitionMap = readDataMaybeNull(zkClient, ReassignPartitionsPath).getKey();
+        if(jsonPartitionMap == null || jsonPartitionMap.isEmpty()){
+            return new HashMap<>();
+        }
+        Map<TopicAndPartition, KafkaController.ReassignedPartitionsContext> res = new HashMap<>();
+        Map<TopicAndPartition, List<Integer>> reassignedPartitions = parsePartitionReassignmentData(jsonPartitionMap);
+        for (Map.Entry<TopicAndPartition, List<Integer>> entry : reassignedPartitions.entrySet()) {
+            res.put(entry.getKey(),new KafkaController.ReassignedPartitionsContext(entry.getValue(),null));
+        }
+        return res;
+    }
+    public static Map<TopicAndPartition, List<Integer>> parsePartitionReassignmentData(String jsonData) throws JsonProcessingException {
+        Map<TopicAndPartition, List<Integer>> reassignedPartitions = new HashMap<>();
+        if(jsonData == null || jsonData.isEmpty()){
+            return reassignedPartitions;
+        }
+        Map<String,Object> map = JacksonUtils.strToMap(jsonData);
+        Object obj = map.get("partitions");
+        if(obj == null){
+            return reassignedPartitions;
+        }
+        Map<String,Object> p = (Map<String,Object>)obj;
+        String topic = p.get("topic").toString();
+        int partition = Integer.parseInt(p.get("partition").toString());
+        List<Integer> newReplicas = (List<Integer>)p.get("replicas");
+        reassignedPartitions .put(new TopicAndPartition(topic, partition) , newReplicas);
+        return reassignedPartitions;
+    }
+    public static  Set<TopicAndPartition> getPartitionsUndergoingPreferredReplicaElection(ZkClient zkClient) throws JsonProcessingException {
+        // read the partitions and their new replica list
+        String jsonPartitionList = readDataMaybeNull(zkClient, PreferredReplicaLeaderElectionPath).getKey();
+        if(jsonPartitionList == null || jsonPartitionList.isEmpty()){
+            return new HashSet<>();
+        }
+       return parsePreferredReplicaElectionData(jsonPartitionList);
+    }
+    public static  Set<TopicAndPartition> parsePreferredReplicaElectionData(String jsonString) throws JsonProcessingException {
+        if(jsonString == null || jsonString.isEmpty()){
+            throw new AdministrationException("Preferred replica election data is empty");
+        }
+        Map<String,Object> map = JacksonUtils.strToMap(jsonString);
+        Object obj = map.get("partitions");
+        if(obj == null){
+            throw new AdministrationException("Preferred replica election data is empty");
+        }
+        Set<TopicAndPartition> res = new HashSet<>();
+        List<Map<String, Object>> partitions = (List<Map<String, Object>>)obj;
+        for(Map<String, Object> partitionsMap:partitions){
+            String topic = partitionsMap.get("topic").toString();
+            int partition = Integer.parseInt(partitionsMap.get("partition").toString());
+            res.add(new TopicAndPartition(topic, partition));
+        }
+        return res;
+    }
+
+    public static Map<TopicAndPartition, LeaderIsrAndControllerEpoch> getPartitionLeaderAndIsrForTopics(ZkClient zkClient,  Set<TopicAndPartition> topicAndPartitions) throws IOException {
+        Map<TopicAndPartition, LeaderIsrAndControllerEpoch> ret = new HashMap<>();
+        for(TopicAndPartition topicAndPartition : topicAndPartitions) {
+            LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = ZkUtils.getLeaderIsrAndEpochForPartition(zkClient, topicAndPartition.topic(), topicAndPartition.partition());
+            if(leaderIsrAndControllerEpoch != null){
+                ret.put(topicAndPartition, leaderIsrAndControllerEpoch);
+            }
+        }
+       return ret;
     }
     public static  class ZKStringSerializer  implements ZkSerializer{
         public byte[] serialize(Object var1) throws ZkMarshallingError{
