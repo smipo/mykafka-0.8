@@ -60,7 +60,10 @@ public class KafkaScheduler {
     }
 
     public String currentThreadName(String name){
-        AtomicInteger threadId =  threadNamesAndIds.put(name, new AtomicInteger(0));
+        AtomicInteger threadId =  threadNamesAndIds.putIfAbsent(name, new AtomicInteger(0));
+        if(threadId == null){
+            threadId = new AtomicInteger(0);
+        }
         return name + threadId.incrementAndGet();
     }
     public void shutdownNow() {

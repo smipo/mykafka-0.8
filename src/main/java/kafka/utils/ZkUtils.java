@@ -6,8 +6,10 @@ import kafka.cluster.Broker;
 import kafka.cluster.Cluster;
 import kafka.common.KafkaException;
 import kafka.common.NoEpochForPartitionException;
+import kafka.common.TopicAndPartition;
 import kafka.consumer.TopicCount;
 import kafka.consumer.TopicCountFactory;
+import kafka.controller.KafkaController;
 import kafka.controller.LeaderIsrAndControllerEpoch;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkMarshallingError;
@@ -165,7 +167,7 @@ public class ZkUtils {
         if(partitions == null){
             return new ArrayList<>();
         }
-        Map<String,List<Integer>> replicaMap = ( Map<String,List<Integer>>)partitions;
+        Map<String,List<Integer>> replicaMap = (Map<String,List<Integer>>)partitions;
         List<Integer> replicas = replicaMap.get(String.valueOf(partition));
         if(replicas == null){
             return new ArrayList<>();
@@ -469,6 +471,25 @@ public class ZkUtils {
         }
         return consumerIdTopicMap;
     }
+    public static Map<TopicAndPartition,List<Integer>> getReplicaAssignmentForTopics(ZkClient zkClient, List<String> topics) throws IOException{
+        Map<TopicAndPartition,List<Integer>> ret = new HashMap<>();
+        for(String topic:topics){
+            String jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(topic)).getKey();
+            if(jsonPartitionMapOpt != null){
+                Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(jsonPartitionMapOpt);
+                Object obj = leaderIsrAndEpochInfo.get("partitions");
+                if(obj != null){
+                    Map<String, List<Integer>> replicaMap = (Map<String, List<Integer>>)obj;
+                    for(Map.Entry<String, List<Integer>> entry : replicaMap.entrySet()){
+                        ret.put(new TopicAndPartition(topic, Integer.parseInt(entry.getKey())), entry.getValue());
+                        logger.debug("Replicas assigned to topic [%s], partition [%s] are [%s]".format(topic, entry.getKey(), entry.getValue().toString()));
+
+                    }
+                }
+            }
+        }
+       return ret;
+    }
 
     public static Map<String, List<String>> getConsumersPerTopic(ZkClient zkClient,String group)  {
         ZKGroupDirs dirs = new ZKGroupDirs(group);
@@ -495,6 +516,55 @@ public class ZkUtils {
         return consumersPerTopicMap;
     }
 
+    public static Map<String,Map<Integer, List<Integer>>> getPartitionAssignmentForTopics(ZkClient zkClient, List<String> topics) throws JsonProcessingException {
+        Map<String,Map<Integer, List<Integer>>> ret = new HashMap<>();
+        for(String topic:topics){
+            String  jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(topic)).getKey();
+            if(jsonPartitionMapOpt == null || jsonPartitionMapOpt.isEmpty()){
+                return new HashMap<>();
+            }
+            Map<String,Object> replicaMap = JacksonUtils.strToMap(jsonPartitionMapOpt);
+            Object obj = replicaMap.get("partitions");
+            if(obj == null){
+                return new HashMap<>();
+            }
+            Map<Integer, List<Integer>> valueMap = new HashMap<>();
+            Map<String, List<Integer>> m1 = (Map<String, List<Integer>>)obj;
+            m1.forEach((k,v)->valueMap.put(Integer.parseInt(k),v));
+            ret.put(topic,valueMap);
+            logger.debug("Partition map for /brokers/topics/%s is %s".format(topic, ret.toString()));
+        }
+        return ret;
+    }
+
+   public static List<Pair<String,Integer>> getPartitionsAssignedToBroker(ZkClient zkClient, List<String> topics,int brokerId) throws JsonProcessingException {
+       List<Pair<String,Integer>> res = new ArrayList<>();
+       Map<String,Map<Integer, List<Integer>>> topicsAndPartitions = getPartitionAssignmentForTopics(zkClient, topics);
+       for (Map.Entry<String,Map<Integer, List<Integer>>> entry : topicsAndPartitions.entrySet()) {
+           String topic = entry.getKey();
+           Map<Integer, List<Integer>> partitionMap = entry.getValue();
+           Map<Integer, List<Integer>> relevantPartitionsMap = partitionMap.entrySet().stream().filter(m -> m.getValue().contains(brokerId)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+           for (Map.Entry<Integer, List<Integer>> entry2 : relevantPartitionsMap.entrySet()) {
+               res.add(new Pair<>(topic,entry2.getKey()));
+           }
+       }
+       return res;
+    }
+
+    public static Set<KafkaController.PartitionAndReplica> getAllReplicasOnBroker(ZkClient zkClient, List<String> topics,List<Integer> brokerIds) throws JsonProcessingException {
+        Set<KafkaController.PartitionAndReplica> res = new HashSet<>();
+        for(int brokerId:brokerIds){
+            // read all the partitions and their assigned replicas into a map organized by
+            // { replica id -> partition 1, partition 2...
+            List<Pair<String,Integer>> partitionsAssignedToThisBroker = getPartitionsAssignedToBroker(zkClient, topics, brokerId);
+            if(partitionsAssignedToThisBroker.size() == 0)
+                logger.info("No state transitions triggered since no partitions are assigned to brokers %s".format(brokerIds.toString()));
+            for(Pair<String,Integer> pair:partitionsAssignedToThisBroker){
+                res.add(new KafkaController.PartitionAndReplica(pair.getKey(), pair.getValue(), brokerId));
+            }
+        }
+        return res;
+    }
     public static  class ZKStringSerializer  implements ZkSerializer{
         public byte[] serialize(Object var1) throws ZkMarshallingError{
             try{
