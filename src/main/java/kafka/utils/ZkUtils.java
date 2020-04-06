@@ -630,7 +630,7 @@ public class ZkUtils {
         if(jsonPartitionList == null || jsonPartitionList.isEmpty()){
             return new HashSet<>();
         }
-       return parsePreferredReplicaElectionData(jsonPartitionList);
+        return parsePreferredReplicaElectionData(jsonPartitionList);
     }
     public static  Set<TopicAndPartition> parsePreferredReplicaElectionData(String jsonString) throws JsonProcessingException {
         if(jsonString == null || jsonString.isEmpty()){
@@ -659,7 +659,77 @@ public class ZkUtils {
                 ret.put(topicAndPartition, leaderIsrAndControllerEpoch);
             }
         }
-       return ret;
+        return ret;
+    }
+
+    /**
+     * Conditional update the persistent path data, return (true, newVersion) if it succeeds, otherwise (the path doesn't
+     * exist, the current version is not the expected version, etc.) return (false, -1)
+     */
+    public static Pair<Boolean,Integer> conditionalUpdatePersistentPath(ZkClient client, String path, String data,int expectVersion) {
+        try {
+            Stat stat = client.writeDataReturnStat(path, data, expectVersion);
+            logger.debug("Conditional update of path %s with value %s and expected version %d succeeded, returning the new version: %d"
+                    .format(path, data, expectVersion, stat.getVersion()));
+            return  new Pair<>(true, stat.getVersion());
+        } catch (Exception e){
+            logger.error("Conditional update of path %s with data %s and expected version %d failed due to %s".format(path, data,
+                    expectVersion, e.getMessage()));
+            return  new Pair<>(false, -1);
+        }
+    }
+    public static String getPartitionReassignmentZkData(Map<TopicAndPartition, List<Integer>> partitionsToBeReassigned) {
+        List<String> jsonPartitionsData = new ArrayList<>();
+        for (Map.Entry<TopicAndPartition, List<Integer>> entry : partitionsToBeReassigned.entrySet()) {
+            String jsonReplicasData = Utils.seqToJson(entry.getValue().stream().map(x->String.valueOf(x)).collect(Collectors.toList()),  false);
+            Map<String, String> m1 = new HashMap<>();
+            m1.put("topic",entry.getKey().topic());
+            List<String> jsonTopicData = Utils.mapToJsonFields(m1, true);
+            Map<String, String> m2 = new HashMap<>();
+            m2.put("partition",String.valueOf(entry.getKey().partition()));
+            m2.put("replicas",jsonReplicasData);
+            List<String> jsonPartitionData = Utils.mapToJsonFields(m2,false);
+            jsonTopicData.addAll(jsonPartitionData);
+            jsonPartitionsData.add(Utils.mergeJsonFields(jsonTopicData));
+        }
+        Map<String, String> m3 = new HashMap<>();
+        m3.put("version","1");
+        m3.put("partitions",Utils.seqToJson(jsonPartitionsData, false));
+        return Utils.mapToJson(m3, false);
+    }
+    public static void updatePartitionReassignmentData(ZkClient zkClient, Map<TopicAndPartition, List<Integer>> partitionsToBeReassigned) {
+        String zkPath = ZkUtils.ReassignPartitionsPath;
+        if(partitionsToBeReassigned.size() == 0){
+            deletePath(zkClient, zkPath);
+            logger.info("No more partitions need to be reassigned. Deleting zk path %s".format(zkPath));
+        }else{
+            String jsonData = getPartitionReassignmentZkData(partitionsToBeReassigned);
+            try {
+                updatePersistentPath(zkClient, zkPath, jsonData);
+                logger.info("Updated partition reassignment path with %s".format(jsonData));
+            } catch (ZkNoNodeException nne){
+                createPersistentPath(zkClient, zkPath, jsonData);
+                logger.debug("Created path %s with %s for partition reassignment".format(zkPath, jsonData));
+            }catch (Throwable e2){
+                throw new AdministrationException(e2.toString());
+            }
+        }
+    }
+
+    /**
+     * Create an persistent node with the given path and data. Create parents if necessary.
+     */
+    public static void createPersistentPath(ZkClient client, String path, String data) {
+        try {
+            client.createPersistent(path, data);
+        } catch (ZkNoNodeException e){
+            createParentPath(client, path);
+            client.createPersistent(path, data);
+        }
+    }
+
+    public static String createSequentialPersistentPath(ZkClient client, String path, String data) {
+        return client.createPersistentSequential(path, data);
     }
     public static  class ZKStringSerializer  implements ZkSerializer{
         public byte[] serialize(Object var1) throws ZkMarshallingError{

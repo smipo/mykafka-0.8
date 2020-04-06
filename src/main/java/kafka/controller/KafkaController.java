@@ -9,10 +9,12 @@ import kafka.server.ZookeeperLeaderElector;
 import kafka.utils.Pair;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.IZkDataListener;
+import org.I0Itec.zkclient.IZkStateListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkNoNodeException;
 import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.apache.log4j.Logger;
+import org.apache.zookeeper.Watcher;
 
 import java.io.IOException;
 import java.util.*;
@@ -664,7 +666,16 @@ public class KafkaController {
         partitionsBeingReassigned.remove(topicAndPartition);
         Map<TopicAndPartition, KafkaController.ReassignedPartitionsContext>  updatedPartitionsBeingReassigned = partitionsBeingReassigned;
         // write the new list to zookeeper
-        ZkUtils.updatePartitionReassignmentData(zkClient, updatedPartitionsBeingReassigned.mapValues(_.newReplicas));
+        Map<TopicAndPartition, List<Integer>> partitionsToBeReassigned = new HashMap<>();
+        for (Map.Entry<TopicAndPartition, KafkaController.ReassignedPartitionsContext> entry : updatedPartitionsBeingReassigned.entrySet()) {
+            List<Integer> list = partitionsToBeReassigned.get(entry.getKey());
+            if(list == null){
+                list = new ArrayList<>();
+                partitionsToBeReassigned.put(entry.getKey(),list);
+            }
+            list.addAll(entry.getValue().newReplicas);
+        }
+        ZkUtils.updatePartitionReassignmentData(zkClient, partitionsToBeReassigned);
         // update the cache
         controllerContext.partitionsBeingReassigned.remove(topicAndPartition);
     }
@@ -757,24 +768,24 @@ public class KafkaController {
                     LeaderAndIsrRequest.LeaderAndIsr newLeaderAndIsr = new LeaderAndIsrRequest.LeaderAndIsr(newLeader, leaderAndIsr.leaderEpoch + 1,
                     leaderAndIsr.isr.stream().filter(b -> b != replicaId).collect(Collectors.toList()), leaderAndIsr.zkVersion + 1);
                     // update the new leadership decision in zookeeper or retry
-                    val (updateSucceeded, newVersion) = ZkUtils.conditionalUpdatePersistentPath(
+                    Pair<Boolean,Integer> pair = ZkUtils.conditionalUpdatePersistentPath(
                             zkClient,
                             ZkUtils.getTopicPartitionLeaderAndIsrPath(topic, partition),
                             ZkUtils.leaderAndIsrZkData(newLeaderAndIsr, epoch()),
                             leaderAndIsr.zkVersion);
-                    newLeaderAndIsr.zkVersion = newVersion;
+                    newLeaderAndIsr.zkVersion = pair.getValue();
 
-                    finalLeaderIsrAndControllerEpoch = Some(LeaderIsrAndControllerEpoch(newLeaderAndIsr, epoch()));
-                    controllerContext.partitionLeadershipInfo.put(topicAndPartition, finalLeaderIsrAndControllerEpoch.get)
-                    if (updateSucceeded)
-                        info("New leader and ISR for partition %s is %s".format(topicAndPartition, newLeaderAndIsr.toString()))
-                    updateSucceeded
+                    finalLeaderIsrAndControllerEpoch = new LeaderIsrAndControllerEpoch(newLeaderAndIsr, epoch());
+                    controllerContext.partitionLeadershipInfo.put(topicAndPartition, finalLeaderIsrAndControllerEpoch);
+                    if (pair.getKey())
+                        logger.info("New leader and ISR for partition %s is %s".format(topicAndPartition.toString(), newLeaderAndIsr.toString()));
+                    zkWriteCompleteOrUnnecessary = pair.getKey();
                 } else {
-                    warn("Cannot remove replica %d from ISR of %s. Leader = %d ; ISR = %s"
-                            .format(replicaId, topicAndPartition, leaderAndIsr.leader, leaderAndIsr.isr))
-                    finalLeaderIsrAndControllerEpoch = Some(LeaderIsrAndControllerEpoch(leaderAndIsr, epoch))
-                    controllerContext.partitionLeadershipInfo.put(topicAndPartition, finalLeaderIsrAndControllerEpoch.get)
-                    true
+                    logger.warn("Cannot remove replica %d from ISR of %s. Leader = %d ; ISR = %s"
+                            .format(replicaId+"", topicAndPartition.toString(), leaderAndIsr.leader, leaderAndIsr.isr));
+                    finalLeaderIsrAndControllerEpoch = new LeaderIsrAndControllerEpoch(leaderAndIsr, epoch());
+                    controllerContext.partitionLeadershipInfo.put(topicAndPartition, finalLeaderIsrAndControllerEpoch);
+                    zkWriteCompleteOrUnnecessary =  true;
                 }
             }else{
                 logger.warn("Cannot remove replica %d from ISR of %s - leaderAndIsr is empty.".format(replicaId+"", topicAndPartition));
@@ -784,6 +795,27 @@ public class KafkaController {
         return finalLeaderIsrAndControllerEpoch;
     }
 
+    public  class SessionExpirationListener implements IZkStateListener {
+        public void handleStateChanged(Watcher.Event.KeeperState var1) throws Exception{
+
+        }
+
+        public void handleNewSession() throws Exception{
+             synchronized(controllerContext.controllerLock){
+                partitionStateMachine.shutdown();
+                replicaStateMachine.shutdown();
+                if(controllerContext.controllerChannelManager != null) {
+                    controllerContext.controllerChannelManager.shutdown();
+                    controllerContext.controllerChannelManager = null;
+                }
+                controllerElector.elect();
+            }
+        }
+
+        public void handleSessionEstablishmentError(Throwable var1) throws Exception{
+
+        }
+    }
 
     public static class  ReassignedPartitionsIsrChangeListener implements IZkDataListener {
         public  KafkaController controller;
