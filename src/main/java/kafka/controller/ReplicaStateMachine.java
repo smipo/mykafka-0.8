@@ -1,5 +1,6 @@
 package kafka.controller;
 
+import kafka.cluster.Broker;
 import kafka.common.StateChangeFailedException;
 import kafka.common.TopicAndPartition;
 import kafka.utils.Three;
@@ -240,57 +241,72 @@ public class ReplicaStateMachine {
      * in zookeeper
      */
     private void initializeReplicaState() {
-        for((topicPartition, assignedReplicas) <- controllerContext.partitionReplicaAssignment) {
-            val topic = topicPartition.topic
-            val partition = topicPartition.partition
-            assignedReplicas.foreach { replicaId =>
-                controllerContext.liveBrokerIds.contains(replicaId) match {
-                    case true => replicaState.put((topic, partition, replicaId), OnlineReplica)
-                    case false => replicaState.put((topic, partition, replicaId), OfflineReplica)
+        for(Map.Entry<TopicAndPartition, List<Integer>> entry : controllerContext.partitionReplicaAssignment.entrySet()){
+            TopicAndPartition topicPartition  = entry.getKey();
+            List<Integer> assignedReplicas = entry.getValue();
+            String topic = topicPartition.topic();
+            int partition = topicPartition.partition();
+            for(Integer replicaId:assignedReplicas){
+                if(controllerContext.liveBrokerIds().contains(replicaId)){
+                    replicaState.put((topic, partition, replicaId), new OnlineReplica());
+                }else{
+                    replicaState.put((topic, partition, replicaId), new OfflineReplica());
                 }
             }
         }
     }
 
     private Set<KafkaController.PartitionAndReplica> getAllReplicasOnBroker(List<String> topics, List<Integer> brokerIds) {
-        brokerIds.map { brokerId =>
-            val partitionsAssignedToThisBroker =
-                    controllerContext.partitionReplicaAssignment.filter(p => topics.contains(p._1.topic) && p._2.contains(brokerId))
-            if(partitionsAssignedToThisBroker.size == 0)
-                info("No state transitions triggered since no partitions are assigned to brokers %s".format(brokerIds.mkString(",")))
-            partitionsAssignedToThisBroker.map(p => new PartitionAndReplica(p._1.topic, p._1.partition, brokerId))
-        }.flatten.toSet
+        Set<KafkaController.PartitionAndReplica> set = new HashSet<>();
+        for(Integer brokerId:brokerIds){
+            Map<TopicAndPartition, List<Integer>> partitionsAssignedToThisBroker = new HashMap<>();
+            for(Map.Entry<TopicAndPartition, List<Integer>> entry : controllerContext.partitionReplicaAssignment.entrySet()){
+                if(!(topics.contains(entry.getKey().topic()) && entry.getValue().contains(brokerId))){
+                    partitionsAssignedToThisBroker.put(entry.getKey(),entry.getValue());
+                    set.add(new KafkaController.PartitionAndReplica(entry.getKey().topic(), entry.getKey().partition(), brokerId));
+                }
+            }
+        }
+        return set;
     }
 
     public List<TopicAndPartition> getPartitionsAssignedToBroker(List<String> topics,int brokerId){
-        controllerContext.partitionReplicaAssignment.filter(_._2.contains(brokerId)).keySet.toSeq
+        List<TopicAndPartition> list = new ArrayList<>();
+        for(Map.Entry<TopicAndPartition, List<Integer>> entry : controllerContext.partitionReplicaAssignment.entrySet()){
+            if(entry.getValue().contains(brokerId)){
+                list.add(entry.getKey());
+            }
+        }
+        return list;
     }
 
 
     public  class BrokerChangeListener implements IZkChildListener {
         public void handleChildChange(String parentPath, List<String> currentBrokerList) throws Exception{
-            info("Broker change listener fired for path %s with children %s".format(parentPath, currentBrokerList.mkString(",")))
-            controllerContext.controllerLock synchronized {
-                if (hasStarted.get) {
-                    ControllerStats.leaderElectionTimer.time {
-                        try {
-                            val curBrokerIds = currentBrokerList.map(_.toInt).toSet
-                            val newBrokerIds = curBrokerIds -- controllerContext.liveOrShuttingDownBrokerIds
-                            val newBrokerInfo = newBrokerIds.map(ZkUtils.getBrokerInfo(zkClient, _))
-                            val newBrokers = newBrokerInfo.filter(_.isDefined).map(_.get)
-                            val deadBrokerIds = controllerContext.liveOrShuttingDownBrokerIds -- curBrokerIds
-                            controllerContext.liveBrokers = curBrokerIds.map(ZkUtils.getBrokerInfo(zkClient, _)).filter(_.isDefined).map(_.get)
-                            info("Newly added brokers: %s, deleted brokers: %s, all live brokers: %s"
-                                    .format(newBrokerIds.mkString(","), deadBrokerIds.mkString(","), controllerContext.liveBrokerIds.mkString(",")))
-                            newBrokers.foreach(controllerContext.controllerChannelManager.addBroker(_))
-                            deadBrokerIds.foreach(controllerContext.controllerChannelManager.removeBroker(_))
-                            if(newBrokerIds.size > 0)
-                                controller.onBrokerStartup(newBrokerIds.toSeq)
-                            if(deadBrokerIds.size > 0)
-                                controller.onBrokerFailure(deadBrokerIds.toSeq)
-                        } catch {
-                            case e: Throwable => error("Error while handling broker changes", e)
+            logger.info("Broker change listener fired for path %s with children %s".format(parentPath, currentBrokerList.toString()));
+            synchronized(controllerContext.controllerLock ) {
+                if (hasStarted.get()) {
+                    try {
+                        Set<Integer> curBrokerIds = currentBrokerList.stream().map(x->Integer.parseInt(x)).collect(Collectors.toSet());
+                        curBrokerIds.removeAll(controllerContext.liveOrShuttingDownBrokerIds());
+                        Set<Integer> newBrokerIds = curBrokerIds;
+                        List<Broker> newBrokerInfo = newBrokerIds.stream().map(brokerId->ZkUtils.getBrokerInfo(zkClient, brokerId)).collect(Collectors.toList());
+                        List<Broker> newBrokers = newBrokerInfo.stream().filter(b->b == null).collect(Collectors.toList());
+                        controllerContext.liveOrShuttingDownBrokerIds().removeAll(curBrokerIds);
+                        Set<Integer> deadBrokerIds = controllerContext.liveOrShuttingDownBrokerIds() ;
+                        controllerContext.liveBrokersUnderlying = curBrokerIds.stream().map(x->ZkUtils.getBrokerInfo(zkClient, x)).filter(x->x == null).collect(Collectors.toSet());
+                        logger.info("Newly added brokers: %s, deleted brokers: %s, all live brokers: %s"
+                                .format(newBrokerIds.toString(), deadBrokerIds.toString(), controllerContext.liveBrokerIds().toString()));
+                        for(Broker b:newBrokers){
+                            controllerContext.controllerChannelManager.addBroker(b);
                         }
+                        deadBrokerIds.forEach(b->controllerContext.controllerChannelManager.removeBroker(b));
+                        if(newBrokerIds.size() > 0)
+                            controller.onBrokerStartup(newBrokerIds.stream().collect(Collectors.toList()));
+                        if(deadBrokerIds.size() > 0)
+                            controller.onBrokerFailure(deadBrokerIds.stream().collect(Collectors.toList()));
+                    } catch(Throwable e) {
+                        logger.error("Error while handling broker changes", e);
                     }
                 }
             }
