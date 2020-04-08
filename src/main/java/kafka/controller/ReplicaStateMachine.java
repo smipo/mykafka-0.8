@@ -313,8 +313,88 @@ public class ReplicaStateMachine {
         }
     }
     public static interface ReplicaState { byte state(); }
-    public  static class  NewReplica implements ReplicaState { public byte state(){return 0;} }
-    public  static class  OnlineReplica implements ReplicaState { public byte state(){return 1;}}
-    public  static class  OfflineReplica implements ReplicaState{ public byte state(){return 2;} }
-    public  static class  NonExistentReplica implements ReplicaState { public byte state(){return 3;} }
+    public  static class  NewReplica implements ReplicaState { public byte state(){return 0;}
+        @Override
+        public int hashCode() {
+            return state();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj == null){
+                return false;
+            }
+            if(obj == this){
+                return true;
+            }
+            if(obj instanceof NewReplica){
+                NewReplica o1 = (NewReplica)obj;
+                return state() == o1.state();
+            }
+            return false;
+        }
+    }
+    public  static class  OnlineReplica implements ReplicaState { public byte state(){return 1;}
+        @Override
+        public int hashCode() {
+            return state();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj == null){
+                return false;
+            }
+            if(obj == this){
+                return true;
+            }
+            if(obj instanceof OnlineReplica){
+                OnlineReplica o1 = (OnlineReplica)obj;
+                return state() == o1.state();
+            }
+            return false;
+        }
+    }
+    public  static class  OfflineReplica implements ReplicaState{ public byte state(){return 2;}
+        @Override
+        public int hashCode() {
+            return state();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj == null){
+                return false;
+            }
+            if(obj == this){
+                return true;
+            }
+            if(obj instanceof OfflineReplica){
+                OfflineReplica o1 = (OfflineReplica)obj;
+                return state() == o1.state();
+            }
+            return false;
+        }
+    }
+    public  static class  NonExistentReplica implements ReplicaState { public byte state(){return 3;}
+        @Override
+        public int hashCode() {
+            return state();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj == null){
+                return false;
+            }
+            if(obj == this){
+                return true;
+            }
+            if(obj instanceof NonExistentReplica){
+                NonExistentReplica o1 = (NonExistentReplica)obj;
+                return state() == o1.state();
+            }
+            return false;
+        }
+    }
 }

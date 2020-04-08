@@ -10,4 +10,8 @@ public class StateChangeFailedException extends RuntimeException {
     public StateChangeFailedException(String message) {
         super(message);
     }
+
+    public StateChangeFailedException(String message, Throwable cause) {
+        super(message,cause);
+    }
 }

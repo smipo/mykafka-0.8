@@ -33,4 +33,12 @@ public class TopicAndPartition {
     public int hashCode() {
         return Objects.hash(topic, partition);
     }
+
+    @Override
+    public String toString() {
+        return "TopicAndPartition{" +
+                "topic='" + topic + '\'' +
+                ", partition=" + partition +
+                '}';
+    }
 }
