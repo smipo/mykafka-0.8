@@ -46,12 +46,12 @@ public class FetchRequest extends RequestOrResponse {
         }
         return new FetchRequest(correlationId,versionId, clientId, replicaId, maxWait, minBytes, requestInfo);
     }
-    short versionId ;
-    String clientId ;
-    int replicaId ;
-    int maxWait;
-    int minBytes;
-    Map<TopicAndPartition, PartitionFetchInfo> requestInfo;
+    public short versionId ;
+    public String clientId ;
+    public  int replicaId ;
+    public int maxWait;
+    public int minBytes;
+    public Map<TopicAndPartition, PartitionFetchInfo> requestInfo;
 
     public FetchRequest(int correlationId, short versionId, String clientId, int replicaId, int maxWait, int minBytes, Map<TopicAndPartition, PartitionFetchInfo> requestInfo) {
         super(RequestKeys.FetchKey, correlationId);
@@ -153,8 +153,8 @@ public class FetchRequest extends RequestOrResponse {
     }
 
     public static class PartitionFetchInfo{
-        long offset;
-        int fetchSize;
+        public long offset;
+        public  int fetchSize;
 
         public PartitionFetchInfo(long offset, int fetchSize) {
             this.offset = offset;
@@ -192,7 +192,7 @@ public class FetchRequest extends RequestOrResponse {
         /**
          * Only for internal use. Clients shouldn't set replicaId.
          */
-        private FetchRequestBuilder replicaId(int replicaId){
+        public FetchRequestBuilder replicaId(int replicaId){
             this.replicaId = replicaId;
             return this;
         }

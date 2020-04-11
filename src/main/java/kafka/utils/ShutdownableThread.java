@@ -21,7 +21,7 @@ public abstract class ShutdownableThread extends Thread{
 
     public CountDownLatch shutdownLatch = new CountDownLatch(1);
 
-    public void shutdown() throws InterruptedException{
+    public void shutdown() throws InterruptedException, IOException {
         logger.info("Shutting down");
         isRunning.set(false);
         if (isInterruptible)
