@@ -2,27 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/Config.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducerConfigShared.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherManager.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherThread.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerConnector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerConnector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerIterator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerIterator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/Fetcher.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/FetcherRunnable.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/KafkaStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/KafkaStream.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/PartitionTopicInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/PartitionTopicInfo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/OffsetResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/OffsetResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadata.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadata.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/common/ErrorMapping.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/common/ErrorMapping.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperConsumerConnector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperConsumerConnector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/storage/MemoryOffsetStorage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/storage/OffsetStorage.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducerConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/AsyncProducerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/async/AsyncProducerConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -113,7 +105,7 @@
       <workItem from="1586384977389" duration="4059000" />
       <workItem from="1586444342276" duration="907000" />
       <workItem from="1586470564795" duration="6648000" />
-      <workItem from="1586568139551" duration="27800000" />
+      <workItem from="1586568139551" duration="35635000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -178,7 +170,14 @@
       <option name="project" value="LOCAL" />
       <updated>1586594209645</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="改写消费者">
+      <created>1586675702946</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1586675702946</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -201,17 +200,18 @@
     <MESSAGE value="改写LogManager" />
     <MESSAGE value="改写ReplicaStateMachine类" />
     <MESSAGE value="杂乱" />
-    <option name="LAST_COMMIT_MESSAGE" value="杂乱" />
+    <MESSAGE value="改写消费者" />
+    <option name="LAST_COMMIT_MESSAGE" value="改写消费者" />
   </component>
   <component name="WindowStateProjectService">
     <state x="361" y="71" key="#Auto_Import" timestamp="1585474622721">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1585474622721" />
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1586664085842">
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1586680044517">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1586664085842" />
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1586680044517" />
     <state x="718" y="162" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1585631219407" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
@@ -238,10 +238,10 @@
     </state>
     <state x="270" y="54" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1585349074544" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1585628591064" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586594211325">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586675704183">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586594211325" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586675704183" />
     <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1586444346723">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -258,10 +258,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="470" y="39" key="refactoring.ChangeSignatureDialog/0.0.1536.824@0.0.1536.824" timestamp="1586600324930" />
-    <state x="425" y="187" key="run.anything.popup" timestamp="1585967530776">
+    <state x="425" y="187" key="run.anything.popup" timestamp="1586688111709">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="425" y="187" key="run.anything.popup/0.0.1536.824@0.0.1536.824" timestamp="1585967530776" />
+    <state x="425" y="187" key="run.anything.popup/0.0.1536.824@0.0.1536.824" timestamp="1586688111709" />
     <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1586160802829">
       <screen x="0" y="0" width="1536" height="824" />
     </state>

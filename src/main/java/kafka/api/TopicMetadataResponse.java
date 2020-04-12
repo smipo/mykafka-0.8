@@ -31,7 +31,7 @@ public class TopicMetadataResponse extends RequestOrResponse{
        return new TopicMetadataResponse(correlationId,topicsMetadata);
     }
 
-    List<TopicMetadata> topicsMetadata;
+    public List<TopicMetadata> topicsMetadata;
 
     public TopicMetadataResponse(int correlationId,List<TopicMetadata> topicsMetadata) {
         super(null,correlationId);

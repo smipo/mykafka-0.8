@@ -62,7 +62,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
     private Map<TopicAndPartition, Long> partitionMap = new HashMap<>(); // a (topic, partition) -> offset map
     private ReentrantLock partitionMapLock = new ReentrantLock();
     private Condition partitionMapCond = partitionMapLock.newCondition();
-    SimpleConsumer simpleConsumer ;
+    public SimpleConsumer simpleConsumer ;
     private String brokerInfo ;
     private ClientIdAndBroker metricId ;
     FetchRequest.FetchRequestBuilder fetchRequestBuilder ;
@@ -70,14 +70,14 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
     /* callbacks to be defined in subclass */
 
     // process fetched data
-    abstract void processPartitionData(TopicAndPartition topicAndPartition, long fetchOffset,
-                                       FetchResponse.FetchResponsePartitionData partitionData);
+    public  abstract void processPartitionData(TopicAndPartition topicAndPartition, long fetchOffset,
+                                       FetchResponse.FetchResponsePartitionData partitionData) throws InterruptedException;
 
     // handle a partition whose offset is out of range and return a new fetch offset
-    abstract long handleOffsetOutOfRange(TopicAndPartition topicAndPartition);
+    public abstract long handleOffsetOutOfRange(TopicAndPartition topicAndPartition) throws Throwable;
 
     // deal with partitions with errors, potentially due to leadership changes
-    abstract void handlePartitionsWithErrors(Iterable<TopicAndPartition> partitions);
+    public abstract void handlePartitionsWithErrors(Iterable<TopicAndPartition> partitions) throws InterruptedException;
 
     @Override
     public void shutdown() throws IOException, InterruptedException {

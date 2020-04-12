@@ -56,6 +56,7 @@ public class ProducerConfig extends AsyncProducerConfig {
         retryBackoffMs = props.getInt("retry.backoff.ms", 100);
         messageSendMaxRetries = props.getInt("message.send.max.retries", 3);
         topicMetadataRefreshIntervalMs = props.getInt("topic.metadata.refresh.interval.ms", 600000);
+        clientId = props.getString("client.id", "producer");
         validate(this);
     }
 
@@ -114,5 +115,7 @@ public class ProducerConfig extends AsyncProducerConfig {
      * a message the metadata is never refreshed
      */
     public int topicMetadataRefreshIntervalMs;
+
+    public String clientId ;
 
 }

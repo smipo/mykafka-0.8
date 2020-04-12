@@ -63,4 +63,12 @@ public class ErrorMapping{
     if(code == null) return UnknownCode;
     return code;
   }
+  public static Throwable exceptionFor(Short code) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    for(Map.Entry<String, Short> entry : errorMap.entrySet()){
+        if(entry.getValue().equals(code)){
+          return (Throwable)Class.forName(entry.getKey()).newInstance();
+        }
+    }
+    return null;
+  }
 }

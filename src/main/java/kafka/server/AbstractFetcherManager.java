@@ -30,7 +30,7 @@ public abstract class AbstractFetcherManager {
     }
 
     // to be defined in subclass to create a specific fetcher
-    abstract AbstractFetcherThread createFetcherThread(int fetcherId,Broker sourceBroker);
+   public abstract AbstractFetcherThread createFetcherThread(int fetcherId,Broker sourceBroker);
 
     public void addFetcher(String topic, int partitionId,long initialOffset,Broker sourceBroker) throws InterruptedException {
          synchronized(mapLock) {

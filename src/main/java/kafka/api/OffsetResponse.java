@@ -45,7 +45,7 @@ public class OffsetResponse extends RequestOrResponse{
         }
     }
 
-    Map<TopicAndPartition, PartitionOffsetsResponse> partitionErrorAndOffsets;
+    public Map<TopicAndPartition, PartitionOffsetsResponse> partitionErrorAndOffsets;
 
     public OffsetResponse(int correlationId,Map<TopicAndPartition, PartitionOffsetsResponse> partitionErrorAndOffsets) {
         super(null, correlationId);

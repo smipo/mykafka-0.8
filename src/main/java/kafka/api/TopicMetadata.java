@@ -23,9 +23,9 @@ public class TopicMetadata {
         return new TopicMetadata(topic, partitionsMetadata, errorCode);
     }
 
-    String topic;
-    List<PartitionMetadata> partitionsMetadata;
-    short errorCode = ErrorMapping.NoError;
+    public String topic;
+    public List<PartitionMetadata> partitionsMetadata;
+    public short errorCode = ErrorMapping.NoError;
 
     public TopicMetadata(String topic,List<PartitionMetadata> partitionsMetadata, short errorCode) {
         this.topic = topic;
@@ -89,11 +89,11 @@ public class TopicMetadata {
            return new PartitionMetadata(partitionId, leader, replicas, isr, errorCode);
        }
 
-       int partitionId;
-       Broker leader;
-       List<Broker> replicas;
-       List<Broker> isr;
-       short errorCode = ErrorMapping.NoError;
+        public  int partitionId;
+        public Broker leader;
+        public List<Broker> replicas;
+        public List<Broker> isr;
+        public short errorCode = ErrorMapping.NoError;
 
        public PartitionMetadata(int partitionId, Broker leader, List<Broker> replicas, List<Broker> isr, short errorCode) {
            this.partitionId = partitionId;

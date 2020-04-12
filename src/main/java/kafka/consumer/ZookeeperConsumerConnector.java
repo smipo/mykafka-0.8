@@ -35,6 +35,7 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 
+
 /**
  * This class handles the consumers interaction with zookeeper
  *
@@ -151,7 +152,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
 
     private void createFetcher() {
         if (enableFetcher)
-            fetcher = new Fetcher(config, zkClient);
+            fetcher = new ConsumerFetcherManager(consumerIdString, config, zkClient);
     }
 
     private void connectZk() {
@@ -169,7 +170,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
             try {
                 scheduler.shutdownNow();
                 if(fetcher != null){
-                    fetcher.stopConnectionsToAllBrokers();
+                    fetcher.stopConnections();
                 }
                 sendShutdownToAllQueues();
                 if (config.autoCommitEnable)
@@ -339,28 +340,6 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
             }
         }
     }
-    private long earliestOrLatestOffset(String topic, int brokerId, int partitionId, long earliestOrLatest) throws IOException{
-        SimpleConsumer simpleConsumer = null;
-        long producedOffset = -1L;
-        try {
-            Cluster cluster = ZkUtils.getCluster(zkClient);
-            Broker broker = cluster.getBroker(brokerId) ;
-            if(broker == null){
-                throw new IllegalStateException("Broker " + brokerId + " is unavailable. Cannot issue getOffsetsBefore request");
-            }
-            simpleConsumer = new SimpleConsumer(broker.host(), broker.port(), ConsumerConfig.SocketTimeout, ConsumerConfig.SocketBufferSize);
-            long[] offsets = simpleConsumer.getOffsetsBefore(topic, partitionId, earliestOrLatest, 1);
-            producedOffset = offsets[0];
-        }
-        catch (Exception e){
-            logger.error("error in earliestOrLatestOffset() ", e);
-        }
-        finally {
-            if (simpleConsumer != null)
-                simpleConsumer.close();
-        }
-        return producedOffset;
-    }
 
 
     public class ZKSessionExpireListener  implements IZkStateListener {
@@ -509,7 +488,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
                         logger.info("Rebalancing attempt failed. Clearing the cache before the next rebalancing operation is triggered");
                     }
                     // stop all fetchers and clear all the queues to avoid data duplication
-                    closeFetchersForQueues(kafkaMessageAndMetadataStreams, topicThreadIdAndQueues.values().stream().collect(Collectors.toList()));
+                    closeFetchersForQueues(cluster,kafkaMessageAndMetadataStreams, topicThreadIdAndQueues.values().stream().collect(Collectors.toList()));
                     Thread.sleep(config.rebalanceBackoffMs);
                 }
             }
@@ -541,7 +520,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
              * But if we don't stop the fetchers first, this consumer would continue returning data for released
              * partitions in parallel. So, not stopping the fetchers leads to duplicate data.
              */
-            closeFetchers(kafkaMessageAndMetadataStreams, myTopicThreadIdsMap);
+            closeFetchers(cluster,kafkaMessageAndMetadataStreams, myTopicThreadIdsMap);
 
             releasePartitionOwnership(topicRegistry);
 
@@ -603,22 +582,53 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
             }
         }
 
-        private void closeFetchersForQueues(Map<String,List<KafkaStream<K,V>>> messageStreams,
+        private void closeFetchersForQueues(Cluster cluster,Map<String,List<KafkaStream<K,V>>> messageStreams,
                                             List<BlockingQueue<FetchedDataChunk>> queuesToBeCleared) {
-            if(fetcher != null) fetcher.clearFetcherQueues(queuesToBeCleared,messageStreams);
-            logger.info("Committing all offsets after clearing the fetcher queues");
-            /**
-             * here, we need to commit offsets before stopping the consumer from returning any more messages
-             * from the current data chunk. Since partition ownership is not yet released, this commit offsets
-             * call will ensure that the offsets committed now will be used by the next consumer thread owning the partition
-             * for the current data chunk. Since the fetchers are already shutdown and this is the last chunk to be iterated
-             * by the consumer, there will be no more messages returned by this iterator until the rebalancing finishes
-             * successfully and the fetchers restart to fetch more data chunks
-             **/
-            commitOffsets();
-        }
 
-        private void closeFetchers( Map<String,List<KafkaStream<K,V>>> messageStreams,
+            List<PartitionTopicInfo> allPartitionInfos = new ArrayList<>();
+            for(Pool<Integer, PartitionTopicInfo> p : topicRegistry.values()){
+                allPartitionInfos.addAll(p.values());
+            }
+            if(fetcher != null) {
+                try{
+                    fetcher.stopConnections();
+                }catch (Exception e){
+                    throw new RuntimeException(e.getMessage());
+                }
+                clearFetcherQueues(allPartitionInfos, cluster, queuesToBeCleared, messageStreams);
+                logger.info("Committing all offsets after clearing the fetcher queues");
+                /**
+                 * here, we need to commit offsets before stopping the consumer from returning any more messages
+                 * from the current data chunk. Since partition ownership is not yet released, this commit offsets
+                 * call will ensure that the offsets committed now will be used by the next consumer thread owning the partition
+                 * for the current data chunk. Since the fetchers are already shutdown and this is the last chunk to be iterated
+                 * by the consumer, there will be no more messages returned by this iterator until the rebalancing finishes
+                 * successfully and the fetchers restart to fetch more data chunks
+                 **/
+                if (config.autoCommitEnable)
+                    commitOffsets();
+            }
+        }
+        private void clearFetcherQueues(List<PartitionTopicInfo> topicInfos, Cluster cluster,
+                                        List<BlockingQueue<FetchedDataChunk>>  queuesTobeCleared,
+                                        Map<String,List<KafkaStream<K,V>>>  messageStreams) {
+
+            // Clear all but the currently iterated upon chunk in the consumer thread's queue
+            for(BlockingQueue<FetchedDataChunk> b:queuesTobeCleared){
+                b.clear();
+            }
+            logger.info("Cleared all relevant queues for this fetcher");
+
+            // Also clear the currently iterated upon chunk in the consumer threads
+            if(messageStreams != null){
+                for(Map.Entry<String, List<KafkaStream<K,V>>> entry : messageStreams.entrySet()){
+                    entry.getValue().forEach(s -> s.clear());
+                }
+            }
+            logger.info("Cleared the data chunks in all the consumer message iterators");
+
+        }
+        private void closeFetchers(Cluster cluster,Map<String,List<KafkaStream<K,V>>> messageStreams,
                                     Map<String, Set<String>> relevantTopicThreadIdsMap) {
             List<BlockingQueue<FetchedDataChunk>> queuesToBeCleared = new ArrayList<>();
             // only clear the fetcher queues for certain topic partitions that *might* no longer be served by this consumer
@@ -628,7 +638,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
                     queuesToBeCleared.add(entry.getValue());
                 }
             }
-            closeFetchersForQueues(messageStreams, queuesToBeCleared);
+            closeFetchersForQueues(cluster,messageStreams, queuesToBeCleared);
         }
 
         private void updateFetcher(Cluster cluster) {
