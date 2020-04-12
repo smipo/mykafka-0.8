@@ -20,38 +20,52 @@ package kafka.consumer;
 
 import java.util.List;
 import java.util.Map;
-import kafka.consumer.KafkaStream;
-import kafka.consumer.TopicFilter;
-import kafka.message.Message;
+
 import kafka.serializer.Decoder;
 
 public interface ConsumerConnector {
+
+
   /**
-   *  Create a list of MessageStreams of type T for each topic.
+   *  Create a list of MessageStreams for each topic.
    *
    *  @param topicCountMap  a map of (topic, #streams) pair
-   *  @param decoder a decoder that converts from Message to T
    *  @return a map of (topic, list of  KafkaStream) pairs.
    *          The number of items in the list is #streams. Each stream supports
    *          an iterator over message/metadata pairs.
    */
-  public <T> Map<String, List<KafkaStream<T>>> createMessageStreams(
-          Map<String, Integer> topicCountMap, Decoder<T> decoder)throws InterruptedException;
+  Map<String, List<KafkaStream<byte[], byte[]>>> createMessageStreams(Map<String, Integer> topicCountMap) throws InterruptedException;
+
+
+  /**
+   *  Create a list of MessageStreams for each topic.
+   *
+   *  @param topicCountMap  a map of (topic, #streams) pair
+   *  @param keyDecoder Decoder to decode the key portion of the message
+   *  @param valueDecoder Decoder to decode the value portion of the message
+   *  @return a map of (topic, list of  KafkaStream) pairs.
+   *          The number of items in the list is #streams. Each stream supports
+   *          an iterator over message/metadata pairs.
+   */
+  public <K,V> Map<String, List<KafkaStream<K,V>>> createMessageStreams(
+          Map<String, Integer> topicCountMap,  Decoder<K> keyDecoder,
+          Decoder<V>  valueDecoder)throws InterruptedException;
 
 
 
   /**
-   *  Create a list of MessageAndTopicStreams containing messages of type T.
+   *  Create a list of message streams for all topics that match a given filter.
    *
-   *  @param topicFilter a TopicFilter that specifies which topics to
-   *                    subscribe to (encapsulates a whitelist or a blacklist).
-   *  @param numStreams the number of message streams to return.
-   *  @param decoder a decoder that converts from Message to T
-   *  @return a list of KafkaStream. Each stream supports an
-   *          iterator over its MessageAndMetadata elements.
+   *  @param topicFilter Either a Whitelist or Blacklist TopicFilter object.
+   *  @param numStreams Number of streams to return
+   *  @param keyDecoder Decoder to decode the key portion of the message
+   *  @param valueDecoder Decoder to decode the value portion of the message
+   *  @return a list of KafkaStream each of which provides an
+   *          iterator over message/metadata pairs over allowed topics.
    */
-  public <T> List<KafkaStream<T>> createMessageStreamsByFilter(
-          TopicFilter topicFilter, int numStreams, Decoder<T> decoder) throws Exception;
+  public <K,V> List<KafkaStream<K,V>> createMessageStreamsByFilter(
+          TopicFilter topicFilter, int numStreams, Decoder<K> keyDecoder,
+          Decoder<V>  valueDecoder) throws Exception;
 
   /**
    *  Commit the offsets of all broker partitions connected by this connector.

@@ -163,7 +163,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
                             }
                         }else{
                             if (isRunning.get()) {
-                                logger.warn("Error for partition [%s,%d] to broker %d:%s".format(topic, partitionId, sourceBroker.id());
+                                logger.warn("Error for partition [%s,%d] to broker %d:%s".format(topic, partitionId, sourceBroker.id()));
                                 partitionsWithError.add(topicAndPartition);
                             }
                         }
@@ -184,9 +184,11 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
         partitionMapLock.lockInterruptibly();
         try {
             TopicAndPartition topicPartition = new TopicAndPartition(topic, partitionId);
+            long partition =initialOffset ;
+            if (PartitionTopicInfo.isOffsetInvalid(initialOffset))
+                partition = handleOffsetOutOfRange(topicPartition);
             partitionMap.put(
-                    topicPartition,
-            if (PartitionTopicInfo.isOffsetInvalid(initialOffset)) handleOffsetOutOfRange(topicPartition) else initialOffset)
+                    topicPartition,partition);
             partitionMapCond.signalAll();
         } finally {
             partitionMapLock.unlock();

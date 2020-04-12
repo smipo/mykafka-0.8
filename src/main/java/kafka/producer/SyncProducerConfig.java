@@ -1,25 +1,28 @@
 package kafka.producer;
 
-import kafka.utils.Utils;
+import kafka.utils.VerifiableProperties;
 
 import java.util.Properties;
 
-public class SyncProducerConfig {
 
-    public Properties props;
+public class SyncProducerConfig extends SyncProducerConfigShared{
 
-    public SyncProducerConfig(Properties props){
-        this.props = props;
+    public static String DefaultClientId = "";
+    public static short DefaultRequiredAcks  = 0;
+    public static int DefaultAckTimeoutMs = 10000;
 
-        host = Utils.getString(props, "host");
-        port = Utils.getInt(props, "port");
 
-        bufferSize = Utils.getInt(props, "buffer.size", 100*1024);
-        connectTimeoutMs = Utils.getInt(props, "connect.timeout.ms", 5000);
-        socketTimeoutMs = Utils.getInt(props, "socket.timeout.ms", 30000);
-        reconnectInterval = Utils.getInt(props, "reconnect.interval", 30000);
-        reconnectTimeInterval = Utils.getInt(props, "reconnect.time.interval.ms", 1000*1000*10);
-        maxMessageSize = Utils.getInt(props, "max.message.size", 1000000);
+    public SyncProducerConfig(Properties originalProps) {
+        this(new VerifiableProperties(originalProps));
+        // no need to verify the property since SyncProducerConfig is supposed to be used internally
+    }
+
+    public SyncProducerConfig(VerifiableProperties props){
+        super(props);
+
+        host = props.getString("host");
+        port = props.getInt("port");
+
     }
 
     /** the broker to which the producer sends events */
@@ -28,17 +31,5 @@ public class SyncProducerConfig {
     /** the port on which the broker is running */
     public int port ;
 
-    public int bufferSize ;
 
-    public int connectTimeoutMs ;
-
-    /** the socket timeout for network requests */
-    public int socketTimeoutMs ;
-
-    public int reconnectInterval ;
-
-    /** negative reconnect time interval means disabling this time-based reconnect feature */
-    public int reconnectTimeInterval ;
-
-    public int maxMessageSize;
 }

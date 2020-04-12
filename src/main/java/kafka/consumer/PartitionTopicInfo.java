@@ -1,38 +1,41 @@
 package kafka.consumer;
 
-import kafka.cluster.Partition;
-import kafka.common.ErrorMapping;
 import kafka.message.ByteBufferMessageSet;
+import kafka.message.MessageAndOffset;
 import org.apache.log4j.Logger;
 
+import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.sun.org.apache.xml.internal.serializer.utils.Utils.messages;
-import static sun.security.jgss.GSSToken.debug;
 
 public class PartitionTopicInfo {
 
+    public static long InvalidOffset = -1L;
+
+    public static boolean isOffsetInvalid(long offset) {
+      return  offset < 0L;
+    }
+
     private static Logger logger = Logger.getLogger(PartitionTopicInfo.class);
 
-    String topic;
-    int brokerId;
-    Partition partition;
-    private BlockingQueue<FetchedDataChunk> chunkQueue;
-    private AtomicLong consumedOffset;
-    private AtomicLong fetchedOffset;
-    private AtomicInteger fetchSize;
+    public String topic;
+    public int partitionId;
+    public BlockingQueue<FetchedDataChunk> chunkQueue;
+    public AtomicLong consumedOffset;
+    public AtomicLong fetchedOffset;
+    public AtomicInteger fetchSize;
+    public String clientId;
 
-    public PartitionTopicInfo(String topic, int brokerId, Partition partition, BlockingQueue<FetchedDataChunk> chunkQueue, AtomicLong consumedOffset, AtomicLong fetchedOffset, AtomicInteger fetchSize) {
+    public PartitionTopicInfo(String topic, int partitionId,  BlockingQueue<FetchedDataChunk> chunkQueue, AtomicLong consumedOffset, AtomicLong fetchedOffset, AtomicInteger fetchSize,String clientId) {
         this.topic = topic;
-        this.brokerId = brokerId;
-        this.partition = partition;
+        this.partitionId = partitionId;
         this.chunkQueue = chunkQueue;
         this.consumedOffset = consumedOffset;
         this.fetchedOffset = fetchedOffset;
         this.fetchSize = fetchSize;
-
+        this.clientId = clientId;
         logger.debug("initial consumer offset of " + this + " is " + consumedOffset.get());
         logger.debug("initial fetch offset of " + this + " is " + fetchedOffset.get());
     }
@@ -59,30 +62,37 @@ public class PartitionTopicInfo {
      * Enqueue a message set for processing
      * @return the number of valid bytes
      */
-    public long enqueue(ByteBufferMessageSet messages, long fetchOffset)  throws InterruptedException{
+    public long enqueue(ByteBufferMessageSet messages)  throws InterruptedException{
         long size = messages.validBytes();
         if(size > 0) {
+            long next = 0;
+            Iterator<MessageAndOffset> iterator = messages.shallowIterator();
+            while (iterator.hasNext()){
+                MessageAndOffset messageAndOffset =  iterator.next();
+                next = messageAndOffset.nextOffset();
+            }
             // update fetched offset to the compressed data chunk size, not the decompressed message set size
             logger.trace("Updating fetch offset = " + fetchedOffset.get() + " with size = " + size);
-            chunkQueue.put(new FetchedDataChunk(messages, this, fetchOffset));
+            chunkQueue.put(new FetchedDataChunk(messages, this, fetchedOffset.get()));
             long newOffset = fetchedOffset.addAndGet(size);
+            fetchedOffset.set(next);
             logger. debug("updated fetch offset of ( %s ) to %d".format(this.toString(), newOffset));
+        }else if(messages.sizeInBytes() > 0) {
+            chunkQueue.put(new FetchedDataChunk(messages, this, fetchedOffset.get()));
         }
        return size;
     }
 
-    /**
-     *  add an empty message with the exception to the queue so that client can see the error
-     */
-    public void enqueueError(Throwable e, long fetchOffset)  throws InterruptedException {
-        ByteBufferMessageSet messages = new ByteBufferMessageSet(ErrorMapping.EmptyByteBuffer, 0,
-                ErrorMapping.codeFor(e.getClass().getName()));
-        chunkQueue.put(new FetchedDataChunk(messages, this, fetchOffset));
-    }
 
-    public String toString(){
-        return topic + ":" + partition.toString() + ": fetched offset = " + fetchedOffset.get() +
-                ": consumed offset = " + consumedOffset.get();
+    @Override
+    public String toString() {
+        return "PartitionTopicInfo{" +
+                "topic='" + topic + '\'' +
+                ", chunkQueue=" + chunkQueue +
+                ", consumedOffset=" + consumedOffset +
+                ", fetchedOffset=" + fetchedOffset +
+                ", fetchSize=" + fetchSize +
+                ", clientId='" + clientId + '\'' +
+                '}';
     }
-
 }

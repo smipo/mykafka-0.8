@@ -2,45 +2,61 @@ package kafka.producer;
 
 import kafka.common.InvalidConfigException;
 import kafka.message.CompressionCodec;
+import kafka.message.CompressionFactory;
+import kafka.producer.async.AsyncProducerConfig;
 import kafka.utils.Utils;
-import kafka.utils.ZkUtils;
+import kafka.utils.VerifiableProperties;
 
 import java.util.List;
 import java.util.Properties;
 
-public class ProducerConfig extends ZkUtils.ZKConfig {
+public class ProducerConfig extends AsyncProducerConfig {
 
-    public ProducerConfig(Properties props){
+    public void validate(ProducerConfig config) {
+        validateBatchSize(config.batchNumMessages, config.queueBufferingMaxMessages);
+        validateProducerType(config.producerType);
+    }
+
+
+    public void  validateBatchSize(int batchSize, int queueSize) {
+        if (batchSize > queueSize)
+            throw new InvalidConfigException("Batch size = " + batchSize + " can't be larger than queue size = " + queueSize);
+    }
+
+    public void  validateProducerType(String producerType) {
+        if(!producerType.equals("sync") && !producerType.equals("async")){
+            throw new InvalidConfigException("Invalid value " + producerType + " for producer.type, valid values are sync/async");
+        }
+    }
+
+    public ProducerConfig(Properties originalProps) {
+        this(new VerifiableProperties(originalProps));
+        props.verify();
+    }
+    public ProducerConfig(VerifiableProperties props){
         super(props);
         init();
     }
 
     private void init(){
-        brokerList = Utils.getString(props, "broker.list", null);
-        if(Utils.propertyExists(brokerList) && Utils.getString(props, "partitioner.class", null) != null)
-            throw new InvalidConfigException("partitioner.class cannot be used when broker.list is set");
-        numRetries = Utils.getInt(props, "num.retries", 0);
+        brokerList = props.getString("metadata.broker.list");
 
-        /** If both broker.list and zk.connect options are specified, throw an exception */
-        if(Utils.propertyExists(brokerList) && Utils.propertyExists(zkConnect))
-            throw new InvalidConfigException("only one of broker.list and zk.connect can be specified");
 
-        if(!Utils.propertyExists(zkConnect) && !Utils.propertyExists(brokerList))
-            throw new InvalidConfigException("At least one of zk.connect or broker.list must be specified");
+        String prop = props.getString("compression.codec", "none");
+        try {
+            compressionCodec = CompressionFactory.getCompressionCodec(Integer.parseInt(prop));
+        }
+        catch (NumberFormatException nfe){
+            compressionCodec =  CompressionFactory.getCompressionCodec(prop);
+        }
+        compressedTopics = Utils.getCSVList(props.getString("compressed.topics", null));
 
-        compressionCodec = Utils.getCompressionCodec(props, "compression.codec");
-        compressedTopics = Utils.getCSVList(Utils.getString(props, "compressed.topics", null));
-
-        partitionerClass = Utils.getString(props, "partitioner.class", "kafka.producer.DefaultPartitioner");
-        producerType = Utils.getString(props, "producer.type", "sync");
-
-        zkReadRetries = Utils.getInt(props, "zk.read.num.retries", 3);
-
-        cbkHandler = Utils.getString(props, "callback.handler", null);
-        cbkHandlerProps = Utils.getProps(props, "callback.handler.props", null);
-        eventHandler = Utils.getString(props, "event.handler", null);
-        eventHandlerProps = Utils.getProps(props, "event.handler.props", null);
-        serializerClass =  Utils.getString(props, "serializer.class", "kafka.serializer.DefaultEncoder");
+        partitionerClass = props.getString("partitioner.class", "kafka.producer.DefaultPartitioner");
+        producerType = props.getString("producer.type", "sync");
+        retryBackoffMs = props.getInt("retry.backoff.ms", 100);
+        messageSendMaxRetries = props.getInt("message.send.max.retries", 3);
+        topicMetadataRefreshIntervalMs = props.getInt("topic.metadata.refresh.interval.ms", 600000);
+        validate(this);
     }
 
     /** For bypassing zookeeper based auto partition discovery, use this config   *
@@ -48,17 +64,6 @@ public class ProducerConfig extends ZkUtils.ZKConfig {
      *  brokerid1:host1:port1, brokerid2:host2:port2*/
     public String brokerList ;
 
-
-    /**
-     * If DefaultEventHandler is used, this specifies the number of times to
-     * retry if an error is encountered during send. Currently, it is only
-     * appropriate when broker.list points to a VIP. If the zk.connect option
-     * is used instead, this will not have any effect because with the zk-based
-     * producer, brokers are not re-selected upon retry. So retries would go to
-     * the same (potentially still down) broker. (KAFKA-253 will help address
-     * this.)
-     */
-    public int numRetries ;
 
 
 
@@ -89,28 +94,25 @@ public class ProducerConfig extends ZkUtils.ZKConfig {
      */
     public List<String> compressedTopics ;
 
-    /**
-     * The producer using the zookeeper software load balancer maintains a ZK cache that gets
-     * updated by the zookeeper watcher listeners. During some events like a broker bounce, the
-     * producer ZK cache can get into an inconsistent state, for a small time period. In this time
-     * period, it could end up picking a broker partition that is unavailable. When this happens, the
-     * ZK cache needs to be updated.
-     * This parameter specifies the number of times the producer attempts to refresh this ZK cache.
+    /** The leader may be unavailable transiently, which can fail the sending of a message.
+     *  This property specifies the number of retries when such failures occur.
      */
-    public int zkReadRetries ;
+    public int messageSendMaxRetries ;
 
-    /** the callback handler for one or multiple events */
-    public String cbkHandler ;
+    /** Before each retry, the producer refreshes the metadata of relevant topics. Since leader
+     * election takes a bit of time, this property specifies the amount of time that the producer
+     * waits before refreshing the metadata.
+     */
+    public  int retryBackoffMs ;
 
-    /** properties required to initialize the callback handler */
-    public Properties cbkHandlerProps ;
-
-    /** the handler for events */
-    public String eventHandler ;
-
-    /** properties required to initialize the callback handler */
-    public Properties eventHandlerProps;
-
-    public String serializerClass;
+    /**
+     * The producer generally refreshes the topic metadata from brokers when there is a failure
+     * (partition missing, leader not available...). It will also poll regularly (default: every 10min
+     * so 600000ms). If you set this to a negative value, metadata will only get refreshed on failure.
+     * If you set this to zero, the metadata will get refreshed after each message sent (not recommended)
+     * Important note: the refresh happen only AFTER the message is sent, so if the producer never sends
+     * a message the metadata is never refreshed
+     */
+    public int topicMetadataRefreshIntervalMs;
 
 }

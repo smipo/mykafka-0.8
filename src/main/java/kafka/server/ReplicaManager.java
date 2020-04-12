@@ -21,8 +21,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Int;
-import static org.apache.log4j.helpers.LogLog.warn;
 
 public class ReplicaManager {
 
@@ -65,7 +63,17 @@ public class ReplicaManager {
 
     public void startHighWaterMarksCheckPointThread()  {
         if(highWatermarkCheckPointThreadStarted.compareAndSet(false, true))
-            kafkaScheduler.scheduleWithRate(checkpointHighWatermarks(), "highwatermark-checkpoint-thread", 0, config.replicaHighWatermarkCheckpointIntervalMs);
+            kafkaScheduler.scheduleWithRate(new Runnable() {
+                @Override
+                public void run() {
+                    Thread.currentThread().setName(kafkaScheduler.currentThreadName("highwatermark-checkpoint-thread"));
+                    try {
+                        checkpointHighWatermarks();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            },  0, config.replicaHighWatermarkCheckpointIntervalMs, true);
     }
 
     /**
@@ -148,11 +156,11 @@ public class ReplicaManager {
         if(partition == null){
             throw new UnknownTopicOrPartitionException("Partition [%s,%d] doesn't exist on %d".format(topic, partitionId, config.brokerId));
         }
-        if(partition.leaderReplicaIfLocal == null){
+        if(partition.leaderReplicaIfLocal() == null){
             throw new NotLeaderForPartitionException("Leader not local for partition [%s,%d] on broker %d"
                     .format(topic, partitionId, config.brokerId));
         }
-        return partition.leaderReplicaIfLocal;
+        return partition.leaderReplicaIfLocal();
     }
 
     public Replica getReplica(String topic,int partitionId, int replicaId)  {
@@ -209,7 +217,7 @@ public class ReplicaManager {
     }
 
     private void makeLeader(int controllerId, int epoch, String topic, int partitionId,
-                            LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo,int correlationId) {
+                            LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo,int correlationId) throws IOException, InterruptedException {
         LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = partitionStateInfo.leaderIsrAndControllerEpoch;
         logger.trace(("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
                 "starting the become-leader transition for partition [%s,%d]")
@@ -225,7 +233,7 @@ public class ReplicaManager {
     }
 
     private void makeFollower(int controllerId, int epoch, String topic, int partitionId,
-                              LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo, Set<Broker> leaders, int correlationId) {
+                              LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo, Set<Broker> leaders, int correlationId) throws IOException, InterruptedException {
         LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = partitionStateInfo.leaderIsrAndControllerEpoch;
         logger.trace(("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
                 "starting the become-follower transition for partition [%s,%d]")
@@ -252,7 +260,7 @@ public class ReplicaManager {
         }
     }
 
-    public void recordFollowerPosition(String topic, int partitionId, int replicaId, long offset)  {
+    public void recordFollowerPosition(String topic, int partitionId, int replicaId, long offset) throws IOException {
         Partition partitionOpt = getPartition(topic, partitionId);
         if(partitionOpt != null) {
             partitionOpt.updateLeaderHWAndMaybeExpandIsr(replicaId, offset);
@@ -264,7 +272,7 @@ public class ReplicaManager {
     /**
      * Flushes the highwatermark value for all partitions to the highwatermark file
      */
-    public void checkpointHighWatermarks() {
+    public void checkpointHighWatermarks() throws IOException {
         List<Replica> replicas = new ArrayList<>();
         for(Partition partition:allPartitions.values()){
             Replica  replica = partition.getReplica(config.brokerId);

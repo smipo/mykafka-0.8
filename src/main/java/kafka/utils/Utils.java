@@ -443,18 +443,7 @@ public class Utils {
         return props;
     }
 
-    public static TreeSet<Partition> getTreeSetSet(){
-        TreeSet<Partition> treeSet = new TreeSet<>(new Comparator<Partition>() {
-            @Override
-            public int compare(Partition o1, Partition o2) {
-                if (o1.brokerId() == o2.brokerId())
-                    return o1.partId() - o2.partId();
-                else
-                    return o1.brokerId() - o2.brokerId();
-            }
-        });
-        return treeSet;
-    }
+
 
     /**
      * Recursively delete the given file/directory and any subfiles (if any exist)
@@ -578,5 +567,27 @@ public class Utils {
         }
         builder.append(" ]");
         return builder.toString();
+    }
+
+    /**
+     * Read the given byte buffer into a byte array
+     */
+    public static byte[] readBytes(ByteBuffer buffer){
+        return readBytes(buffer, 0, buffer.limit());
+    }
+
+    /**
+     * Read a byte array from the given offset and size in the buffer
+     */
+     public static byte[] readBytes(ByteBuffer buffer, int offset, int size){
+        byte[] dest = new byte[size];
+        if(buffer.hasArray()) {
+            System.arraycopy(buffer.array(), buffer.arrayOffset() + offset, dest, 0, size);
+        } else {
+            buffer.mark();
+            buffer.get(dest);
+            buffer.reset();
+        }
+        return dest;
     }
 }

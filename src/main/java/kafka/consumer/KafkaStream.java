@@ -5,28 +5,30 @@ import kafka.serializer.Decoder;
 
 import java.util.concurrent.BlockingQueue;
 
-public class KafkaStream<T> implements Iterable<MessageAndMetadata<T>>{
+public class KafkaStream<K,V> implements Iterable<MessageAndMetadata<K,V>>{
 
-    BlockingQueue<FetchedDataChunk> queue;
-    int consumerTimeoutMs;
-    private Decoder<T> decoder;
-    boolean enableShallowIterator;
+    public  BlockingQueue<FetchedDataChunk> queue;
+    public int consumerTimeoutMs;
+    public Decoder<K> keyDecoder;
+    public Decoder<V> valueDecoder;
+    public String clientId;
 
-    private ConsumerIterator<T> iter ;
+    private ConsumerIterator<K,V> iter ;
 
-    public KafkaStream(BlockingQueue<FetchedDataChunk> queue, int consumerTimeoutMs, Decoder<T> decoder, boolean enableShallowIterator) {
+    public KafkaStream(BlockingQueue<FetchedDataChunk> queue, int consumerTimeoutMs, Decoder<K> keyDecoder, Decoder<V> valueDecoder, String clientId) {
         this.queue = queue;
         this.consumerTimeoutMs = consumerTimeoutMs;
-        this.decoder = decoder;
-        this.enableShallowIterator = enableShallowIterator;
+        this.keyDecoder = keyDecoder;
+        this.valueDecoder = valueDecoder;
+        this.clientId = clientId;
 
-        this.iter =  new ConsumerIterator<T>(queue, consumerTimeoutMs, decoder, enableShallowIterator);
+        this.iter =  new ConsumerIterator<K,V>(queue, consumerTimeoutMs, keyDecoder,valueDecoder, clientId);
     }
 
     /**
      *  Create an iterator over messages in the stream.
      */
-   public ConsumerIterator<T> iterator() {
+   public ConsumerIterator<K,V> iterator() {
         return iter;
     }
 

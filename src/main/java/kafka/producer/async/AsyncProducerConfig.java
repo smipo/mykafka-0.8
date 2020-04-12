@@ -1,31 +1,29 @@
 package kafka.producer.async;
 
-import kafka.producer.SyncProducerConfig;
-import kafka.utils.Utils;
 
-import java.util.Properties;
+import kafka.utils.VerifiableProperties;
 
-public class AsyncProducerConfig extends SyncProducerConfig {
 
-    public AsyncProducerConfig(Properties props){
-        super(props);
+public class AsyncProducerConfig  {
 
-        queueTime = Utils.getInt(props, "queue.time", 5000);
-        queueSize = Utils.getInt(props, "queue.size", 10000);
-        enqueueTimeoutMs = Utils.getInt(props, "queue.enqueueTimeout.ms", 0);
-        batchSize = Utils.getInt(props, "batch.size", 200);
-        serializerClass = Utils.getString(props, "serializer.class", "kafka.serializer.DefaultEncoder");
-        cbkHandler = Utils.getString(props, "callback.handler", null);
-        cbkHandlerProps = Utils.getProps(props, "callback.handler.props", null);
-        eventHandler = Utils.getString(props, "event.handler", null);
-        eventHandlerProps = Utils.getProps(props, "event.handler.props", null);
+    public VerifiableProperties props;
+
+    public AsyncProducerConfig(VerifiableProperties props){
+        this.props = props;
+        queueBufferingMaxMs = props.getInt("queue.buffering.max.ms", 5000);
+        queueBufferingMaxMessages = props.getInt("queue.buffering.max.messages", 10000);
+        queueEnqueueTimeoutMs = props.getInt("queue.enqueue.timeout.ms", -1);
+        batchNumMessages = props.getInt("batch.num.messages", 200);
+        serializerClass = props.getString("serializer.class", "kafka.serializer.DefaultEncoder");
+        keySerializerClass = props.getString("key.serializer.class", serializerClass);
     }
 
+
     /* maximum time, in milliseconds, for buffering data on the producer queue */
-    public int queueTime ;
+    public int queueBufferingMaxMs;
 
     /** the maximum size of the blocking queue for buffering on the producer */
-    public int queueSize ;
+    public int queueBufferingMaxMessages ;
 
     /**
      * Timeout for event enqueue:
@@ -33,23 +31,14 @@ public class AsyncProducerConfig extends SyncProducerConfig {
      * -ve: enqueue will block indefinitely if the queue is full
      * +ve: enqueue will block up to this many milliseconds if the queue is full
      */
-    public  int enqueueTimeoutMs;
+    public int queueEnqueueTimeoutMs;
 
     /** the number of messages batched at the producer */
-    public int batchSize;
+    public int batchNumMessages ;
 
-    /** the serializer class for events */
+    /** the serializer class for values */
     public String serializerClass ;
 
-    /** the callback handler for one or multiple events */
-    public String cbkHandler ;
-
-    /** properties required to initialize the callback handler */
-    public Properties cbkHandlerProps ;
-
-    /** the handler for events */
-    public String eventHandler ;
-
-    /** properties required to initialize the callback handler */
-    public Properties eventHandlerProps;
+    /** the serializer class for keys (defaults to the same as for values) */
+    public String keySerializerClass;
 }

@@ -1,11 +1,14 @@
 package kafka.consumer;
 
+import kafka.common.MessageSizeTooLargeException;
 import kafka.message.MessageAndMetadata;
 import kafka.message.MessageAndOffset;
 import kafka.serializer.Decoder;
 import kafka.utils.IteratorTemplate;
+import kafka.utils.Utils;
 import org.apache.log4j.Logger;
 
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -18,20 +21,23 @@ import static kafka.consumer.ZookeeperConsumerConnector.shutdownCommand;
  * The iterator takes a shutdownCommand object which can be added to the queue to trigger a shutdown
  *
  */
-public class ConsumerIterator<T> extends IteratorTemplate<MessageAndMetadata<T>> {
+public class ConsumerIterator<K, V> extends IteratorTemplate<MessageAndMetadata<K, V>> {
 
     private static Logger logger = Logger.getLogger(ConsumerIterator.class);
 
-    BlockingQueue<FetchedDataChunk> channel;
-    int consumerTimeoutMs;
-    private Decoder<T> decoder;
-    boolean enableShallowIterator;
+    public BlockingQueue<FetchedDataChunk> channel;
+    public int consumerTimeoutMs;
+    public Decoder<K> keyDecoder;
+    public Decoder<V> valueDecoder;
+    public String clientId;
 
-    public ConsumerIterator(BlockingQueue<FetchedDataChunk> channel, int consumerTimeoutMs, Decoder<T> decoder, boolean enableShallowIterator) {
+
+    public ConsumerIterator(BlockingQueue<FetchedDataChunk> channel, int consumerTimeoutMs, Decoder<K> keyDecoder, Decoder<V> valueDecoder,  String clientId) {
         this.channel = channel;
         this.consumerTimeoutMs = consumerTimeoutMs;
-        this.decoder = decoder;
-        this.enableShallowIterator = enableShallowIterator;
+        this.keyDecoder = keyDecoder;
+        this.valueDecoder = valueDecoder;
+        this.clientId = clientId;
     }
 
     private AtomicReference<Iterator<MessageAndOffset>> current = new AtomicReference<>();
@@ -39,8 +45,8 @@ public class ConsumerIterator<T> extends IteratorTemplate<MessageAndMetadata<T>>
     private long consumedOffset = -1L;
 
 
-    public MessageAndMetadata<T>  next(){
-        MessageAndMetadata<T>  item = super.next();
+    public MessageAndMetadata<K,V>  next(){
+        MessageAndMetadata<K,V>  item = super.next();
         if(consumedOffset < 0)
             throw new IllegalStateException("Offset returned by the message set is invalid %d".format(consumedOffset + ""));
         currentTopicInfo.resetConsumeOffset(consumedOffset);
@@ -49,7 +55,7 @@ public class ConsumerIterator<T> extends IteratorTemplate<MessageAndMetadata<T>>
         return item;
     }
 
-    protected MessageAndMetadata<T> makeNext() {
+    protected MessageAndMetadata<K,V> makeNext() {
         FetchedDataChunk currentDataChunk = null;
         // if we don't have an iterator, get one
         Iterator<MessageAndOffset> localCurrent = current.get();
@@ -75,20 +81,32 @@ public class ConsumerIterator<T> extends IteratorTemplate<MessageAndMetadata<T>>
                 return allDone();
             } else {
                 currentTopicInfo = currentDataChunk.topicInfo();
-                if (currentTopicInfo.getConsumeOffset() != currentDataChunk.fetchOffset) {
+                if (currentTopicInfo.getConsumeOffset() < currentDataChunk.fetchOffset) {
                     logger.error("consumed offset: %d doesn't match fetch offset: %d for %s;\n Consumer may lose data"
                             .format(currentTopicInfo.getConsumeOffset() + "", currentDataChunk.fetchOffset, currentTopicInfo));
                     currentTopicInfo.resetConsumeOffset(currentDataChunk.fetchOffset);
                 }
-                if (enableShallowIterator) localCurrent =  currentDataChunk.messages.shallowIterator();
-                else localCurrent = currentDataChunk.messages.iterator();
+                localCurrent = currentDataChunk.messages.iterator();
                 current.set(localCurrent);
             }
+            // if we just updated the current chunk and it is empty that means the fetch size is too small!
+            if(currentDataChunk.messages.validBytes() == 0)
+                throw new MessageSizeTooLargeException("Found a message larger than the maximum fetch size of this consumer on topic " +
+                        "%s partition %d at fetch offset %d. Increase the fetch size, or decrease the maximum message size the broker will allow."
+                                .format(currentDataChunk.topicInfo.topic, currentDataChunk.topicInfo.partitionId, currentDataChunk.fetchOffset));
+
         }
         MessageAndOffset item = localCurrent.next();
-        consumedOffset = item.offset();
+        // reject the messages that have already been consumed
+        while (item.offset() < currentTopicInfo.getConsumeOffset() && localCurrent.hasNext()) {
+            item = localCurrent.next();
+        }
+        consumedOffset = item.nextOffset();
 
-        return new MessageAndMetadata(decoder.toEvent(item.message()), currentTopicInfo.topic);
+        item.message().ensureValid(); // validate checksum of message to ensure it is valid
+
+        ByteBuffer keyBuffer = item.message().key();
+        return new MessageAndMetadata(keyBuffer == null?null:keyDecoder.fromBytes(Utils.readBytes(keyBuffer)), valueDecoder.fromBytes(Utils.readBytes(item.message().payload())), currentTopicInfo.topic, currentTopicInfo.partitionId, item.offset());
     }
 
     public void clearCurrentChunk() {

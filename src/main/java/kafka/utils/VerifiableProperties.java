@@ -149,4 +149,16 @@ public class VerifiableProperties {
                 logger.info("Property %s is overridden to %s".format(key, props.getProperty(key)));
         }
     }
+
+    public short getShort(String name,Short defaultValue){
+        return getShortInRange(name, defaultValue, Short.MIN_VALUE, Short.MAX_VALUE);
+    }
+
+    public short getShortInRange(String name,Short defaultValue, short s,short e) {
+        if(containsKey(name))
+            return Short.parseShort(getProperty(name));
+        else
+            return  defaultValue;
+    }
+
 }
