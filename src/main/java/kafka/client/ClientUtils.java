@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import kafka.api.TopicMetadataRequest;
 import kafka.api.TopicMetadataResponse;
 import kafka.cluster.Broker;
+import kafka.common.KafkaException;
 import kafka.producer.ProducerConfig;
 import kafka.producer.ProducerPool;
 import kafka.producer.SyncProducer;
@@ -43,19 +44,19 @@ public class ClientUtils {
                 fetchMetaDataSucceeded = true;
             }catch(Throwable e){
                 logger.warn("Fetching topic metadata with correlation id %d for topics [%s] from broker [%s] failed"
-                            .format(correlationId, topics, shuffledBrokers.get(i).toString), e);
+                            .format(correlationId, topics, shuffledBrokers.get(i).toString()), e);
                     t = e;
             } finally {
-                i = i + 1
-                producer.close()
+                i = i + 1;
+                producer.close();
             }
         }
         if(!fetchMetaDataSucceeded) {
-            throw new KafkaException("fetching topic metadata for topics [%s] from broker [%s] failed".format(topics, shuffledBrokers), t)
+            throw new KafkaException("fetching topic metadata for topics [%s] from broker [%s] failed".format(topics.toString(), shuffledBrokers.toString()), t);
         } else {
-            debug("Successfully fetched metadata for %d topic(s) %s".format(topics.size, topics))
+            logger.debug("Successfully fetched metadata for %d topic(s) %s".format(topics.size()+"", topics));
         }
-        return topicMetadataResponse
+        return topicMetadataResponse;
     }
 
     /**
@@ -75,6 +76,21 @@ public class ClientUtils {
         return fetchTopicMetadata(topics, brokers, producerConfig, correlationId);
     }
 
-
+    /**
+     * Parse a list of broker urls in the form host1:port1, host2:port2, ...
+     */
+    public static List<Broker> parseBrokerList(String brokerListStr){
+        List<Broker> list = new ArrayList<>();
+        List<String> brokersStr = Utils.parseCsvList(brokerListStr);
+        for(int i = 0;i < brokersStr.size();i++){
+            String brokerStr = brokersStr.get(i);
+            int brokerId = i;
+            String[] brokerInfos = brokerStr.split(":");
+            String hostName = brokerInfos[0];
+            int port = Integer.parseInt(brokerInfos[1]);
+            list.add(new Broker(brokerId, hostName, port));
+        }
+       return list;
+    }
 
 }

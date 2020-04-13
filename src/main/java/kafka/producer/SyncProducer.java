@@ -1,39 +1,31 @@
 package kafka.producer;
 
-import kafka.api.ProducerRequest;
-import kafka.api.RequestKeys;
-import kafka.message.ByteBufferMessageSet;
-import kafka.message.InvalidMessageException;
-import kafka.message.MessageAndOffset;
+import kafka.api.*;
+import kafka.network.BlockingChannel;
 import kafka.network.BoundedByteBufferSend;
+import kafka.network.Receive;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Random;
+
 
 public class SyncProducer {
 
     private static Logger logger = Logger.getLogger(SyncProducer.class);
 
-    public static short RequestKey = 0;
-    public static Random randomGenerator = new Random();
 
     SyncProducerConfig config;
 
     public SyncProducer(SyncProducerConfig config){
         this.config = config;
-        lastConnectionTime = System.currentTimeMillis() - (long)randomGenerator.nextDouble() * config.reconnectInterval;
+        blockingChannel = new BlockingChannel(config.host, config.port, BlockingChannel.UseDefaultBufferSize,
+                config.sendBufferBytes, config.requestTimeoutMs);
+        brokerInfo = "host_%s-port_%s".format(config.host, config.port);
     }
 
-    private int MaxConnectBackoffMs = 60000;
-    private SocketChannel channel  = null;
-    private int sentOnConnection = 0;
-    /** make time-based reconnect starting at a random time **/
-    private long lastConnectionTime ;
+    private BlockingChannel blockingChannel;
+    String brokerInfo ;
     private Object lock = new Object();
     private volatile boolean shutdown = false;
 
@@ -41,33 +33,20 @@ public class SyncProducer {
         return config;
     }
 
-    private void verifySendBuffer(ByteBuffer buffer) {
+
+    private void verifyRequest(RequestOrResponse request) throws IOException {
         /**
          * This seems a little convoluted, but the idea is to turn on verification simply changing log4j settings
          * Also, when verification is turned on, care should be taken to see that the logs don't fill up with unnecessary
          * data. So, leaving the rest of the logging at TRACE, while errors should be logged at ERROR level
          */
         if (logger.isDebugEnabled()) {
-            logger.trace("verifying sendbuffer of size " + buffer.limit());
+            ByteBuffer buffer = new BoundedByteBufferSend(request).buffer();
+            logger.info("verifying sendbuffer of size " + buffer.limit());
             short requestTypeId = buffer.getShort();
-            if (requestTypeId == RequestKeys.MultiProduce) {
-                try {
-                    MultiProducerRequest request = MultiProducerRequest.readFrom(buffer);
-                    for (ProducerRequest produce : request.produces()) {
-                        try {
-                            Iterator<MessageAndOffset> iterator = produce.messages().iterator();
-                            while (iterator.hasNext()){
-                                MessageAndOffset messageAndOffset = iterator.next();
-                                if (!messageAndOffset.message().isValid())
-                                    throw new InvalidMessageException("Message for topic " + produce.topic() + " is invalid");
-                            }
-                        } catch (Throwable e){
-                            logger.error("error iterating messages ", e);
-                        }
-                    }
-                }catch (Throwable e){
-                    logger.error("error verifying sendbuffer ", e);
-                }
+            if(requestTypeId == RequestKeys.ProduceKey) {
+                ProducerRequest request1 = ProducerRequest.readFrom(buffer);
+                logger.info(request1.toString());
             }
         }
     }
@@ -75,51 +54,44 @@ public class SyncProducer {
     /**
      * Common functionality for the public send methods
      */
-    private void send(BoundedByteBufferSend send) throws Exception{
-        synchronized (lock){
-            verifySendBuffer(send.buffer().slice());
+    private Receive doSend(RequestOrResponse request, boolean readResponse) throws IOException {
+        synchronized(lock) {
+            verifyRequest(request);
             getOrMakeConnection();
-            try {
-                send.writeCompletely(channel);
-            } catch (IOException e){
-                disconnect();
-                throw  e;
-            }
-            // TODO: do we still need this?
-            sentOnConnection += 1;
 
-            if(sentOnConnection >= config.reconnectInterval || (config.reconnectTimeInterval >= 0 && System.currentTimeMillis() - lastConnectionTime >= config.reconnectTimeInterval)) {
+            Receive response  = null;
+            try {
+                blockingChannel.send(request);
+                if(readResponse)
+                    response = blockingChannel.receive();
+                else
+                    logger.trace("Skipping reading response");
+            } catch (IOException e){
+                // no way to tell if write succeeded. Disconnect and re-throw exception to let client handle retry
                 disconnect();
-                channel = connect();
-                sentOnConnection = 0;
-                lastConnectionTime = System.currentTimeMillis();
+                throw e;
+            }catch (Throwable e1){
+                throw e1;
             }
+            return response;
         }
     }
 
     /**
-     * Send a message
+     * Send a message. If the producerRequest had required.request.acks=0, then the
+     * returned response object is null
      */
-    public void send(String topic, int partition,ByteBufferMessageSet messages) throws Exception{
-        messages.verifyMessageSize(config.maxMessageSize);
-        int setSize = (int)messages.sizeInBytes();
-        logger.trace("Got message set with " + setSize + " bytes to send");
-        send(new BoundedByteBufferSend(new ProducerRequest(topic, partition, messages)));
+    public ProducerResponse send(ProducerRequest producerRequest) throws IOException {
+        Receive response = doSend(producerRequest, producerRequest.requiredAcks == 0? false : true);
+        if(producerRequest.requiredAcks != 0)
+            return ProducerResponse.readFrom(response.buffer());
+        else
+            return null;
     }
 
-    public void send(String topic, ByteBufferMessageSet messages) throws Exception{
-        send(topic, -1, messages);
-    }
-
-    public void multiSend(ProducerRequest[] produces) throws Exception{
-        //todo
-        int setSize = 0;
-        for (ProducerRequest request : produces) {
-            request.messages().verifyMessageSize(config.maxMessageSize);
-            setSize += request.messages().sizeInBytes();
-        }
-        logger.trace("Got multi message sets with " + setSize + " bytes to send");
-        send(new BoundedByteBufferSend(new MultiProducerRequest(produces)));
+    public TopicMetadataResponse send(TopicMetadataRequest request) throws IOException {
+        Receive response = doSend(request,true);
+        return TopicMetadataResponse.readFrom(response.buffer());
     }
 
     public void close()  {
@@ -129,6 +101,10 @@ public class SyncProducer {
         }
     }
 
+    private void reconnect() throws IOException {
+        disconnect();
+        connect();
+    }
 
     /**
      * Disconnect from current channel, closing connection.
@@ -136,49 +112,34 @@ public class SyncProducer {
      */
     private void disconnect() {
         try {
-            if(channel != null) {
+            if(blockingChannel.isConnected()) {
                 logger.info("Disconnecting from " + config.host + ":" + config.port);
-                channel.close();
-                channel.socket().close();
-                channel = null;
+                blockingChannel.disconnect();
             }
-        } catch(Exception e) {
+        } catch (Exception e){
             logger.error("Error on disconnect: ", e);
         }
     }
 
-    private SocketChannel connect() throws Exception{
-        int connectBackoffMs = 1;
-        long beginTimeMs = System.currentTimeMillis();
-        while(channel == null && !shutdown) {
+    private BlockingChannel connect() throws IOException {
+        if (!blockingChannel.isConnected() && !shutdown) {
             try {
-                channel = SocketChannel.open();
-                channel.socket().setSendBufferSize(config.bufferSize);
-                channel.configureBlocking(true);
-                channel.socket().setSoTimeout(config.socketTimeoutMs);
-                channel.socket().setKeepAlive(true);
-                channel.connect(new InetSocketAddress(config.host, config.port));
+                blockingChannel.connect();
                 logger.info("Connected to " + config.host + ":" + config.port + " for producing");
-            }
-            catch (Exception e){
+            } catch (Exception e){
                 disconnect();
-                long endTimeMs = System.currentTimeMillis();
-                if ( (endTimeMs - beginTimeMs + connectBackoffMs) > config.connectTimeoutMs)
-                {
-                    logger.error("Producer connection to " +  config.host + ":" + config.port + " timing out after " + config.connectTimeoutMs + " ms", e);
-                    throw e;
-                }
-                logger.error("Connection attempt to " +  config.host + ":" + config.port + " failed, next attempt in " + connectBackoffMs + " ms", e);
-                Thread.sleep(connectBackoffMs);
-                connectBackoffMs = Math.min(10 * connectBackoffMs, MaxConnectBackoffMs);
+                logger.error("Producer connection to " +  config.host + ":" + config.port + " unsuccessful", e);
+                throw e;
             }
         }
-        return channel;
+        return blockingChannel;
     }
 
-    private void getOrMakeConnection() throws Exception{
-        if(channel == null) {
-            channel = connect();
+    private void getOrMakeConnection() throws IOException {
+        if(!blockingChannel.isConnected()) {
+            connect();
         }
     }
+
+
 }

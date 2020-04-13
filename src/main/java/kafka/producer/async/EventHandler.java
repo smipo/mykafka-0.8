@@ -1,24 +1,20 @@
 package kafka.producer.async;
 
-import kafka.producer.SyncProducer;
-import kafka.serializer.Encoder;
+import kafka.producer.KeyedMessage;
 
-import java.util.Properties;
+import java.util.List;
 
-public interface EventHandler<T> {
+/**
+ * Handler that dispatches the batched data from the queue.
+ */
+public interface EventHandler< K,V> {
 
-    /**
-     * Initializes the event handler using a Properties object
-     * @param props the properties used to initialize the event handler
-     */
-    public void init(Properties props) ;
 
     /**
      * Callback to dispatch the batched data and send it to a Kafka server
      * @param events the data sent to the producer
-     * @param producer the low-level producer used to send the data
      */
-    public void handle(QueueItem<T>[] events, SyncProducer producer, Encoder<T> encoder)  throws Exception;
+    public void handle(List<KeyedMessage<K,V>> events)  throws Exception;
 
     /**
      * Cleans up and shuts down the event handler

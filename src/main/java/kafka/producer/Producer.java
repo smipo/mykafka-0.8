@@ -5,7 +5,6 @@ import kafka.cluster.Broker;
 import kafka.cluster.Partition;
 import kafka.common.InvalidPartitionException;
 import kafka.common.NoBrokersForPartitionException;
-import kafka.producer.async.CallbackHandler;
 import kafka.producer.async.EventHandler;
 import kafka.serializer.Encoder;
 import kafka.utils.Utils;

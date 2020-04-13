@@ -42,11 +42,11 @@ public class ProducerRequest   extends RequestOrResponse{
         }
        return new ProducerRequest(correlationId,versionId, clientId, requiredAcks, ackTimeoutMs, data);
     }
-    short versionId;
-    String clientId;
-    short requiredAcks;
-    int ackTimeoutMs;
-    Map<TopicAndPartition, ByteBufferMessageSet> data;
+    public  short versionId;
+    public  String clientId;
+    public short requiredAcks;
+    public int ackTimeoutMs;
+    public  Map<TopicAndPartition, ByteBufferMessageSet> data;
 
     public ProducerRequest( int correlationId,short versionId, String clientId, short requiredAcks, int ackTimeoutMs, Map<TopicAndPartition, ByteBufferMessageSet> data) {
         super(RequestKeys.ProduceKey,correlationId);

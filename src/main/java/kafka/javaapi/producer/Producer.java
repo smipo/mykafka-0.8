@@ -4,10 +4,8 @@ import kafka.producer.Partitioner;
 import kafka.producer.ProducerConfig;
 import kafka.producer.ProducerPool;
 import kafka.producer.SyncProducer;
-import kafka.producer.async.QueueItem;
 import kafka.serializer.Encoder;
 import kafka.utils.Utils;
-import org.omg.CORBA.Object;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;

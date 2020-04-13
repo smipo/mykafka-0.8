@@ -18,7 +18,6 @@ package kafka.javaapi.producer.async;
 
 
 import java.util.Properties;
-import kafka.producer.async.QueueItem;
 
 /**
  * Callback handler APIs for use in the async producer. The purpose is to

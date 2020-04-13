@@ -12,7 +12,7 @@ public class VerifiableProperties {
 
     private static Logger logger = Logger.getLogger(VerifiableProperties.class);
 
-    Properties props;
+    public Properties props;
 
     public VerifiableProperties(Properties props) {
         this.props = props;

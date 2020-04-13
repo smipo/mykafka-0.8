@@ -20,7 +20,6 @@ package kafka.javaapi.producer.async;
 import java.util.List;
 import java.util.Properties;
 import kafka.javaapi.producer.SyncProducer;
-import kafka.producer.async.QueueItem;
 import kafka.serializer.Encoder;
 
 /**
