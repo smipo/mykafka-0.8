@@ -40,7 +40,7 @@ public class ProducerResponse  extends RequestOrResponse{
         }
     }
 
-    Map<TopicAndPartition, ProducerResponseStatus> status;
+    public Map<TopicAndPartition, ProducerResponseStatus> status;
 
     public ProducerResponse(int correlationId,Map<TopicAndPartition, ProducerResponseStatus> status) {
         super(null,correlationId);

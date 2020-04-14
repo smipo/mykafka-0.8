@@ -590,4 +590,12 @@ public class Utils {
         }
         return dest;
     }
+
+    /**
+     * Get the absolute value of the given number. If the number is Int.MinValue return 0.
+     * This is different from java.lang.Math.abs or scala.math.abs in that they return Int.MinValue (!).
+     */
+    public static  int abs(int n) {
+        return n & 0x7fffffff;
+    }
 }

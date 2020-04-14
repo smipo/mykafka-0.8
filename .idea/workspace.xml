@@ -2,28 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/KeyedMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/common/FailedToSendMessageException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/ByteArrayPartitioner.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/javaapi/producer/Producer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/javaapi/producer/Producer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/javaapi/producer/async/CallbackHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/javaapi/producer/async/CallbackHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/javaapi/producer/async/EventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/javaapi/producer/async/EventHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/BrokerPartitionInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/BrokerPartitionInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ConfigBrokerPartitionInfo.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/DefaultPartitioner.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/DefaultPartitioner.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/Producer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/Producer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerPool.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ZKBrokerPartitionInfo.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/AsyncProducer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/AsyncProducerInterruptedException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/CallbackHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducerConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/DefaultEventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/async/DefaultEventHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/EventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/async/EventHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/QueueClosedException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/QueueFullException.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/QueueItem.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -116,6 +106,8 @@
       <workItem from="1586470564795" duration="6648000" />
       <workItem from="1586568139551" duration="36541000" />
       <workItem from="1586816785264" duration="3536000" />
+      <workItem from="1586871430952" duration="2388000" />
+      <workItem from="1586902165160" duration="4715000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -226,10 +218,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1585474622721" />
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1586819688006">
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1586871646297">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1586819688006" />
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1586871646297" />
     <state x="718" y="162" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1585631219407" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
@@ -239,10 +231,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1586819604799" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1586688565588">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1586820424050">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1586688565588" />
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1586820424050" />
     <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -256,14 +248,14 @@
     </state>
     <state x="270" y="54" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1585349074544" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1585628591064" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586688570145">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1586820427403">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586688570145" />
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1586817426038">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1586820427403" />
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1586902200604">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1586817426038" />
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1586902200604" />
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1585605117971">
       <screen x="0" y="0" width="1536" height="824" />
     </state>

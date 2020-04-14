@@ -15,7 +15,7 @@ public class SyncProducer {
     private static Logger logger = Logger.getLogger(SyncProducer.class);
 
 
-    SyncProducerConfig config;
+    public SyncProducerConfig config;
 
     public SyncProducer(SyncProducerConfig config){
         this.config = config;
@@ -25,7 +25,7 @@ public class SyncProducer {
     }
 
     private BlockingChannel blockingChannel;
-    String brokerInfo ;
+    public String brokerInfo ;
     private Object lock = new Object();
     private volatile boolean shutdown = false;
 
