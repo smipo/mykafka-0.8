@@ -3,6 +3,7 @@ package kafka.controller;
 import kafka.cluster.Broker;
 import kafka.common.StateChangeFailedException;
 import kafka.common.TopicAndPartition;
+import kafka.utils.Preconditions;
 import kafka.utils.Three;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.IZkChildListener;
@@ -38,7 +39,7 @@ public class ReplicaStateMachine {
         controllerId = controller.config.brokerId;
         zkClient = controllerContext.zkClient;
 
-        brokerRequestBatch = new ControllerChannelManager.ControllerBrokerRequestBatch(controller.controllerContext, controller.sendRequest,
+        brokerRequestBatch = controllerContext.controllerChannelManager.new ControllerBrokerRequestBatch(controller.controllerContext,
                 controllerId, controller.clientId());
 
         noOpPartitionLeaderSelector = new NoOpLeaderSelector(controllerContext);
@@ -146,8 +147,8 @@ public class ReplicaStateMachine {
                 brokerRequestBatch.addStopReplicaRequestForBrokers(brokerIds, topic, partition,  true);
                 // remove this replica from the assigned replicas list for its partition
                 List<Integer> currentAssignedReplicas = controllerContext.partitionReplicaAssignment.get(topicAndPartition);
-                controllerContext.partitionReplicaAssignment.put(topicAndPartition, currentAssignedReplicas.stream().filter(r -> r != replicaId).collect(Collectors.toList()))
-                replicaState.remove((topic, partition, replicaId));
+                controllerContext.partitionReplicaAssignment.put(topicAndPartition, currentAssignedReplicas.stream().filter(r -> r != replicaId).collect(Collectors.toList()));
+                replicaState.remove(new Three<>(topic, partition, replicaId));
                 logger.trace("Controller %d epoch %d changed state of replica %d for partition %s to NonExistentReplica"
                         .format(controllerId+"", controller.epoch(), replicaId, topicAndPartition));
             }else if(targetState instanceof OnlineReplica){
@@ -226,10 +227,10 @@ public class ReplicaStateMachine {
 
     private void assertValidPreviousStates(String topic, int partition, int replicaId, List<ReplicaState> fromStates,
                                            ReplicaState targetState) {
-        assert(fromStates.contains(replicaState((topic, partition, replicaId))),
+        Preconditions.checkArgument(fromStates.contains(replicaState.get(new Three<>(topic, partition, replicaId))),
         "Replica %s for partition [%s,%d] should be in the %s states before moving to %s state"
-                .format(replicaId, topic, partition, fromStates.mkString(","), targetState) +
-                ". Instead it is in %s state".format(replicaState((topic, partition, replicaId))))
+                .format(replicaId+"", topic, partition, fromStates.toString(), targetState) +
+                ". Instead it is in %s state".format(replicaState.get(new Three(topic, partition, replicaId)).toString()));
     }
 
     private void registerBrokerChangeListener() {
@@ -248,9 +249,9 @@ public class ReplicaStateMachine {
             int partition = topicPartition.partition();
             for(Integer replicaId:assignedReplicas){
                 if(controllerContext.liveBrokerIds().contains(replicaId)){
-                    replicaState.put((topic, partition, replicaId), new OnlineReplica());
+                    replicaState.put(new Three(topic, partition, replicaId), new OnlineReplica());
                 }else{
-                    replicaState.put((topic, partition, replicaId), new OfflineReplica());
+                    replicaState.put(new Three(topic, partition, replicaId), new OfflineReplica());
                 }
             }
         }

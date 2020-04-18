@@ -53,7 +53,7 @@ public class ZkUtils {
         if(controller == null){
             throw new KafkaException("Controller doesn't exist");
         }
-        KafkaController.parseControllerId(controller);
+       return KafkaController.parseControllerId(controller);
     }
 
     public static String getTopicPartitionPath(String topic, int partitionId){
@@ -246,6 +246,29 @@ public class ZkUtils {
             }
         }
     }
+    public static void createElectorEphemeralPathExpectConflictHandleZKBug(ZkClient zkClient,String path, String data, int leaderId,  int backoffTime) throws InterruptedException {
+        while (true) {
+            try {
+                createEphemeralPathExpectConflict(zkClient, path, data);
+                return;
+            } catch (ZkNodeExistsException e){
+                // An ephemeral node may still exist even after its corresponding session has expired
+                // due to a Zookeeper bug, in this case we need to retry writing until the previous node is deleted
+                // and hence the write succeeds without ZkNodeExistsException
+                String r = ZkUtils.readDataMaybeNull(zkClient, path).getKey();
+                if(r != null) {
+                    if (KafkaController.parseControllerId(r) == leaderId){
+                        logger.info("I wrote this conflicted ephemeral node [%s] at %s a while back in a different session, ".format(data, path)
+                                + "hence I will backoff for this node to be deleted by Zookeeper and retry");
+
+                        Thread.sleep(backoffTime);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+        }
+    }
     public static String getConsumerPartitionOwnerPath(String group,String topic,int partition) {
         ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(group, topic);
         return topicDirs.consumerOwnerDir + "/" + partition;
@@ -391,6 +414,13 @@ public class ZkUtils {
 
     public static String readData(ZkClient client, String path){
         return client.readData(path);
+    }
+
+
+    public static Pair<String, Stat> readDataAndStat(ZkClient client,String path) {
+        Stat stat = new Stat();
+        String dataStr = client.readData(path, stat);
+        return new Pair<>(dataStr, stat);
     }
 
     public static Pair<String,Stat> readDataMaybeNull(ZkClient client, String path){

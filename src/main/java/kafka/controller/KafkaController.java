@@ -1,11 +1,11 @@
 package kafka.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import kafka.api.LeaderAndIsrRequest;
 import kafka.cluster.Broker;
 import kafka.common.*;
 import kafka.server.KafkaConfig;
 import kafka.server.ZookeeperLeaderElector;
+import kafka.utils.JacksonUtils;
 import kafka.utils.Pair;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.IZkDataListener;
@@ -15,13 +15,12 @@ import org.I0Itec.zkclient.exception.ZkNoNodeException;
 import org.I0Itec.zkclient.exception.ZkNodeExistsException;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.awt.SystemColor.info;
-import static org.apache.log4j.helpers.LogLog.warn;
 
 public class KafkaController {
 
@@ -29,6 +28,26 @@ public class KafkaController {
     public static int InitialControllerEpochZkVersion = 1;
 
     private static Logger logger = Logger.getLogger(KafkaController.class);
+
+
+    public static int parseControllerId(String controllerInfoString) {
+        try {
+            if(controllerInfoString== null || controllerInfoString.isEmpty()){
+                throw new KafkaException("Failed to parse the controller info json [%s].".format(controllerInfoString));
+            }
+            Map<String,Object> controllerInfo = JacksonUtils.strToMap(controllerInfoString);
+            return Integer.parseInt(controllerInfo.get("brokerid").toString());
+        } catch (Throwable t){
+                // It may be due to an incompatible controller register version
+                logger.warn("Failed to parse the controller info as json. "
+                        + "Probably this controller is still using the old format [%s] to store the broker id in zookeeper".format(controllerInfoString));
+                try {
+                    return Integer.parseInt(controllerInfoString);
+                } catch (Throwable t1){
+                  throw new KafkaException("Failed to parse the controller info: " + controllerInfoString + ". This is neither the new or the old format.", t1);
+            }
+        }
+    }
 
     KafkaConfig config;
     ZkClient zkClient;
@@ -38,6 +57,7 @@ public class KafkaController {
         this.zkClient = zkClient;
 
         controllerContext = new ControllerContext(zkClient, config.zkSessionTimeoutMs);
+        controllerContext.controllerChannelManager = new ControllerChannelManager(controllerContext, config);
         partitionStateMachine = new PartitionStateMachine(this);
         replicaStateMachine = new ReplicaStateMachine(this);
         controllerElector = new ZookeeperLeaderElector(controllerContext, ZkUtils.ControllerPath,
@@ -46,7 +66,7 @@ public class KafkaController {
         reassignedPartitionLeaderSelector = new ReassignedPartitionLeaderSelector(controllerContext);
         preferredReplicaPartitionLeaderSelector = new PreferredReplicaPartitionLeaderSelector(controllerContext);
         controlledShutdownPartitionLeaderSelector = new ControlledShutdownLeaderSelector(controllerContext);
-        brokerRequestBatch = new ControllerChannelManager.ControllerBrokerRequestBatch(controllerContext, sendRequest(), this.config.brokerId, this.clientId());
+        brokerRequestBatch =  controllerContext.controllerChannelManager.new ControllerBrokerRequestBatch(controllerContext,  this.config.brokerId, this.clientId());
 
         registerControllerChangedListener();
     }
@@ -80,7 +100,7 @@ public class KafkaController {
      * @param id Id of the broker to shutdown.
      * @return The number of partitions that the broker still leads.
      */
-    public Set<TopicAndPartition> shutdownBroker(int id) throws IOException {
+    public Set<TopicAndPartition> shutdownBroker(int id) throws IOException, InterruptedException {
 
         if (!isActive()) {
             throw new ControllerMovedException("Controller moved to another broker. Aborting controlled shutdown");
@@ -165,7 +185,7 @@ public class KafkaController {
      * If it encounters any unexpected exception/error while becoming controller, it resigns as the current controller.
      * This ensures another controller election will be triggered and there will always be an actively serving controller
      */
-    public void onControllerFailover() {
+    public void onControllerFailover() throws IOException, InterruptedException {
         if(isRunning) {
             logger.info("Broker %d starting become controller state transition".format(config.brokerId + ""));
             // increment the controller epoch
@@ -212,7 +232,7 @@ public class KafkaController {
      * 2. Even if we do refresh the cache, there is no guarantee that by the time the leader and ISR request reaches
      *    every broker that it is still valid.  Brokers check the leader epoch to determine validity of the request.
      */
-    public void onBrokerStartup(List<Integer> newBrokers) throws IOException {
+    public void onBrokerStartup(List<Integer> newBrokers) throws IOException, InterruptedException {
         logger.info("New broker startup callback for %s".format(newBrokers.toString()));
 
         Set<Integer> newBrokersSet = newBrokers.stream().collect(Collectors.toSet());
@@ -236,7 +256,9 @@ public class KafkaController {
                 }
             }
         }
-        partitionsWithReplicasOnNewBrokers.forEach((k,v) -> onPartitionReassignment(k, v));
+        for(Map.Entry<TopicAndPartition, KafkaController.ReassignedPartitionsContext> entry : partitionsWithReplicasOnNewBrokers.entrySet()){
+            onPartitionReassignment(entry.getKey(), entry.getValue());
+        }
     }
 
     /**
@@ -296,7 +318,7 @@ public class KafkaController {
         partitionStateMachine.handleStateChanges(newPartitions, new PartitionStateMachine.NewPartition(),partitionStateMachine.noOpPartitionLeaderSelector);
         replicaStateMachine.handleStateChanges(getAllReplicasForPartition(newPartitions), new ReplicaStateMachine.NewReplica());
         partitionStateMachine.handleStateChanges(newPartitions, new PartitionStateMachine.OnlinePartition(), offlinePartitionSelector);
-        replicaStateMachine.handleStateChanges(getAllReplicasForPartition(newPartitions), new PartitionStateMachine.OnlinePartition());
+        replicaStateMachine.handleStateChanges(getAllReplicasForPartition(newPartitions), new ReplicaStateMachine.OnlineReplica());
     }
 
     /**
@@ -312,7 +334,7 @@ public class KafkaController {
      * 5. Write new AR
      * 6. Remove partition from the /admin/reassign_partitions path
      */
-    public void onPartitionReassignment(TopicAndPartition topicAndPartition, ReassignedPartitionsContext reassignedPartitionContext) {
+    public void onPartitionReassignment(TopicAndPartition topicAndPartition, ReassignedPartitionsContext reassignedPartitionContext) throws IOException, InterruptedException {
         List<Integer> reassignedReplicas = reassignedPartitionContext.newReplicas;
         if(areReplicasInIsr(topicAndPartition.topic(), topicAndPartition.partition(), reassignedReplicas)){
             // mark the new replicas as online
@@ -342,7 +364,7 @@ public class KafkaController {
             // start new replicas
             startNewReplicasForReassignedPartition(topicAndPartition, reassignedPartitionContext);
             logger.info("Waiting for new replicas %s for partition %s being ".format(reassignedReplicas.toString(), topicAndPartition) +
-                    "reassigned to catch up with the leader")
+                    "reassigned to catch up with the leader");
         }
     }
 
@@ -350,15 +372,15 @@ public class KafkaController {
                                                       int partition,
                                                       ReassignedPartitionsContext reassignedPartitionContext) {
         List<Integer> reassignedReplicas = reassignedPartitionContext.newReplicas;
-        val isrChangeListener = new ReassignedPartitionsIsrChangeListener(this, topic, partition,
-                reassignedReplicas.toSet)
-        reassignedPartitionContext.isrChangeListener = isrChangeListener
+        ReassignedPartitionsIsrChangeListener isrChangeListener = new ReassignedPartitionsIsrChangeListener(this, topic, partition,
+                reassignedReplicas.stream().collect(Collectors.toSet()));
+        reassignedPartitionContext.isrChangeListener = isrChangeListener;
         // register listener on the leader and isr path to wait until they catch up with the current leader
-        zkClient.subscribeDataChanges(ZkUtils.getTopicPartitionLeaderAndIsrPath(topic, partition), isrChangeListener)
+        zkClient.subscribeDataChanges(ZkUtils.getTopicPartitionLeaderAndIsrPath(topic, partition), isrChangeListener);
     }
 
     public void  initiateReassignReplicasForTopicPartition(TopicAndPartition topicAndPartition,
-                                                           ReassignedPartitionsContext reassignedPartitionContext) {
+                                                           ReassignedPartitionsContext reassignedPartitionContext) throws IOException {
         List<Integer> newReplicas = reassignedPartitionContext.newReplicas;
         String topic = topicAndPartition.topic();
         int partition = topicAndPartition.partition();
@@ -453,9 +475,6 @@ public class KafkaController {
         }
     }
 
-    public void sendRequest(brokerId : Int, request : RequestOrResponse, callback: (RequestOrResponse) => Unit = null) = {
-        controllerContext.controllerChannelManager.sendRequest(brokerId, request, callback)
-    }
 
     public void incrementControllerEpoch(ZkClient zkClient)  {
         try {
@@ -527,7 +546,9 @@ public class KafkaController {
             }
 
         }
-        reassignedPartitions.forEach(p -> removePartitionFromReassignedPartitions(p));
+        for(TopicAndPartition p:reassignedPartitions){
+            removePartitionFromReassignedPartitions(p);
+        }
         Map<TopicAndPartition, KafkaController.ReassignedPartitionsContext> partitionsToReassign = new HashMap<>();
         partitionsToReassign.putAll(partitionsBeingReassigned);
         reassignedPartitions.forEach(p -> partitionsToReassign.remove(p));
@@ -536,9 +557,9 @@ public class KafkaController {
         logger.info("Partitions already reassigned: %s".format(reassignedPartitions.toString()));
         logger.info("Resuming reassignment of partitions: %s".format(partitionsToReassign.toString()));
 
-        partitionsToReassign.forEach( (k,v) ->
-            initiateReassignReplicasForTopicPartition(k, v)
-        );
+        for(Map.Entry<TopicAndPartition, KafkaController.ReassignedPartitionsContext> entry : partitionsToReassign.entrySet()){
+            initiateReassignReplicasForTopicPartition(entry.getKey(), entry.getValue());
+        }
     }
 
     private void initializeAndMaybeTriggerPreferredReplicaElection() throws IOException {
@@ -555,8 +576,7 @@ public class KafkaController {
         onPreferredReplicaElection(controllerContext.partitionsUndergoingPreferredReplicaElection.stream().collect(Collectors.toSet()));
     }
 
-    private void startChannelManager() {
-        controllerContext.controllerChannelManager = new ControllerChannelManager(controllerContext, config);
+    private void startChannelManager() throws IOException {
         controllerContext.controllerChannelManager.startup();
     }
 
@@ -730,7 +750,7 @@ public class KafkaController {
      * @param brokers The brokers that the update metadata request should be sent to
      * @param partitions The partitions for which the metadata is to be sent
      */
-    private void sendUpdateMetadataRequest(List<Integer> brokers, Set<TopicAndPartition> partitions) {
+    private void sendUpdateMetadataRequest(List<Integer> brokers, Set<TopicAndPartition> partitions) throws InterruptedException {
         brokerRequestBatch.newBatch();
         brokerRequestBatch.addUpdateMetadataRequestForBrokers(brokers, partitions);
         brokerRequestBatch.sendRequestsToBrokers(epoch(), controllerContext.correlationId.getAndIncrement());
@@ -897,6 +917,132 @@ public class KafkaController {
         public ReassignedPartitionsContext(List<Integer> newReplicas, ReassignedPartitionsIsrChangeListener isrChangeListener) {
             this.newReplicas = newReplicas;
             this.isrChangeListener = isrChangeListener;
+        }
+    }
+
+    /**
+     * Starts the preferred replica leader election for the list of partitions specified under
+     * /admin/preferred_replica_election -
+     */
+   public  class PreferredReplicaElectionListener implements IZkDataListener {
+
+        KafkaController controller;
+
+        public PreferredReplicaElectionListener(KafkaController controller) {
+            this.controller = controller;
+            zkClient = controller.controllerContext.zkClient;
+            controllerContext = controller.controllerContext;
+        }
+
+        ZkClient zkClient ;
+        ControllerContext controllerContext ;
+
+        /**
+         * Invoked when some partitions are reassigned by the admin command
+         * @throws Exception On any error.
+         */
+        public void handleDataChange(String dataPath, Object data) throws Exception {
+            logger.debug("Preferred replica election listener fired for path %s. Record partitions to undergo preferred replica election %s"
+                    .format(dataPath, data.toString()));
+            Set<TopicAndPartition> partitionsForPreferredReplicaElection = ZkUtils.parsePreferredReplicaElectionData(data.toString());
+
+             synchronized(controllerContext.controllerLock) {
+                logger.info("These partitions are already undergoing preferred replica election: %s"
+                        .format(controllerContext.partitionsUndergoingPreferredReplicaElection.toString()));
+                partitionsForPreferredReplicaElection.removeAll(controllerContext.partitionsUndergoingPreferredReplicaElection);
+                controller.onPreferredReplicaElection(partitionsForPreferredReplicaElection);
+            }
+        }
+
+        /**
+         * @throws Exception
+         *             On any error.
+         */
+        public void handleDataDeleted(String var1) throws Exception {
+        }
+
+    }
+
+    class ControllerEpochListener implements IZkDataListener  {
+
+       KafkaController controller;
+
+        public ControllerEpochListener(KafkaController controller) {
+            this.controller = controller;
+            controllerContext = controller.controllerContext;
+            readControllerEpochFromZookeeper();
+        }
+
+        ControllerContext controllerContext ;
+        /**
+         * Invoked when a controller updates the epoch value
+         * @throws Exception On any error.
+         */
+        public void handleDataChange(String datapath, Object data) throws Exception {
+            logger.debug("Controller epoch listener fired with new epoch " + data.toString());
+            synchronized(controllerContext.controllerLock ) {
+                // read the epoch path to get the zk version
+                readControllerEpochFromZookeeper();
+            }
+        }
+
+        /**
+         * @throws Exception
+         *             On any error.
+         */
+       public void handleDataDeleted(String var1) throws Exception {
+       }
+
+        private void readControllerEpochFromZookeeper() {
+            // initialize the controller epoch and zk version by reading from zookeeper
+            if(ZkUtils.pathExists(controllerContext.zkClient, ZkUtils.ControllerEpochPath)) {
+                Pair<String, Stat> epochData = ZkUtils.readDataAndStat(controllerContext.zkClient, ZkUtils.ControllerEpochPath);
+                controllerContext.epoch = Integer.parseInt(epochData.getKey());
+                controllerContext.epochZkVersion = epochData.getValue().getVersion();
+                logger.info("Initialized controller epoch to %d and zk version %d".format(controllerContext.epoch+"", controllerContext.epochZkVersion));
+            }
+        }
+    }
+
+    /**
+     * Starts the partition reassignment process unless -
+     * 1. Partition previously existed
+     * 2. New replicas are the same as existing replicas
+     * 3. Any replica in the new set of replicas are dead
+     * If any of the above conditions are satisfied, it logs an error and removes the partition from list of reassigned
+     * partitions.
+     */
+    public class PartitionsReassignedListener implements IZkDataListener {
+        KafkaController controller;
+
+        public PartitionsReassignedListener(KafkaController controller) {
+            this.controller = controller;
+            zkClient = controller.controllerContext.zkClient;
+            controllerContext = controller.controllerContext;
+        }
+
+        ZkClient zkClient;
+        ControllerContext controllerContext;
+
+        /**
+         * Invoked when some partitions are reassigned by the admin command
+         *
+         * @throws Exception On any error.
+         */
+        public void handleDataChange(String dataPath, Object data) throws Exception {
+            logger.debug("Partitions reassigned listener fired for path %s. Record partitions to be reassigned %s"
+                    .format(dataPath, data.toString()));
+            Map<TopicAndPartition, List<Integer>> partitionsReassignmentData = ZkUtils.parsePartitionReassignmentData(data.toString());
+            for(Map.Entry<TopicAndPartition, List<Integer>> entry : partitionsReassignmentData.entrySet()){
+                if(!controllerContext.partitionsBeingReassigned.containsKey(entry.getKey())){
+                    synchronized(controllerContext.controllerLock ) {
+                        ReassignedPartitionsContext context = new ReassignedPartitionsContext(entry.getValue(),null);
+                        controller.initiateReassignReplicasForTopicPartition(entry.getKey(), context);
+                    }
+                }
+            }
+        }
+        public void handleDataDeleted(String var1) throws Exception {
         }
     }
 }

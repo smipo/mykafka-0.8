@@ -43,7 +43,7 @@ public class PartitionStateMachine {
         controllerId = controller.config.brokerId;
         zkClient = controllerContext.zkClient;
 
-        brokerRequestBatch = new ControllerChannelManager.ControllerBrokerRequestBatch(controller.controllerContext, controller.sendRequest,
+        brokerRequestBatch = controllerContext.controllerChannelManager.new ControllerBrokerRequestBatch(controller.controllerContext,
                 controllerId, controller.clientId());
 
         noOpPartitionLeaderSelector = new NoOpLeaderSelector(controllerContext);

@@ -59,7 +59,7 @@ public class ProducerSendThread<K,V> extends Thread{
         // drain the queue until you get a shutdown command
         while (true){
             KeyedMessage<K,V> currentQueueItem = queue.poll(Math.max(0, (lastSend + queueTime) - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
-            if(currentQueueItem.topic.equals("shutdown")){
+            if(currentQueueItem == shutdownCommand){
                 break;
             }
             long elapsed = (System.currentTimeMillis() - lastSend);

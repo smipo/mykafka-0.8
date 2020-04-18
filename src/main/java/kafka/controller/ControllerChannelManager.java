@@ -25,19 +25,20 @@ public class ControllerChannelManager {
     ControllerContext controllerContext;
     KafkaConfig config;
 
-    public ControllerChannelManager(ControllerContext controllerContext, KafkaConfig config) {
+    public ControllerChannelManager(ControllerContext controllerContext, KafkaConfig config)  {
         this.controllerContext = controllerContext;
         this.config = config;
-
-        controllerContext.liveBrokers.foreach(addNewBroker(_));
     }
 
     private Map<Integer,ControllerBrokerStateInfo> brokerStateInfo = new HashMap<>();
     private Object brokerLock = new Object();
 
 
-    public void startup()  {
+    public void startup()  throws IOException{
          synchronized(brokerLock) {
+             for(Broker b:controllerContext.liveBrokers()){
+                 addNewBroker(b);
+             }
             brokerStateInfo.forEach((k,v) -> startRequestSendThread(k));
         }
     }
@@ -154,15 +155,13 @@ public class ControllerChannelManager {
             }
         }
     }
-    public static class ControllerBrokerRequestBatch{
+    public  class ControllerBrokerRequestBatch{
         public ControllerContext controllerContext;
-        public Pair<RequestOrResponse, Callback<RequestOrResponse>> sendRequest;
         public int controllerId;
         public String clientId;
 
-        public ControllerBrokerRequestBatch(ControllerContext controllerContext, Pair<RequestOrResponse, Callback<RequestOrResponse>> sendRequest, int controllerId, String clientId) {
+        public ControllerBrokerRequestBatch(ControllerContext controllerContext,  int controllerId, String clientId) {
             this.controllerContext = controllerContext;
-            this.sendRequest = sendRequest;
             this.controllerId = controllerId;
             this.clientId = clientId;
         }
@@ -196,11 +195,13 @@ public class ControllerChannelManager {
                                                      LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch ,
                                                      List<Integer> replicas) {
             for(Integer brokerId:brokerIds){
-                leaderAndIsrRequestMap.putIfAbsent(brokerId, new HashMap<Pair<String, Integer>, LeaderAndIsrRequest.PartitionStateInfo>());
-                leaderAndIsrRequestMap.get(brokerId).put((topic, partition),
-                       new LeaderAndIsrRequest.PartitionStateInfo(leaderIsrAndControllerEpoch, replicas.stream().collect(Collectors.toSet()));
+                leaderAndIsrRequestMap.putIfAbsent(brokerId, new HashMap<>());
+                leaderAndIsrRequestMap.get(brokerId).put(new Pair<>(topic, partition),
+                       new LeaderAndIsrRequest.PartitionStateInfo(leaderIsrAndControllerEpoch, replicas.stream().collect(Collectors.toSet())));
             }
-            addUpdateMetadataRequestForBrokers(controllerContext.liveOrShuttingDownBrokerIds.toSeq, Set(TopicAndPartition(topic, partition)));
+            Set<TopicAndPartition> set = new HashSet<>();
+            set.add(new TopicAndPartition(topic, partition));
+            addUpdateMetadataRequestForBrokers(controllerContext.liveOrShuttingDownBrokerIds().stream().collect(Collectors.toList()), set);
         }
 
         public void addStopReplicaRequestForBrokers(List<Integer> brokerIds, String topic,int partition,boolean deletePartition) {
@@ -224,27 +225,27 @@ public class ControllerChannelManager {
                                                Set<TopicAndPartition> partitions) {
             Set<TopicAndPartition> partitionList = new HashSet<>();
             if(partitions == null || partitions.isEmpty()) {
-                partitionList = controllerContext.partitionLeadershipInfo.keySet;
+                partitionList = controllerContext.partitionLeadershipInfo.keySet();
             } else {
                 partitionList = partitions;
             }
             for(TopicAndPartition partition:partitionList){
-                val leaderIsrAndControllerEpochOpt = controllerContext.partitionLeadershipInfo().get(partition);
-                leaderIsrAndControllerEpochOpt match {
-                    case Some(leaderIsrAndControllerEpoch) =>
-                        val replicas = controllerContext.partitionReplicaAssignment(partition).toSet
-                        val partitionStateInfo = PartitionStateInfo(leaderIsrAndControllerEpoch, replicas)
-                        brokerIds.foreach { brokerId =>
-                        updateMetadataRequestMap.getOrElseUpdate(brokerId, new mutable.HashMap[TopicAndPartition, PartitionStateInfo])
-                        updateMetadataRequestMap(brokerId).put(partition, partitionStateInfo)
+                LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = controllerContext.partitionLeadershipInfo.get(partition);
+                if(leaderIsrAndControllerEpoch != null){
+                    List<Integer> replicas = controllerContext.partitionReplicaAssignment.get(partition);
+                    LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo = new LeaderAndIsrRequest.PartitionStateInfo(leaderIsrAndControllerEpoch, replicas.stream().collect(Collectors.toSet()));
+                    for(Integer brokerId:brokerIds){
+                        updateMetadataRequestMap.putIfAbsent(brokerId, new HashMap<>());
+                        updateMetadataRequestMap.get(brokerId).put(partition, partitionStateInfo);
                     }
-                    case None =>
-                        info("Leader not assigned yet for partition %s. Skip sending udpate metadata request".format(partition))
+
+                }else{
+                    logger.info("Leader not assigned yet for partition %s. Skip sending udpate metadata request".format(partition.toString()));
                 }
             }
         }
 
-        public void sendRequestsToBrokers(int controllerEpoch, int correlationId) {
+        public void sendRequestsToBrokers(int controllerEpoch, int correlationId) throws InterruptedException {
             for(Map.Entry<Integer,Map<Pair<String,Integer>, LeaderAndIsrRequest.PartitionStateInfo>> entry : leaderAndIsrRequestMap.entrySet()){
                 int broker = entry.getKey();
                 Map<Pair<String,Integer>, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfos = entry.getValue();
@@ -253,7 +254,7 @@ public class ControllerChannelManager {
                     int leaderId = entryPartition.getValue().leaderIsrAndControllerEpoch.leaderAndIsr.leader;
                     leaderIds.add(leaderId);
                 }
-                Set<Broker> leaders = controllerContext.liveOrShuttingDownBrokers.filter(b => leaderIds.contains(b.id));
+                Set<Broker> leaders = controllerContext.liveOrShuttingDownBrokers().stream().filter(b -> leaderIds.contains(b.id())).collect(Collectors.toSet());
                 LeaderAndIsrRequest leaderAndIsrRequest = new LeaderAndIsrRequest(partitionStateInfos, leaders, controllerId, controllerEpoch, correlationId, clientId);
                 for(Map.Entry<Pair<String,Integer>, LeaderAndIsrRequest.PartitionStateInfo> entryPartition : partitionStateInfos.entrySet()){
                     String typeOfRequest ;
@@ -266,29 +267,33 @@ public class ControllerChannelManager {
                 sendRequest(broker, leaderAndIsrRequest, null);
             }
             leaderAndIsrRequestMap.clear();
-            updateMetadataRequestMap.foreach { m =>
-                val broker = m._1
-                val partitionStateInfos = m._2.toMap
-                val updateMetadataRequest = new UpdateMetadataRequest(controllerId, controllerEpoch, correlationId, clientId,
-                        partitionStateInfos, controllerContext.liveOrShuttingDownBrokers)
-                partitionStateInfos.foreach(p => stateChangeLogger.trace(("Controller %d epoch %d sending UpdateMetadata request with " +
-                        "correlationId %d to broker %d for partition %s").format(controllerId, controllerEpoch, correlationId, broker, p._1)))
-                sendRequest(broker, updateMetadataRequest, null)
+            for(Map.Entry<Integer,Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo>> entry : updateMetadataRequestMap.entrySet()){
+                int broker = entry.getKey();
+                Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfos = entry.getValue();
+                UpdateMetadataRequest updateMetadataRequest = new UpdateMetadataRequest(controllerId, controllerEpoch, correlationId, clientId,
+                        partitionStateInfos, controllerContext.liveOrShuttingDownBrokers());
+                partitionStateInfos.forEach((k,v) -> logger.trace(("Controller %d epoch %d sending UpdateMetadata request with " +
+                        "correlationId %d to broker %d for partition %s").format(controllerId+"", controllerEpoch, correlationId, broker, k)));
+                sendRequest(broker, updateMetadataRequest, null);
             }
-            updateMetadataRequestMap.clear()
-            Seq((stopReplicaRequestMap, false), (stopAndDeleteReplicaRequestMap, true)) foreach {
-                case(m, deletePartitions) => {
-                    m foreach {
-                        case(broker, replicas) =>
-                            if (replicas.size > 0) {
-                                debug("The stop replica request (delete = %s) sent to broker %d is %s"
-                                        .format(deletePartitions, broker, replicas.mkString(",")))
-                                val stopReplicaRequest = new StopReplicaRequest(deletePartitions, Set.empty[(String, Int)] ++ replicas, controllerId,
-                                        controllerEpoch, correlationId)
-                                sendRequest(broker, stopReplicaRequest, null)
-                            }
-                    }
-                    m.clear()
+            updateMetadataRequestMap.clear();
+
+            for(Map.Entry<Integer, List<Pair<String,Integer>>> entry : stopReplicaRequestMap.entrySet()){
+                if (entry.getValue().size() > 0) {
+                    logger.debug("The stop replica request (delete = %s) sent to broker %d is %s"
+                            .format(false + "", entry.getKey(), entry.getValue().toString()));
+                    StopReplicaRequest stopReplicaRequest = new StopReplicaRequest(false, entry.getValue().stream().collect(Collectors.toSet()), controllerId,
+                            controllerEpoch, correlationId);
+                    sendRequest(entry.getKey(), stopReplicaRequest, null);
+                }
+            }
+            for(Map.Entry<Integer, List<Pair<String,Integer>>> entry : stopAndDeleteReplicaRequestMap.entrySet()){
+                if (entry.getValue().size() > 0) {
+                    logger.debug("The stop replica request (delete = %s) sent to broker %d is %s"
+                            .format(true + "", entry.getKey(), entry.getValue().toString()));
+                    StopReplicaRequest stopReplicaRequest = new StopReplicaRequest(true, entry.getValue().stream().collect(Collectors.toSet()), controllerId,
+                            controllerEpoch, correlationId);
+                    sendRequest(entry.getKey(), stopReplicaRequest, null);
                 }
             }
         }

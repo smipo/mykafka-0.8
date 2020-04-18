@@ -47,6 +47,7 @@ public class ZookeeperLeaderElector implements LeaderElector{
 
 
     public void startup(){
+        controllerContext.zkClient.subscribeDataChanges(electionPath, leaderChangeListener);
         synchronized(controllerContext.controllerLock) {
             elect();
         }
@@ -68,17 +69,16 @@ public class ZookeeperLeaderElector implements LeaderElector{
         l1.addAll(l2);
         String electString = Utils.mergeJsonFields(l1);
         try {
-            ZkUtils.createEphemeralPathExpectConflictHandleZKBug(controllerContext.zkClient, electionPath, electString, brokerId,
-                    (controllerString : String, leaderId : Any) => KafkaController.parseControllerId(controllerString) == leaderId.asInstanceOf[Int],
+            ZkUtils.createElectorEphemeralPathExpectConflictHandleZKBug(controllerContext.zkClient, electionPath, electString, brokerId,
                     controllerContext.zkSessionTimeout);
             logger.info(brokerId + " successfully elected as leader");
             leaderId = brokerId;
-            kafkaController.onBecomingLeader();
+            kafkaController.onControllerFailover();
         } catch (ZkNodeExistsException e){
             // If someone else has written the path, then
             String data = ZkUtils.readDataMaybeNull(controllerContext.zkClient, electionPath).getKey();
             if(data != null && !data.isEmpty()){
-                leaderId = KafkaController.parseControllerId(controller);
+                leaderId = KafkaController.parseControllerId(data);
             }else{
                 logger.warn("A leader has been elected but just resigned, this will result in another round of election");
                 leaderId = -1;
