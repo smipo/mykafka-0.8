@@ -50,11 +50,12 @@ public class Pool<K,V> {
         pool.clear();
     }
 
-   public int size (){
+    public int size (){
         return pool.size();
-   }
+    }
 
     public ConcurrentHashMap<K, V> pool() {
         return pool;
     }
+
 }

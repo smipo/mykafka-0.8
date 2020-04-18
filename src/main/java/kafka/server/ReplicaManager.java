@@ -90,7 +90,12 @@ public class ReplicaManager {
 
     public void startup() {
         // start ISR expiration thread
-        kafkaScheduler.scheduleWithRate(maybeShrinkIsr(), "isr-expiration-thread-", 0, config.replicaLagTimeMaxMs);
+        kafkaScheduler.scheduleWithRate(new Runnable() {
+            @Override
+            public void run() {
+                Thread.currentThread().setName(kafkaScheduler.currentThreadName("isr-expiration-thread-"));
+                maybeShrinkIsr();
+            }},  0, config.replicaLagTimeMaxMs,false);
     }
 
     public short stopReplica(String topic,int partitionId, boolean deletePartition) throws InterruptedException {
@@ -163,6 +168,9 @@ public class ReplicaManager {
         return partition.leaderReplicaIfLocal();
     }
 
+    public Replica getReplica(String topic,int partitionId){
+        return getReplica(topic,partitionId,config.brokerId);
+    }
     public Replica getReplica(String topic,int partitionId, int replicaId)  {
         Partition partitionOpt = getPartition(topic, partitionId);
         if(partitionOpt != null){

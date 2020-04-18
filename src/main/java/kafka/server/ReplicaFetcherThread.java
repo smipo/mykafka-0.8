@@ -1,6 +1,7 @@
 package kafka.server;
 
 import kafka.api.FetchResponse;
+import kafka.api.OffsetRequest;
 import kafka.cluster.Broker;
 import kafka.cluster.Replica;
 import kafka.common.KafkaStorageException;
@@ -64,7 +65,7 @@ public class ReplicaFetcherThread  extends AbstractFetcherThread{
     /**
      * Handle a partition whose offset is out of range and return a new fetch offset.
      */
-    public long handleOffsetOutOfRange(TopicAndPartition topicAndPartition){
+    public long handleOffsetOutOfRange(TopicAndPartition topicAndPartition) throws Throwable {
         Replica replica = replicaMgr.getReplica(topicAndPartition.topic(), topicAndPartition.partition());
         Log log = replica.log;
 
@@ -78,12 +79,12 @@ public class ReplicaFetcherThread  extends AbstractFetcherThread{
          *
          * There is a potential for a mismatch between the logs of the two replicas here. We don't fix this mismatch as of now.
          */
-        val leaderEndOffset = simpleConsumer.earliestOrLatestOffset(topicAndPartition, OffsetRequest.LatestTime, brokerConfig.brokerId)
-        if (leaderEndOffset < log.logEndOffset) {
-            log.truncateTo(leaderEndOffset)
-            warn("Replica %d for partition %s reset its fetch offset to current leader %d's latest offset %d"
-                    .format(brokerConfig.brokerId, topicAndPartition, sourceBroker.id, leaderEndOffset))
-            leaderEndOffset
+        long leaderEndOffset = simpleConsumer.earliestOrLatestOffset(topicAndPartition, OffsetRequest.LatestTime, brokerConfig.brokerId);
+        if (leaderEndOffset < log.logEndOffset()) {
+            log.truncateTo(leaderEndOffset);
+            logger.warn("Replica %d for partition %s reset its fetch offset to current leader %d's latest offset %d"
+                    .format(brokerConfig.brokerId+"", topicAndPartition, sourceBroker.id(), leaderEndOffset));
+            return leaderEndOffset;
         } else {
             /**
              * The follower could have been down for a long time and when it starts up, its end offset could be smaller than the leader's
@@ -91,11 +92,11 @@ public class ReplicaFetcherThread  extends AbstractFetcherThread{
              *
              * Roll out a new log at the follower with the start offset equal to the current leader's start offset and continue fetching.
              */
-            val leaderStartOffset = simpleConsumer.earliestOrLatestOffset(topicAndPartition, OffsetRequest.EarliestTime, brokerConfig.brokerId)
-            log.truncateAndStartWithNewOffset(leaderStartOffset)
-            warn("Replica %d for partition %s reset its fetch offset to current leader %d's start offset %d"
-                    .format(brokerConfig.brokerId, topicAndPartition, sourceBroker.id, leaderStartOffset))
-            leaderStartOffset
+            long leaderStartOffset = simpleConsumer.earliestOrLatestOffset(topicAndPartition, OffsetRequest.EarliestTime, brokerConfig.brokerId);
+            log.truncateAndStartWithNewOffset(leaderStartOffset);
+            logger.warn("Replica %d for partition %s reset its fetch offset to current leader %d's start offset %d"
+                    .format(brokerConfig.brokerId+"", topicAndPartition, sourceBroker.id(), leaderStartOffset));
+            return leaderStartOffset;
         }
     }
 

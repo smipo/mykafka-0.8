@@ -30,76 +30,32 @@ public class KafkaZooKeeper {
     private static Logger logger = Logger.getLogger(KafkaZooKeeper.class);
 
     KafkaConfig config;
-    LogManager logManager;
 
-    public KafkaZooKeeper( KafkaConfig config,
-                           LogManager logManager){
+    public KafkaZooKeeper(KafkaConfig config) {
         this.config = config;
-        this.logManager = logManager;
-
         brokerIdPath = ZkUtils.BrokerIdsPath + "/" + config.brokerId;
     }
 
     String brokerIdPath ;
-    ZkClient zkClient = null;
-    List<String> topics = new ArrayList<>();
-    Object lock = new Object();
+    private ZkClient zkClient = null;
 
-    public void startup() {
+    public void startup() throws UnknownHostException {
         /* start client */
         logger.info("connecting to ZK: " + config.zkConnect);
-        zkClient = new ZkClient(config.zkConnect, config.zkSessionTimeoutMs, config.zkConnectionTimeoutMs,new ZKStringSerializer());
+        zkClient = KafkaZookeeperClient.getZookeeperClient(config);
         zkClient.subscribeStateChanges(new SessionExpireListener());
+        registerBrokerInZk();
     }
 
-    public void registerBrokerInZk() {
-        logger.info("Registering broker " + brokerIdPath);
-        String hostName  ;
-        if (config.hostName == null){
-            try{
-                hostName = InetAddress.getLocalHost().getHostAddress();
-            }catch (UnknownHostException e){
-                hostName = "127.0.0.1";
-            }
-        }
+    private void registerBrokerInZk() throws UnknownHostException {
+        String hostName ;
+        if(config.hostName == null || config.hostName.trim().isEmpty())
+            hostName = InetAddress.getLocalHost().getCanonicalHostName();
         else
             hostName = config.hostName;
-        String creatorId = hostName + "-" + System.currentTimeMillis();
-        Broker broker = new Broker(config.brokerId, creatorId, hostName, config.port);
-        try {
-            ZkUtils.createEphemeralPathExpectConflict(zkClient, brokerIdPath, broker.getZKString());
-        } catch(ZkNodeExistsException e) {
-            throw new RuntimeException("A broker is already registered on the path " + brokerIdPath + ". This probably " +
-                    "indicates that you either have configured a brokerid that is already in use, or " +
-                    "else you have shutdown this broker and restarted it faster than the zookeeper " +
-                    "timeout so it appears to be re-registering.");
-
-        }
-        logger.info("Registering broker " + brokerIdPath + " succeeded with " + broker);
+        int jmxPort = Integer.parseInt(System.getProperty("com.sun.management.jmxremote.port", "-1"));
+        ZkUtils.registerBrokerInZk(zkClient, config.brokerId, hostName, config.port, config.zkSessionTimeoutMs, jmxPort);
     }
-
-    public void registerTopicInZk(String topic) {
-        registerTopicInZkInternal(topic);
-        synchronized(lock) {
-            topics.add(topic);
-        }
-    }
-
-    public void registerTopicInZkInternal(String topic) {
-        String brokerTopicPath = ZkUtils.BrokerTopicsPath + "/" + topic + "/" + config.brokerId;
-        Integer numParts = logManager.getTopicPartitionsMap().getOrDefault(topic, config.numPartitions);
-        logger.info("Begin registering broker topic " + brokerTopicPath + " with " + numParts + " partitions");
-        ZkUtils.createEphemeralPathExpectConflict(zkClient, brokerTopicPath, String.valueOf(numParts));
-        logger.info("End registering broker topic " + brokerTopicPath);
-    }
-
-    public void close() {
-        if (zkClient != null) {
-            logger.info("Closing zookeeper client...");
-            zkClient.close();
-        }
-    }
-
 
     /**
      *  When we get a SessionExpired event, we lost all ephemeral nodes and zkclient has reestablished a
@@ -121,16 +77,22 @@ public class KafkaZooKeeper {
         public void handleNewSession() throws Exception {
             logger.info("re-registering broker info in ZK for broker " + config.brokerId);
             registerBrokerInZk();
-            synchronized(lock) {
-                logger.info("re-registering broker topics in ZK for broker " + config.brokerId);
-                for (String topic : topics)
-                    registerTopicInZkInternal(topic);
-            }
             logger.info("done re-registering broker");
+            logger.info("Subscribing to %s path to watch for new topics".format(ZkUtils.BrokerTopicsPath));
         }
-
         public void handleSessionEstablishmentError(Throwable var1) throws Exception{
-            // do nothing,
+
         }
+    }
+
+    public void shutdown() {
+        if (zkClient != null) {
+            logger.info("Closing zookeeper client...");
+            zkClient.close();
+        }
+    }
+
+    public ZkClient getZookeeperClient() {
+        return zkClient;
     }
 }
