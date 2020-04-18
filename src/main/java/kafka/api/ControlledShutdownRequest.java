@@ -20,8 +20,8 @@ public class ControlledShutdownRequest  extends RequestOrResponse {
         return new ControlledShutdownRequest(versionId, correlationId, brokerId);
     }
 
-    short versionId;
-    int brokerId;
+    public short versionId;
+    public int brokerId;
 
     public ControlledShutdownRequest( short versionId, int correlationId,int brokerId) {
         super(RequestKeys.ControlledShutdownKey, correlationId);

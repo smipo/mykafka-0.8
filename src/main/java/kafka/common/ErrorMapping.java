@@ -31,7 +31,7 @@ public class ErrorMapping{
   public static final short NoError = 0;
   public static final short OffsetOutOfRangeCode = 1;
   public static final short InvalidMessageCode = 2;
-  public static final short WrongPartitionCode = 3;
+  public static final short UnknownTopicOrPartitionCode = 3;
   public static final short InvalidFetchSizeCode = 4;
   public static final short LeaderNotAvailableCode  = 5;
   public static final short NotLeaderForPartitionCode  = 6;
@@ -46,7 +46,7 @@ public class ErrorMapping{
   static {
     errorMap.put(OffsetOutOfRangeException.class.getName(),OffsetOutOfRangeCode);
     errorMap.put(InvalidMessageException.class.getName(),InvalidMessageCode);
-    errorMap.put(InvalidPartitionException.class.getName(),WrongPartitionCode);
+    errorMap.put(InvalidPartitionException.class.getName(),UnknownTopicOrPartitionCode);
     errorMap.put(InvalidMessageSizeException.class.getName(),InvalidFetchSizeCode);
 
     errorMap.put(NotLeaderForPartitionException.class.getName(),LeaderNotAvailableCode);

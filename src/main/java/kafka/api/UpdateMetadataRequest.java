@@ -48,12 +48,12 @@ public class UpdateMetadataRequest extends RequestOrResponse {
     public static int DefaultAckTimeout = 1000;
 
 
-    short versionId;
-    String clientId;
-    int controllerId;
-    int controllerEpoch;
-    Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfos;
-    Set<Broker> aliveBrokers;
+    public short versionId;
+    public String clientId;
+    public int controllerId;
+    public  int controllerEpoch;
+    public  Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfos;
+    public Set<Broker> aliveBrokers;
 
     public UpdateMetadataRequest(int correlationId, short versionId, String clientId, int controllerId, int controllerEpoch, Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfos, Set<Broker> aliveBrokers) {
         super(RequestKeys.UpdateMetadataKey, correlationId);

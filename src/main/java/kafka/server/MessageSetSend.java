@@ -56,7 +56,7 @@ public class MessageSetSend extends Send {
         if(header.hasRemaining())
             written += channel.write(header);
         if(!header.hasRemaining()) {
-            long fileBytesSent = messages.writeTo(channel, sent, size - sent);
+            long fileBytesSent = messages.writeTo(channel, sent, (int)(size - sent));
             written += fileBytesSent;
             sent += fileBytesSent;
         }

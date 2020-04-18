@@ -60,6 +60,7 @@ public abstract class RequestPurgatory<T extends  DelayedRequest, R> {
 
     /* background thread expiring requests that have been waiting too long */
     private ExpiredRequestReaper expiredRequestReaper = new ExpiredRequestReaper();
+
     private Thread expirationThread ;
 
 
@@ -103,7 +104,7 @@ public abstract class RequestPurgatory<T extends  DelayedRequest, R> {
     /**
      * Handle an expired delayed request
      */
-    protected abstract void expire(T delayed);
+    protected abstract void expire(T delayed) throws Exception;
 
     /**
      * Shutdown the expirey thread

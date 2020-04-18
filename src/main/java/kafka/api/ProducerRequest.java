@@ -63,6 +63,7 @@ public class ProducerRequest   extends RequestOrResponse{
                 dataGroupedByTopic.put(entry.getKey().topic(),list);
             }
             list.add(new Pair<>(entry.getKey(),entry.getValue()));
+            topicPartitionMessageSizeMap.put(entry.getKey(),entry.getValue().sizeInBytes());
         }
     }
 
@@ -74,8 +75,8 @@ public class ProducerRequest   extends RequestOrResponse{
         this(correlationId,ProducerRequest.CurrentVersion, clientId, requiredAcks, ackTimeoutMs, data);
     }
 
-    Map<String, List<Pair<TopicAndPartition, ByteBufferMessageSet>>> dataGroupedByTopic = new HashMap<>();
-
+    public Map<String, List<Pair<TopicAndPartition, ByteBufferMessageSet>>> dataGroupedByTopic = new HashMap<>();
+    public Map<TopicAndPartition,Integer> topicPartitionMessageSizeMap = new HashMap<>();
 
     public void writeTo(ByteBuffer buffer) throws IOException {
         buffer.putShort(versionId);

@@ -1,6 +1,7 @@
 package kafka.server;
 
 import kafka.cluster.Broker;
+import kafka.common.KafkaZookeeperClient;
 import kafka.log.LogManager;
 import kafka.utils.ZKStringSerializer;
 import kafka.utils.ZkUtils;
