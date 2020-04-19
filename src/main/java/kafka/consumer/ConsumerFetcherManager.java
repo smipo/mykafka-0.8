@@ -51,7 +51,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
             super(name,true);
         }
         // thread responsible for adding the fetcher to the right broker when leader is available
-        public  void doWork() throws IOException, InterruptedException{
+        public  void doWork() throws Throwable{
             Map<TopicAndPartition, Broker> leaderForPartitionsMap = new HashMap<>();
             lock.lock();
             try {

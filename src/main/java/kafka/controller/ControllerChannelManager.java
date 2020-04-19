@@ -123,7 +123,7 @@ public class ControllerChannelManager {
         private Object lock = new Object();
 
         @Override
-        public void doWork() throws IOException, InterruptedException {
+        public void doWork() throws Throwable {
             Pair<RequestOrResponse, Callback<RequestOrResponse>> queueItem = queue.take();
             RequestOrResponse request = queueItem.getKey();
             Callback<RequestOrResponse> callback = queueItem.getValue();

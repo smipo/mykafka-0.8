@@ -37,7 +37,7 @@ public abstract class ShutdownableThread extends Thread{
         shutdownLatch.await();
     }
 
-    public abstract void doWork() throws IOException, InterruptedException;
+    public abstract void doWork() throws Throwable;
 
     @Override
     public void run() {

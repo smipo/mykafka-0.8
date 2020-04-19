@@ -1,8 +1,7 @@
 package kafka.javaapi.consumer;
 
-import kafka.api.FetchRequest;
-import kafka.javaapi.MultiFetchResponse;
-import kafka.javaapi.message.ByteBufferMessageSet;
+import kafka.javaapi.FetchResponse;
+import kafka.javaapi.OffsetRequest;
 
 import java.io.IOException;
 
@@ -12,52 +11,63 @@ public class SimpleConsumer {
     int port;
     int soTimeout;
     int bufferSize;
+    String clientId;
 
-    public SimpleConsumer(String host, int port, int soTimeout, int bufferSize) throws IOException {
+    public SimpleConsumer(String host, int port, int soTimeout, int bufferSize, String clientId) {
         this.host = host;
         this.port = port;
         this.soTimeout = soTimeout;
         this.bufferSize = bufferSize;
-        underlying = new kafka.consumer.SimpleConsumer(host, port, soTimeout, bufferSize);
+        this.clientId = clientId;
+
+        underlying = new kafka.consumer.SimpleConsumer(host, port, soTimeout, bufferSize, clientId);
     }
+
     kafka.consumer.SimpleConsumer underlying ;
 
 
     /**
-     *  Fetch a set of messages from a topic.
+     *  Fetch a set of messages from a topic. This version of the fetch method
+     *  takes the Scala version of a fetch request (i.e.,
+     *  [[kafka.api.FetchRequest]] and is intended for use with the
+     *  [[kafka.api.FetchRequestBuilder]].
      *
      *  @param request  specifies the topic name, topic partition, starting byte offset, maximum bytes to be fetched.
      *  @return a set of fetched messages
      */
-    public ByteBufferMessageSet fetch(FetchRequest request)throws IOException {
-        kafka.message.ByteBufferMessageSet messageSet = underlying.fetch(request);
-        return new ByteBufferMessageSet(messageSet.getBuffer(), messageSet.getInitialOffset(),
-                messageSet.getErrorCode());
+    public FetchResponse fetch(kafka.api.FetchRequest request) throws IOException {
+        return new FetchResponse(underlying.fetch(request));
     }
 
     /**
-     *  Combine multiple fetch requests in one call.
+     *  Fetch a set of messages from a topic.
      *
-     *  @param fetches  a sequence of fetch requests.
-     *  @return a sequence of fetch responses
+     *  @param request specifies the topic name, topic partition, starting byte offset, maximum bytes to be fetched.
+     *  @return a set of fetched messages
      */
-    public MultiFetchResponse multifetch(java.util.List<FetchRequest> fetches) throws IOException{
-        FetchRequest[] fetchRequests = new FetchRequest[fetches.size()];
-        kafka.api.MultiFetchResponse response = underlying.multifetch(fetches.toArray(fetchRequests));
-        return new kafka.javaapi.MultiFetchResponse(response.buffer(), response.numSets(), response.offsets());
+    public FetchResponse fetch(kafka.javaapi.FetchRequest request) throws IOException {
+        return fetch(request.underlying);
+    }
+
+    /**
+     *  Fetch metadata for a sequence of topics.
+     *
+     *  @param request specifies the versionId, clientId, sequence of topics.
+     *  @return metadata for each topic in the request.
+     */
+    public kafka.javaapi.TopicMetadataResponse send( kafka.javaapi.TopicMetadataRequest request) throws IOException {
+        return new kafka.javaapi.TopicMetadataResponse(underlying.send(request.underlying));
     }
 
     /**
      *  Get a list of valid offsets (up to maxSize) before the given time.
-     *  The result is a list of offsets, in descending order.
      *
-     *  @param time: time in millisecs (-1, from the latest offset available, -2 from the smallest offset available)
-     *  @return an array of offsets
+     *  @param request a [[kafka.javaapi.OffsetRequest]] object.
+     *  @return a [[kafka.javaapi.OffsetResponse]] object.
      */
-    public long[] getOffsetsBefore(String topic,int  partition,long time, int maxNumOffsets) throws IOException{
-        return underlying.getOffsetsBefore(topic, partition, time, maxNumOffsets);
+    public kafka.javaapi.OffsetResponse getOffsetsBefore(OffsetRequest request) throws IOException {
+        return new kafka.javaapi.OffsetResponse(underlying.getOffsetsBefore(request.underlying));
     }
-
 
     public void close() throws IOException{
         underlying.close();

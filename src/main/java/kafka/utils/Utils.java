@@ -616,4 +616,18 @@ public class Utils {
     public static  int abs(int n) {
         return n & 0x7fffffff;
     }
+
+
+    /**
+     * Create an instance of the class with the given class name
+     */
+    public static  Object createObject(String className, Object...args) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Class<?> klass = Class.forName(className);
+        Class[] parameterTypes = new Class[args.length];
+        for(int i = 0;i < args.length;i++){
+            parameterTypes[i] = args[i].getClass();
+        }
+        Constructor<?> constructor = klass.getConstructor(parameterTypes);
+        return constructor.newInstance(args);
+    }
 }

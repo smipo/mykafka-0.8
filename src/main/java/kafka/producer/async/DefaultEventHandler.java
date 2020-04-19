@@ -1,6 +1,5 @@
 package kafka.producer.async;
 
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import kafka.api.ProducerRequest;
 import kafka.api.ProducerResponse;
 import kafka.api.TopicMetadata;
@@ -10,7 +9,6 @@ import kafka.message.Message;
 import kafka.message.NoCompressionCodec;
 import kafka.producer.*;
 import kafka.serializer.Encoder;
-import kafka.utils.Pair;
 import kafka.utils.Utils;
 import org.apache.log4j.Logger;
 

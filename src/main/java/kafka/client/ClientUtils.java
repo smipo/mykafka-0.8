@@ -38,13 +38,13 @@ public class ClientUtils {
         List<Broker> shuffledBrokers = brokers;
         while(i < shuffledBrokers.size() && !fetchMetaDataSucceeded) {
             SyncProducer producer = ProducerPool.createSyncProducer(producerConfig, shuffledBrokers.get(i));
-            logger.info("Fetching metadata from broker %s with correlation id %d for %d topic(s) %s".format(shuffledBrokers.get(i), correlationId, topics.size(), topics));
+            logger.info("Fetching metadata from broker %s with correlation id %d for %d topic(s) %s".format(shuffledBrokers.get(i).toString(), correlationId, topics.size(), topics));
             try {
                 topicMetadataResponse = producer.send(topicMetadataRequest);
                 fetchMetaDataSucceeded = true;
             }catch(Throwable e){
                 logger.warn("Fetching topic metadata with correlation id %d for topics [%s] from broker [%s] failed"
-                            .format(correlationId, topics, shuffledBrokers.get(i).toString()), e);
+                            .format(correlationId+"", topics, shuffledBrokers.get(i).toString()), e);
                     t = e;
             } finally {
                 i = i + 1;

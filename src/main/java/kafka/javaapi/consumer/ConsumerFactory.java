@@ -10,10 +10,10 @@ public class ConsumerFactory {
      *  Create a ConsumerConnector
      *
      *  @param config  at the minimum, need to specify the groupid of the consumer and the zookeeper
-     *                 connection string zk.connect.
+     *                 connection string zookeeper.connect.
      */
-    public static kafka.consumer.ConsumerConnector create(ConsumerConfig config)throws UnknownHostException {
-        kafka.consumer.ZookeeperConsumerConnector consumerConnect = new kafka.consumer.ZookeeperConsumerConnector(config);
+    public static ConsumerConnector create(ConsumerConfig config) throws UnknownHostException {
+        ZookeeperConsumerConnector consumerConnect = new ZookeeperConsumerConnector(config);
         return consumerConnect;
     }
 
@@ -21,10 +21,10 @@ public class ConsumerFactory {
      *  Create a ConsumerConnector
      *
      *  @param config  at the minimum, need to specify the groupid of the consumer and the zookeeper
-     *                 connection string zk.connect.
+     *                 connection string zookeeper.connect.
      */
-    public static ConsumerConnector createJavaConsumerConnector(ConsumerConfig config)throws UnknownHostException{
-        ZookeeperConsumerConnector consumerConnect = new ZookeeperConsumerConnector(config);
+    public static kafka.javaapi.consumer.ConsumerConnector createJavaConsumerConnector(ConsumerConfig config) throws UnknownHostException {
+        kafka.javaapi.consumer.ZookeeperConsumerConnector consumerConnect = new kafka.javaapi.consumer.ZookeeperConsumerConnector(config);
         return consumerConnect;
     }
 }

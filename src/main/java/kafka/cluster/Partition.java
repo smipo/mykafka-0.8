@@ -162,7 +162,7 @@ public class Partition {
      *  4. start a fetcher to the new leader
      */
     public boolean makeFollower(int controllerId, String topic, int partitionId,
-                                LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch, Set<Broker> leaders,int correlationId) throws IOException, InterruptedException {
+                                LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch, Set<Broker> leaders,int correlationId) throws Throwable {
         synchronized(leaderIsrUpdateLock) {
             LeaderAndIsrRequest.LeaderAndIsr leaderAndIsr = leaderIsrAndControllerEpoch.leaderAndIsr;
             if (leaderEpoch >= leaderAndIsr.leaderEpoch) {

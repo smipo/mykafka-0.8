@@ -1,14 +1,17 @@
 package kafka.producer;
 
 
+import kafka.api.TopicMetadata;
 import kafka.common.ProducerClosedException;
 import kafka.common.QueueFullException;
 import kafka.producer.async.DefaultEventHandler;
 import kafka.producer.async.EventHandler;
 import kafka.producer.async.ProducerSendThread;
+import kafka.serializer.DefaultEncoder;
 import kafka.utils.Utils;
 import org.apache.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +38,10 @@ public class Producer<K,V> {
                     config.clientId);
             producerSendThread.start();
         }
+    }
+
+    public Producer(ProducerConfig config){
+      this(config,new DefaultEventHandler(config, new DefaultPartitioner<K>(), new DefaultEncoder(), new DefaultEncoder(),new ProducerPool(config), new HashMap<>()));
     }
 
     AtomicBoolean hasShutdown = new AtomicBoolean(false);

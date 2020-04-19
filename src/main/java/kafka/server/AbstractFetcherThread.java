@@ -86,7 +86,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
     }
 
     @Override
-    public void doWork() throws IOException, InterruptedException{
+    public void doWork() throws Throwable{
         partitionMapLock.lock();
         try{
             if (partitionMap.isEmpty())
@@ -103,7 +103,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
             processFetchRequest(fetchRequest);
     }
 
-    private void processFetchRequest(FetchRequest fetchRequest) {
+    private void processFetchRequest(FetchRequest fetchRequest) throws InterruptedException {
         Set<TopicAndPartition> partitionsWithError = new HashSet<>();
         FetchResponse response = null;
         try {
@@ -180,7 +180,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
         }
     }
 
-    public void addPartition(String topic, int partitionId, long initialOffset) throws InterruptedException {
+    public void addPartition(String topic, int partitionId, long initialOffset) throws Throwable {
         partitionMapLock.lockInterruptibly();
         try {
             TopicAndPartition topicPartition = new TopicAndPartition(topic, partitionId);

@@ -241,7 +241,7 @@ public class ReplicaManager {
     }
 
     private void makeFollower(int controllerId, int epoch, String topic, int partitionId,
-                              LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo, Set<Broker> leaders, int correlationId) throws IOException, InterruptedException {
+                              LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo, Set<Broker> leaders, int correlationId) throws Throwable {
         LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = partitionStateInfo.leaderIsrAndControllerEpoch;
         logger.trace(("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
                 "starting the become-follower transition for partition [%s,%d]")

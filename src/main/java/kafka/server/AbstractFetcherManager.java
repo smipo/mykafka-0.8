@@ -32,7 +32,7 @@ public abstract class AbstractFetcherManager {
     // to be defined in subclass to create a specific fetcher
    public abstract AbstractFetcherThread createFetcherThread(int fetcherId,Broker sourceBroker);
 
-    public void addFetcher(String topic, int partitionId,long initialOffset,Broker sourceBroker) throws InterruptedException {
+    public void addFetcher(String topic, int partitionId,long initialOffset,Broker sourceBroker) throws Throwable {
          synchronized(mapLock) {
              AbstractFetcherThread fetcherThread  = null;
              BrokerAndFetcherId key = new BrokerAndFetcherId(sourceBroker, getFetcherId(topic, partitionId));
