@@ -108,7 +108,7 @@ public class FetchRequest extends RequestOrResponse {
         }
         return  2 + /* versionId */
                 4 + /* correlationId */
-               ApiUtils.shortStringLength(clientId) +
+                ApiUtils.shortStringLength(clientId) +
                 4 + /* replicaId */
                 4 + /* maxWait */
                 4 + /* minBytes */
@@ -137,19 +137,20 @@ public class FetchRequest extends RequestOrResponse {
         requestChannel.sendResponse(new RequestChannel.Response(request, new FetchResponse.FetchResponseSend(errorResponse)));
     }
 
-    /**
-     *  Public constructor for the clients
-     */
-    public FetchRequest(int correlationId,
-                        String clientId,
-                        int maxWait, int minBytes,
-                        Map<TopicAndPartition, PartitionFetchInfo> requestInfo) {
-        this(correlationId,FetchRequest.CurrentVersion,
-                clientId,
-                RequestOrResponse.OrdinaryConsumerId,
-                maxWait,
-                minBytes,
-                requestInfo);
+    public int numPartitions(){
+        return requestInfo.size();
+    }
+    @Override
+    public String toString() {
+        return "FetchRequest{" +
+                "versionId=" + versionId +
+                ", clientId='" + clientId + '\'' +
+                ", replicaId=" + replicaId +
+                ", maxWait=" + maxWait +
+                ", minBytes=" + minBytes +
+                ", requestInfo=" + requestInfo +
+                ", requestInfoGroupedByTopic=" + requestInfoGroupedByTopic +
+                '}';
     }
 
     public static class PartitionFetchInfo{

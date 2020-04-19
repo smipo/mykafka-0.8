@@ -127,4 +127,20 @@ public class OffsetRequest extends RequestOrResponse {
         OffsetResponse errorResponse = new OffsetResponse(correlationId, partitionErrorAndOffsets);
         requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(errorResponse)));
     }
+    public boolean isFromOrdinaryClient (){
+        return replicaId == RequestOrResponse.OrdinaryConsumerId;
+    }
+    public boolean isFromDebuggingClient(){
+        return replicaId == RequestOrResponse.DebuggingConsumerId;
+    }
+    @Override
+    public String toString() {
+        return "OffsetRequest{" +
+                "requestInfo=" + requestInfo +
+                ", versionId=" + versionId +
+                ", clientId='" + clientId + '\'' +
+                ", replicaId=" + replicaId +
+                ", requestInfoGroupedByTopic=" + requestInfoGroupedByTopic +
+                '}';
+    }
 }

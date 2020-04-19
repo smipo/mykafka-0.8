@@ -1,17 +1,41 @@
 package kafka.network;
 
+import kafka.api.ProducerRequest;
 import kafka.api.RequestKeys;
 import kafka.api.RequestOrResponse;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class RequestChannel {
+
+    private static Logger logger = Logger.getLogger(RequestChannel.class);
+
+    public static Request AllDone ;
+
+    static {
+        try {
+            AllDone = new Request(1, 2, getShutdownReceive(), 0, new InetSocketAddress(0));
+        }catch (Exception e){
+            logger.error("Request AllDone error:{}",e);
+        }
+    }
+
+    public static ByteBuffer getShutdownReceive() throws IOException {
+        ProducerRequest emptyProducerRequest = new ProducerRequest(0, (short)0, "", (short) 0, 0, new HashMap<>());
+        ByteBuffer byteBuffer = ByteBuffer.allocate(emptyProducerRequest.sizeInBytes() + 2);
+        byteBuffer.putShort(RequestKeys.ProduceKey);
+        emptyProducerRequest.writeTo(byteBuffer);
+        byteBuffer.rewind();
+        return byteBuffer;
+    }
 
     int numProcessors;
     int queueSize;

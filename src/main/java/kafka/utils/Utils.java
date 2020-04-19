@@ -326,6 +326,24 @@ public class Utils {
         int index = topicPartition.lastIndexOf('-');
         return new Pair<String, Integer> (topicPartition.substring(0,index), Integer.parseInt(topicPartition.substring(index+1)));
     }
+    /**
+     * Create a daemon thread
+     * @param runnable The runnable to execute in the background
+     * @return The unstarted thread
+     */
+    public static  Thread daemonThread(Runnable runnable) {
+        return newThread(runnable, true);
+    }
+
+    /**
+     * Create a daemon thread
+     * @param name The name of the thread
+     * @param runnable The runnable to execute in the background
+     * @return The unstarted thread
+     */
+    public static  Thread daemonThread(String name,Runnable runnable) {
+        return newThread(name, runnable, true);
+    }
 
     public static  Thread newThread(String name, Runnable runnable, boolean daemon){
         Thread thread = new Thread(runnable, name);

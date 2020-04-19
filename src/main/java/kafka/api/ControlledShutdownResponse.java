@@ -24,8 +24,8 @@ public class ControlledShutdownResponse extends RequestOrResponse{
        return new ControlledShutdownResponse(correlationId, errorCode, partitionsRemaining);
     }
 
-    short errorCode = ErrorMapping.NoError;
-    Set<TopicAndPartition> partitionsRemaining;
+    public short errorCode = ErrorMapping.NoError;
+    public Set<TopicAndPartition> partitionsRemaining;
 
     public ControlledShutdownResponse(int correlationId, short errorCode, Set<TopicAndPartition> partitionsRemaining) {
         super(null,correlationId);

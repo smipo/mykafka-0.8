@@ -46,8 +46,8 @@ public class SocketServer {
 
     private Processor[] processors;
     private volatile Acceptor acceptor;
-    RequestChannel requestChannel ;
-    long milliseconds = System.currentTimeMillis();
+    public RequestChannel requestChannel ;
+    public long milliseconds = System.currentTimeMillis();
 
     /**
      * Start the socket server

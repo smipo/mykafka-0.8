@@ -4,6 +4,7 @@ import kafka.utils.Pool;
 import kafka.utils.Utils;
 import org.apache.log4j.Logger;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -80,7 +81,7 @@ public abstract class RequestPurgatory<T extends  DelayedRequest, R> {
     /**
      * Update any watchers and return a list of newly satisfied requests.
      */
-    public List<T> update(Object key, R request){
+    public List<T> update(Object key, R request) throws Exception {
         Watchers w = watchersForKey.get(key);
         if(w == null)
             return new ArrayList<>();
@@ -99,7 +100,7 @@ public abstract class RequestPurgatory<T extends  DelayedRequest, R> {
     /**
      * Check if this request satisfied this delayed request
      */
-    protected abstract boolean checkSatisfied(R request, T delayed);
+    protected abstract boolean checkSatisfied(R request, T delayed) throws Exception;
 
     /**
      * Handle an expired delayed request
@@ -143,7 +144,7 @@ public abstract class RequestPurgatory<T extends  DelayedRequest, R> {
             return purged;
         }
 
-        public synchronized List<T> collectSatisfiedRequests(R request) {
+        public synchronized List<T> collectSatisfiedRequests(R request) throws Exception {
             List<T> response = new ArrayList<>();
             Iterator<T> iter = requests.iterator();
             while(iter.hasNext()) {

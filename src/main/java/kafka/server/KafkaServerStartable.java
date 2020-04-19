@@ -20,7 +20,7 @@ public class KafkaServerStartable {
     }
 
     private void init() {
-        server = new KafkaServer(serverConfig);
+        server = new KafkaServer(serverConfig,System.currentTimeMillis());
     }
 
     public void startup() {

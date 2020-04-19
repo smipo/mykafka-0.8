@@ -31,9 +31,9 @@ public class TopicMetadataRequest extends RequestOrResponse{
         }
         return new TopicMetadataRequest(versionId, correlationId, clientId, topics);
     }
-    short versionId;
-    String clientId;
-    List<String> topics;
+    public short versionId;
+    public String clientId;
+    public List<String> topics;
 
     public TopicMetadataRequest(short versionId,int correlationId, String clientId, List<String> topics) {
         super(RequestKeys.MetadataKey, correlationId);

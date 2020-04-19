@@ -1,16 +1,19 @@
 package kafka.server;
 
+import kafka.admin.CreateTopicCommand;
 import kafka.api.*;
 import kafka.cluster.Broker;
 import kafka.cluster.Partition;
 import kafka.cluster.Replica;
 import kafka.common.*;
 import kafka.controller.KafkaController;
+import kafka.controller.LeaderIsrAndControllerEpoch;
 import kafka.message.ByteBufferMessageSet;
 import kafka.message.MessageSet;
 import kafka.network.BoundedByteBufferSend;
 import kafka.network.RequestChannel;
 import kafka.utils.Pair;
+import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.log4j.Logger;
 
@@ -18,8 +21,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static kafka.api.RequestKeys.*;
+
 
 public class KafkaApis {
 
@@ -58,25 +63,21 @@ public class KafkaApis {
     /**
      * Top-level method that handles all requests and multiplexes to the right api
      */
-    public void handle(RequestChannel.Request request) {
+    public void handle(RequestChannel.Request request) throws IOException, InterruptedException {
         try{
             logger.trace("Handling request: " + request.requestObj + " from client: " + request.remoteAddress);
-            request.requestId match {
-                case RequestKeys.ProduceKey => handleProducerRequest(request)
-                case RequestKeys.FetchKey => handleFetchRequest(request)
-                case RequestKeys.OffsetsKey => handleOffsetRequest(request)
-                case RequestKeys.MetadataKey => handleTopicMetadataRequest(request)
-                case RequestKeys.LeaderAndIsrKey => handleLeaderAndIsrRequest(request)
-                case RequestKeys.StopReplicaKey => handleStopReplicaRequest(request)
-                case RequestKeys.UpdateMetadataKey => handleUpdateMetadataRequest(request)
-                case RequestKeys.ControlledShutdownKey => handleControlledShutdownRequest(request)
-                case requestId => throw new KafkaException("No mapping found for handler id " + requestId)
-            }
+            if(request.requestId == ProduceKey) handleProducerRequest(request);
+            else if(request.requestId == FetchKey) handleFetchRequest(request);
+            else if(request.requestId == OffsetsKey) handleOffsetRequest(request);
+            else if(request.requestId == MetadataKey) handleTopicMetadataRequest(request);
+            else if(request.requestId == LeaderAndIsrKey) handleLeaderAndIsrRequest(request);
+            else if(request.requestId == StopReplicaKey)  handleStopReplicaRequest(request);
+            else if(request.requestId == UpdateMetadataKey)handleUpdateMetadataRequest(request);
+            else if(request.requestId == ControlledShutdownKey)handleControlledShutdownRequest(request);
+            else throw new KafkaException("No mapping found for handler id " + request.requestId);
         } catch (Throwable e){
-                request.requestObj.handleError(e, requestChannel, request);
-                logger.error("error when handling request %s".format(request.requestObj+""), e);
-        } finally {
-            request.apiLocalCompleteTimeMs = SystemTime.milliseconds;
+            request.requestObj.handleError(e, requestChannel, request);
+            logger.error("error when handling request %s".format(request.requestObj+""), e);
         }
     }
 
@@ -87,8 +88,8 @@ public class KafkaApis {
             LeaderAndIsrResponse leaderAndIsrResponse = new LeaderAndIsrResponse(leaderAndIsrRequest.correlationId, pair.getKey(), pair.getValue());
             requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(leaderAndIsrResponse)));
         } catch (KafkaStorageException e){
-                logger.fatal("Disk error during leadership change.", e);
-                Runtime.getRuntime().halt(1);
+            logger.fatal("Disk error during leadership change.", e);
+            Runtime.getRuntime().halt(1);
         }
     }
 
@@ -110,17 +111,17 @@ public class KafkaApis {
             logger.warn(stateControllerEpochErrorMessage);
             throw new ControllerMovedException(stateControllerEpochErrorMessage);
         }
-         synchronized(partitionMetadataLock) {
+        synchronized(partitionMetadataLock) {
             replicaManager.controllerEpoch = updateMetadataRequest.controllerEpoch;
             // cache the list of alive brokers in the cluster
             updateMetadataRequest.aliveBrokers.forEach(b -> aliveBrokers.put(b.id(), b));
-             for(Map.Entry<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> entry : updateMetadataRequest.partitionStateInfos.entrySet()){
-                 leaderCache.put(entry.getKey(), entry.getValue());
-                 if(logger.isTraceEnabled())
-                     logger.trace(("Broker %d cached leader info %s for partition %s in response to UpdateMetadata request " +
-                             "sent by controller %d epoch %d with correlation id %d").format(brokerId+"", entry.getValue().toString(), entry.getKey().toString(),
-                             updateMetadataRequest.controllerId, updateMetadataRequest.controllerEpoch, updateMetadataRequest.correlationId));
-             }
+            for(Map.Entry<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> entry : updateMetadataRequest.partitionStateInfos.entrySet()){
+                leaderCache.put(entry.getKey(), entry.getValue());
+                if(logger.isTraceEnabled())
+                    logger.trace(("Broker %d cached leader info %s for partition %s in response to UpdateMetadata request " +
+                            "sent by controller %d epoch %d with correlation id %d").format(brokerId+"", entry.getValue().toString(), entry.getKey().toString(),
+                            updateMetadataRequest.controllerId, updateMetadataRequest.controllerEpoch, updateMetadataRequest.correlationId));
+            }
         }
         UpdateMetadataResponse updateMetadataResponse = new UpdateMetadataResponse(updateMetadataRequest.correlationId,ErrorMapping.NoError);
         requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(updateMetadataResponse)));
@@ -131,14 +132,14 @@ public class KafkaApis {
         Set<TopicAndPartition> partitionsRemaining = controller.shutdownBroker(controlledShutdownRequest.brokerId);
         ControlledShutdownResponse controlledShutdownResponse = new ControlledShutdownResponse(controlledShutdownRequest.correlationId,
                 ErrorMapping.NoError, partitionsRemaining);
-        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(controlledShutdownResponse)))
+        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(controlledShutdownResponse)));
     }
 
     /**
      * Check if a partitionData from a produce request can unblock any
      * DelayedFetch requests.
      */
-    public void maybeUnblockDelayedFetchRequests(String topic ,int partition,int messageSizeInBytes) throws UnsupportedEncodingException, InterruptedException {
+    public void maybeUnblockDelayedFetchRequests(String topic ,int partition,int messageSizeInBytes) throws Exception {
         List<DelayedFetch> satisfied =  fetchRequestPurgatory.update(new RequestKey(topic, partition), messageSizeInBytes);
         logger.trace("Producer request to (%s-%d) unblocked %d fetch requests.".format(topic, partition, satisfied.size()));
 
@@ -153,7 +154,7 @@ public class KafkaApis {
     /**
      * Handle a produce request
      */
-    public void handleProducerRequest(RequestChannel.Request request) throws IOException, InterruptedException {
+    public void handleProducerRequest(RequestChannel.Request request) throws Exception {
         ProducerRequest produceRequest = (ProducerRequest)request.requestObj;
         long sTime = System.currentTimeMillis();
         List<ProduceResult> localProduceResults = appendToLocalLog(produceRequest);
@@ -249,8 +250,8 @@ public class KafkaApis {
                 // NOTE: Failed produce requests is not incremented for UnknownTopicOrPartitionException and NotLeaderForPartitionException
                 // since failed produce requests metric is supposed to indicate failure of a broker in handling a produce request
                 // for a partition it is the leader for
-                    logger.fatal("Halting due to unrecoverable I/O error while handling produce request: ", e);
-                    Runtime.getRuntime().halt(1);
+                logger.fatal("Halting due to unrecoverable I/O error while handling produce request: ", e);
+                Runtime.getRuntime().halt(1);
             }catch (UnknownTopicOrPartitionException utpe){
                 logger.warn("Produce request with correlation id %d from client %s on partition %s failed due to %s".format(
                         producerRequest.correlationId+"", producerRequest.clientId, topicAndPartition, utpe.getMessage()));
@@ -271,7 +272,7 @@ public class KafkaApis {
     /**
      * Handle a fetch request
      */
-    public void handleFetchRequest(RequestChannel.Request request) throws IOException, InterruptedException {
+    public void handleFetchRequest(RequestChannel.Request request) throws Exception {
         FetchRequest fetchRequest = (FetchRequest)request.requestObj;
         if(fetchRequest.isFromFollower()) {
             maybeUpdatePartitionHw(fetchRequest);
@@ -287,23 +288,25 @@ public class KafkaApis {
                 d.respond();
             }
         }
-
-        val dataRead = readMessageSets(fetchRequest);
-        val bytesReadable = dataRead.values.map(_.messages.sizeInBytes).sum
+        int bytesReadable = 0;
+        Map<TopicAndPartition, FetchResponse.FetchResponsePartitionData> dataRead = readMessageSets(fetchRequest);
+        for(Map.Entry<TopicAndPartition, FetchResponse.FetchResponsePartitionData> entry : dataRead.entrySet()){
+            bytesReadable += entry.getValue().messages.sizeInBytes();
+        }
         if(fetchRequest.maxWait <= 0 ||
                 bytesReadable >= fetchRequest.minBytes ||
-                fetchRequest.numPartitions <= 0) {
-            debug("Returning fetch response %s for fetch request with correlation id %d to client %s"
-                    .format(dataRead.values.map(_.error).mkString(","), fetchRequest.correlationId, fetchRequest.clientId))
-            val response = new FetchResponse(fetchRequest.correlationId, dataRead)
-            requestChannel.sendResponse(new RequestChannel.Response(request, new FetchResponseSend(response)))
+                fetchRequest.numPartitions() <= 0) {
+            logger.debug("Returning fetch response %s for fetch request with correlation id %d to client %s"
+                    .format(dataRead.values().toString(), fetchRequest.correlationId, fetchRequest.clientId));
+            FetchResponse response = new FetchResponse(fetchRequest.correlationId, dataRead);
+            requestChannel.sendResponse(new RequestChannel.Response(request, new FetchResponse.FetchResponseSend(response)));
         } else {
-            debug("Putting fetch request with correlation id %d from client %s into purgatory".format(fetchRequest.correlationId,
-                    fetchRequest.clientId))
+            logger.debug("Putting fetch request with correlation id %d from client %s into purgatory".format(fetchRequest.correlationId+"",
+                    fetchRequest.clientId));
             // create a list of (topic, partition) pairs to use as keys for this delayed request
-            val delayedFetchKeys = fetchRequest.requestInfo.keys.toSeq.map(new RequestKey(_))
-            val delayedFetch = new DelayedFetch(delayedFetchKeys, request, fetchRequest, fetchRequest.maxWait, bytesReadable)
-            fetchRequestPurgatory.watch(delayedFetch)
+            List<RequestKey> delayedFetchKeys = fetchRequest.requestInfo.keySet().stream().map(x->new RequestKey(x)).collect(Collectors.toList());
+            DelayedFetch delayedFetch = new DelayedFetch(delayedFetchKeys, request, fetchRequest, fetchRequest.maxWait, bytesReadable);
+            fetchRequestPurgatory.watch(delayedFetch);
         }
     }
 
@@ -319,46 +322,44 @@ public class KafkaApis {
      * (topic, partition) -> PartitionData
      */
     private  Map<TopicAndPartition, FetchResponse.FetchResponsePartitionData> readMessageSets(FetchRequest fetchRequest)  {
+        Map<TopicAndPartition, FetchResponse.FetchResponsePartitionData> resMap = new HashMap<>();
         boolean isFetchFromFollower = fetchRequest.isFromFollower();
         for(Map.Entry<TopicAndPartition, FetchRequest.PartitionFetchInfo> entry : fetchRequest.requestInfo.entrySet()){
             String topic = entry.getKey().topic();
             int partition = entry.getKey().partition();
             long offset = entry.getValue().offset;
             long fetchSize = entry.getValue().fetchSize;
-            val partitionData =;
+            FetchResponse.FetchResponsePartitionData partitionData ;
             try {
-                val (messages, highWatermark) = readMessageSet(topic, partition, offset, fetchSize, fetchRequest.replicaId)
-                BrokerTopicStats.getBrokerTopicStats(topic).bytesOutRate.mark(messages.sizeInBytes)
-                BrokerTopicStats.getBrokerAllTopicsStats.bytesOutRate.mark(messages.sizeInBytes)
+                Pair<MessageSet, Long> pair = readMessageSet(topic, partition, offset, (int)fetchSize, fetchRequest.replicaId);
+                MessageSet messages = pair.getKey();
+                long highWatermark = pair.getValue();
                 if (!isFetchFromFollower) {
-                    new FetchResponsePartitionData(ErrorMapping.NoError, highWatermark, messages)
+                    partitionData = new FetchResponse.FetchResponsePartitionData(ErrorMapping.NoError, highWatermark, messages);
                 } else {
-                    debug("Leader %d for partition [%s,%d] received fetch request from follower %d"
-                            .format(brokerId, topic, partition, fetchRequest.replicaId))
-                    new FetchResponsePartitionData(ErrorMapping.NoError, highWatermark, messages)
+                    logger.debug("Leader %d for partition [%s,%d] received fetch request from follower %d"
+                            .format(brokerId+"", topic, partition, fetchRequest.replicaId));
+                    partitionData = new FetchResponse.FetchResponsePartitionData(ErrorMapping.NoError, highWatermark, messages);
                 }
-            } catch {
+            } catch (UnknownTopicOrPartitionException utpe){
                 // NOTE: Failed fetch requests is not incremented for UnknownTopicOrPartitionException and NotLeaderForPartitionException
                 // since failed fetch requests metric is supposed to indicate failure of a broker in handling a fetch request
                 // for a partition it is the leader for
-                case utpe: UnknownTopicOrPartitionException =>
-                    warn("Fetch request with correlation id %d from client %s on partition [%s,%d] failed due to %s".format(
-                            fetchRequest.correlationId, fetchRequest.clientId, topic, partition, utpe.getMessage))
-                    new FetchResponsePartitionData(ErrorMapping.codeFor(utpe.getClass.asInstanceOf[Class[Throwable]]), -1L, MessageSet.Empty)
-                case nle: NotLeaderForPartitionException =>
-                    warn("Fetch request with correlation id %d from client %s on partition [%s,%d] failed due to %s".format(
-                            fetchRequest.correlationId, fetchRequest.clientId, topic, partition, nle.getMessage))
-                    new FetchResponsePartitionData(ErrorMapping.codeFor(nle.getClass.asInstanceOf[Class[Throwable]]), -1L, MessageSet.Empty)
-                case t: Throwable =>
-                    BrokerTopicStats.getBrokerTopicStats(topic).failedFetchRequestRate.mark()
-                    BrokerTopicStats.getBrokerAllTopicsStats.failedFetchRequestRate.mark()
-                    error("Error when processing fetch request for partition [%s,%d] offset %d from %s with correlation id %d"
-                            .format(topic, partition, offset, if (isFetchFromFollower) "follower" else "consumer", fetchRequest.correlationId), t)
-                    new FetchResponsePartitionData(ErrorMapping.codeFor(t.getClass.asInstanceOf[Class[Throwable]]), -1L, MessageSet.Empty)
+                logger.warn("Fetch request with correlation id %d from client %s on partition [%s,%d] failed due to %s".format(
+                        fetchRequest.correlationId+"", fetchRequest.clientId, topic, partition, utpe.getMessage()));
+                partitionData = new FetchResponse.FetchResponsePartitionData(ErrorMapping.codeFor(utpe.getClass().getName()), -1L, MessageSet.Empty);
+            }catch (NotLeaderForPartitionException nle){
+                logger.warn("Fetch request with correlation id %d from client %s on partition [%s,%d] failed due to %s".format(
+                        fetchRequest.correlationId+"", fetchRequest.clientId, topic, partition, nle.getMessage()));
+                partitionData =  new FetchResponse.FetchResponsePartitionData(ErrorMapping.codeFor(nle.getClass().getName()), -1L, MessageSet.Empty);
+            }catch (Throwable t){
+                logger.error("Error when processing fetch request for partition [%s,%d] offset %d from %s with correlation id %d"
+                        .format(topic, partition, offset, isFetchFromFollower == true? "follower" : "consumer", fetchRequest.correlationId), t);
+                partitionData = new FetchResponse.FetchResponsePartitionData(ErrorMapping.codeFor(t.getClass().getName()), -1L, MessageSet.Empty);
             }
-            (TopicAndPartition(topic, partition), partitionData)
+            resMap.put(new TopicAndPartition(topic, partition), partitionData);
         }
-
+        return resMap;
     }
 
     /**
@@ -394,131 +395,141 @@ public class KafkaApis {
     /**
      * Service the offset request API
      */
-    public void handleOffsetRequest(RequestChannel.Request request) {
+    public void handleOffsetRequest(RequestChannel.Request request) throws IOException, InterruptedException {
         OffsetRequest offsetRequest = (OffsetRequest)request.requestObj;
-        val responseMap = offsetRequest.requestInfo.map(elem => {
-                val (topicAndPartition, partitionOffsetRequestInfo) = elem
-        try {
-            // ensure leader exists
-            val localReplica = if(!offsetRequest.isFromDebuggingClient)
-                replicaManager.getLeaderReplicaIfLocal(topicAndPartition.topic, topicAndPartition.partition)
-            else
-                replicaManager.getReplicaOrException(topicAndPartition.topic, topicAndPartition.partition)
-            val offsets = {
-                    val allOffsets = replicaManager.logManager.getOffsets(topicAndPartition,
-                    partitionOffsetRequestInfo.time,
-                    partitionOffsetRequestInfo.maxNumOffsets)
-            if (!offsetRequest.isFromOrdinaryClient) allOffsets
-            else {
-                val hw = localReplica.highWatermark
-                if (allOffsets.exists(_ > hw))
-                    hw +: allOffsets.dropWhile(_ > hw)
-            else allOffsets
+        Map<TopicAndPartition, OffsetResponse.PartitionOffsetsResponse> responseMap = new HashMap<>();
+        for(Map.Entry<TopicAndPartition, OffsetRequest.PartitionOffsetRequestInfo> entry : offsetRequest.requestInfo.entrySet()){
+            TopicAndPartition topicAndPartition = entry.getKey();
+            OffsetRequest.PartitionOffsetRequestInfo partitionOffsetRequestInfo = entry.getValue();
+            try {
+                // ensure leader exists
+                Replica localReplica ;
+                if(!offsetRequest.isFromDebuggingClient())
+                    localReplica = replicaManager.getLeaderReplicaIfLocal(topicAndPartition.topic(), topicAndPartition.partition());
+                else
+                    localReplica = replicaManager.getReplicaOrException(topicAndPartition.topic(), topicAndPartition.partition());
+                List<Long> offsets = new ArrayList<>();
+                Long[] allOffsets = replicaManager.logManager.getOffsets(topicAndPartition,
+                        partitionOffsetRequestInfo.time,
+                        partitionOffsetRequestInfo.maxNumOffsets);
+                if (!offsetRequest.isFromOrdinaryClient()) offsets = Arrays.asList(allOffsets);
+                else {
+                    boolean exists = false;
+                    long hw = localReplica.highWatermark();
+                    for(Long offset:allOffsets){
+                        if(offset > hw){
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) offsets = Arrays.asList(allOffsets);
+                }
+                responseMap.put(topicAndPartition, new OffsetResponse.PartitionOffsetsResponse(ErrorMapping.NoError, offsets));
+            } catch (UnknownTopicOrPartitionException utpe){
+                // NOTE: UnknownTopicOrPartitionException and NotLeaderForPartitionException are special cased since these error messages
+                // are typically transient and there is no value in logging the entire stack trace for the same
+                logger.warn("Offset request with correlation id %d from client %s on partition %s failed due to %s".format(
+                        offsetRequest.correlationId+"", offsetRequest.clientId, topicAndPartition, utpe.getMessage()));
+                responseMap.put(topicAndPartition,new OffsetResponse.PartitionOffsetsResponse(ErrorMapping.codeFor(utpe.getClass().getName()), null) );
+            }catch (NotLeaderForPartitionException nle){
+                logger.warn("Offset request with correlation id %d from client %s on partition %s failed due to %s".format(
+                        offsetRequest.correlationId+"", offsetRequest.clientId, topicAndPartition,nle.getMessage()));
+                responseMap.put(topicAndPartition, new OffsetResponse.PartitionOffsetsResponse(ErrorMapping.codeFor(nle.getClass().getName()), null));
+            }catch (Throwable e){
+                logger.warn("Error while responding to offset request", e);
+                responseMap.put(topicAndPartition, new OffsetResponse.PartitionOffsetsResponse(ErrorMapping.codeFor(e.getClass().getName()), null) );
             }
         }
-            (topicAndPartition, PartitionOffsetsResponse(ErrorMapping.NoError, offsets))
-        } catch {
-            // NOTE: UnknownTopicOrPartitionException and NotLeaderForPartitionException are special cased since these error messages
-            // are typically transient and there is no value in logging the entire stack trace for the same
-            case utpe: UnknownTopicOrPartitionException =>
-                warn("Offset request with correlation id %d from client %s on partition %s failed due to %s".format(
-                        offsetRequest.correlationId, offsetRequest.clientId, topicAndPartition, utpe.getMessage))
-                (topicAndPartition, PartitionOffsetsResponse(ErrorMapping.codeFor(utpe.getClass.asInstanceOf[Class[Throwable]]), Nil) )
-            case nle: NotLeaderForPartitionException =>
-                warn("Offset request with correlation id %d from client %s on partition %s failed due to %s".format(
-                        offsetRequest.correlationId, offsetRequest.clientId, topicAndPartition,nle.getMessage))
-                (topicAndPartition, PartitionOffsetsResponse(ErrorMapping.codeFor(nle.getClass.asInstanceOf[Class[Throwable]]), Nil) )
-            case e: Throwable =>
-                warn("Error while responding to offset request", e)
-                (topicAndPartition, PartitionOffsetsResponse(ErrorMapping.codeFor(e.getClass.asInstanceOf[Class[Throwable]]), Nil) )
-        }
-    })
-        val response = OffsetResponse(offsetRequest.correlationId, responseMap)
-        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(response)))
+        OffsetResponse response = new OffsetResponse(offsetRequest.correlationId, responseMap);
+        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(response)));
     }
 
     /**
      * Service the topic metadata request API
      */
-    public void handleTopicMetadataRequest(RequestChannel.Request request) {
-        val metadataRequest = request.requestObj.asInstanceOf[TopicMetadataRequest]
-        val topicsMetadata = new mutable.ArrayBuffer[TopicMetadata]()
-        val config = replicaManager.config
-        var uniqueTopics = Set.empty[String]
-        uniqueTopics = {
-        if(metadataRequest.topics.size > 0)
-            metadataRequest.topics.toSet
+    public void handleTopicMetadataRequest(RequestChannel.Request request) throws IllegalAccessException, InstantiationException, ClassNotFoundException, IOException, InterruptedException {
+        TopicMetadataRequest metadataRequest = (TopicMetadataRequest)request.requestObj;
+        List<TopicMetadata> topicsMetadata = new ArrayList<>();
+        KafkaConfig config = replicaManager.config;
+        Set<String> uniqueTopics = new HashSet<>();
+        if(metadataRequest.topics.size() > 0)
+            uniqueTopics = metadataRequest.topics.stream().collect(Collectors.toSet());
         else
-            ZkUtils.getAllTopics(zkClient).toSet
-    }
-        val topicMetadataList =
-                partitionMetadataLock synchronized {
-            uniqueTopics.map { topic =>
-                if(leaderCache.keySet.map(_.topic).contains(topic)) {
-                    val partitionStateInfo = leaderCache.filter(p => p._1.topic.equals(topic))
-                    val sortedPartitions = partitionStateInfo.toList.sortWith((m1,m2) => m1._1.partition < m2._1.partition)
-                    val partitionMetadata = sortedPartitions.map { case(topicAndPartition, partitionState) =>
-                        val replicas = leaderCache(topicAndPartition).allReplicas
-                        var replicaInfo: Seq[Broker] = replicas.map(aliveBrokers.getOrElse(_, null)).filter(_ != null).toSeq
-                        var leaderInfo: Option[Broker] = None
-                        var isrInfo: Seq[Broker] = Nil
-                        val leaderIsrAndEpoch = partitionState.leaderIsrAndControllerEpoch
-                        val leader = leaderIsrAndEpoch.leaderAndIsr.leader
-                        val isr = leaderIsrAndEpoch.leaderAndIsr.isr
-                        debug("%s".format(topicAndPartition) + ";replicas = " + replicas + ", in sync replicas = " + isr + ", leader = " + leader)
+            uniqueTopics = ZkUtils.getAllTopics(zkClient).stream().collect(Collectors.toSet());
+        List<TopicMetadata> topicMetadataList = new ArrayList<>();
+        synchronized(partitionMetadataLock) {
+            for(String topic:uniqueTopics){
+                if(leaderCache.keySet().stream().map(x->x.topic()).collect(Collectors.toSet()).contains(topic)) {
+                    Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfo =  leaderCache.entrySet().stream().filter(p -> p.getKey().topic().equals(topic)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> sortedPartitions = partitionStateInfo.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getKey().partition()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+                    List<TopicMetadata.PartitionMetadata> partitionMetadata = new ArrayList<>();
+                    for(Map.Entry<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> entry : sortedPartitions.entrySet()){
+                        TopicAndPartition topicAndPartition = entry.getKey();
+                        LeaderAndIsrRequest.PartitionStateInfo partitionState = entry.getValue();
+                        Set<Integer> replicas = leaderCache.get(topicAndPartition).allReplicas;
+                        List<Broker> replicaInfo = replicas.stream().map(r -> aliveBrokers.getOrDefault(r, null)).filter(r->r!= null).collect(Collectors.toList());
+                        Broker leaderInfo = null;
+                        List<Broker> isrInfo = new ArrayList<>();
+                        LeaderIsrAndControllerEpoch leaderIsrAndEpoch = partitionState.leaderIsrAndControllerEpoch;
+                        int leader = leaderIsrAndEpoch.leaderAndIsr.leader;
+                        List<Integer> isr = leaderIsrAndEpoch.leaderAndIsr.isr;
+                        logger.debug("%s".format(topicAndPartition.toString()) + ";replicas = " + replicas + ", in sync replicas = " + isr + ", leader = " + leader);
                         try {
-                            if(aliveBrokers.keySet.contains(leader))
-                                leaderInfo = Some(aliveBrokers(leader))
-                            else throw new LeaderNotAvailableException("Leader not available for partition %s".format(topicAndPartition))
-                            isrInfo = isr.map(aliveBrokers.getOrElse(_, null)).filter(_ != null)
-                            if(replicaInfo.size < replicas.size)
+                            if(aliveBrokers.keySet().contains(leader))
+                                leaderInfo = aliveBrokers.get(leader);
+                            else throw new LeaderNotAvailableException("Leader not available for partition %s".format(topicAndPartition.toString()));
+                            isrInfo = isr.stream().map(i->aliveBrokers.getOrDefault(i, null)).filter(i->i != null).collect(Collectors.toList());
+                            if(replicaInfo.size() < replicas.size()) {
+                                List<Integer> replicaIds = replicaInfo.stream().map(r->r.id()).collect(Collectors.toList());
                                 throw new ReplicaNotAvailableException("Replica information not available for following brokers: " +
-                                        replicas.filterNot(replicaInfo.map(_.id).contains(_)).mkString(","))
-                            if(isrInfo.size < isr.size)
+                                        replicas.stream().filter(r -> !replicaIds.contains(r)).collect(Collectors.toList()).toString());
+                            }
+                            if(isrInfo.size() < isr.size()) {
+                                List<Integer> isrInfoIds = isrInfo.stream().map(r->r.id()).collect(Collectors.toList());
                                 throw new ReplicaNotAvailableException("In Sync Replica information not available for following brokers: " +
-                                        isr.filterNot(isrInfo.map(_.id).contains(_)).mkString(","))
-                            new PartitionMetadata(topicAndPartition.partition, leaderInfo, replicaInfo, isrInfo, ErrorMapping.NoError)
-                        } catch {
-                        case e: Throwable =>
-                            error("Error while fetching metadata for partition %s".format(topicAndPartition), e)
-                            new PartitionMetadata(topicAndPartition.partition, leaderInfo, replicaInfo, isrInfo,
-                                    ErrorMapping.codeFor(e.getClass.asInstanceOf[Class[Throwable]]))
+                                        isr.stream().filter(r -> !isrInfoIds.contains(r)).collect(Collectors.toList()).toString());
+                            }
+                            partitionMetadata.add(new TopicMetadata.PartitionMetadata(topicAndPartition.partition(), leaderInfo, replicaInfo, isrInfo, ErrorMapping.NoError));
+                        } catch (Throwable e){
+                            logger.error("Error while fetching metadata for partition %s".format(topicAndPartition.toString()), e);
+                            partitionMetadata.add(new TopicMetadata.PartitionMetadata(topicAndPartition.partition(), leaderInfo, replicaInfo, isrInfo,
+                                    ErrorMapping.codeFor(e.getClass().getName())));
+                        }
                     }
-                    }
-                    new TopicMetadata(topic, partitionMetadata)
+                    topicMetadataList.add(new TopicMetadata(topic, partitionMetadata,ErrorMapping.NoError));
                 } else {
                     // topic doesn't exist, send appropriate error code
-                    new TopicMetadata(topic, Seq.empty[PartitionMetadata], ErrorMapping.UnknownTopicOrPartitionCode)
+                    topicMetadataList.add(new TopicMetadata(topic, new ArrayList<>(), ErrorMapping.UnknownTopicOrPartitionCode));
                 }
             }
         }
-
         // handle auto create topics
-        topicMetadataList.foreach { topicMetadata =>
-            topicMetadata.errorCode match {
-                case ErrorMapping.NoError => topicsMetadata += topicMetadata
-                case ErrorMapping.UnknownTopicOrPartitionCode =>
-                    if (config.autoCreateTopicsEnable) {
-                        try {
-                            CreateTopicCommand.createTopic(zkClient, topicMetadata.topic, config.numPartitions, config.defaultReplicationFactor)
-                            info("Auto creation of topic %s with %d partitions and replication factor %d is successful!"
-                                    .format(topicMetadata.topic, config.numPartitions, config.defaultReplicationFactor))
-                        } catch {
-                            case e: TopicExistsException => // let it go, possibly another broker created this topic
-                        }
-                        topicsMetadata += new TopicMetadata(topicMetadata.topic, topicMetadata.partitionsMetadata, ErrorMapping.LeaderNotAvailableCode)
-                    } else {
-                        topicsMetadata += topicMetadata
+        for(TopicMetadata topicMetadata:topicMetadataList){
+            if(topicMetadata.errorCode == ErrorMapping.NoError ){
+                topicsMetadata.add(topicMetadata);
+            } else if (topicMetadata.errorCode == ErrorMapping.UnknownTopicOrPartitionCode) {
+                if (config.autoCreateTopicsEnable) {
+                    try {
+                        CreateTopicCommand.createTopic(zkClient, topicMetadata.topic, config.numPartitions, config.defaultReplicationFactor,"");
+                        logger.info("Auto creation of topic %s with %d partitions and replication factor %d is successful!"
+                                .format(topicMetadata.topic, config.numPartitions, config.defaultReplicationFactor));
+                    } catch (TopicExistsException e){
+                        // let it go, possibly another broker created this topic
                     }
-                case _ =>
-                    debug("Error while fetching topic metadata for topic %s due to %s ".format(topicMetadata.topic,
-                            ErrorMapping.exceptionFor(topicMetadata.errorCode).getClass.getName))
-                    topicsMetadata += topicMetadata
+                    topicsMetadata.add(new TopicMetadata(topicMetadata.topic, topicMetadata.partitionsMetadata, ErrorMapping.LeaderNotAvailableCode));
+                } else {
+                    topicsMetadata.add(topicMetadata);
+                }
+            }else {
+                logger.debug("Error while fetching topic metadata for topic %s due to %s ".format(topicMetadata.topic,
+                        ErrorMapping.exceptionFor(topicMetadata.errorCode).getClass().getName()));
+                topicsMetadata.add(topicMetadata);
             }
         }
-        trace("Sending topic metadata %s for correlation id %d to client %s".format(topicsMetadata.mkString(","), metadataRequest.correlationId, metadataRequest.clientId))
-        val response = new TopicMetadataResponse(topicsMetadata.toSeq, metadataRequest.correlationId)
-        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(response)))
+        logger.trace("Sending topic metadata %s for correlation id %d to client %s".format(topicsMetadata.toString(), metadataRequest.correlationId, metadataRequest.clientId));
+        TopicMetadataResponse response = new TopicMetadataResponse(metadataRequest.correlationId,topicsMetadata);
+        requestChannel.sendResponse(new RequestChannel.Response(request, new BoundedByteBufferSend(response)));
     }
 
     public void close() throws InterruptedException {
@@ -575,7 +586,7 @@ public class KafkaApis {
         FetchRequest fetch;
         long initialSize;
 
-        public DelayedFetch(long delayMs, List<RequestKey> keys, RequestChannel.Request request, FetchRequest fetch, long initialSize) {
+        public DelayedFetch(List<RequestKey> keys, RequestChannel.Request request, FetchRequest fetch,long delayMs, long initialSize) {
             super(keys, request, delayMs);
             this.request = request;
             this.fetch = fetch;
@@ -604,8 +615,8 @@ public class KafkaApis {
          * A fetch request is satisfied when it has accumulated enough data to meet the min_bytes field
          */
         public boolean checkSatisfied(Integer messageSizeInBytes,DelayedFetch delayedFetch) {
-                long accumulatedSize = delayedFetch.bytesAccumulated.addAndGet(messageSizeInBytes);
-                return accumulatedSize >= delayedFetch.fetch.minBytes;
+            long accumulatedSize = delayedFetch.bytesAccumulated.addAndGet(messageSizeInBytes);
+            return accumulatedSize >= delayedFetch.fetch.minBytes;
         }
 
         /**
@@ -683,7 +694,7 @@ public class KafkaApis {
          * As partitions become acknowledged, we may be able to unblock
          * DelayedFetchRequests that are pending on those partitions.
          */
-        public boolean isSatisfied(RequestKey followerFetchRequestKey) {
+        public boolean isSatisfied(RequestKey followerFetchRequestKey) throws Exception {
             String topic = followerFetchRequestKey.topic;
             int partitionId = followerFetchRequestKey.partition;
             RequestKey key = new RequestKey(topic, partitionId);
@@ -763,7 +774,7 @@ public class KafkaApis {
         }
 
         protected boolean checkSatisfied(RequestKey followerFetchRequestKey,
-                                     DelayedProduce delayedProduce) {
+                                         DelayedProduce delayedProduce) throws Exception {
             return delayedProduce.isSatisfied(followerFetchRequestKey);
         }
 
