@@ -8,6 +8,7 @@ import kafka.producer.async.DefaultEventHandler;
 import kafka.producer.async.EventHandler;
 import kafka.producer.async.ProducerSendThread;
 import kafka.serializer.DefaultEncoder;
+import kafka.serializer.StringEncoder;
 import kafka.utils.Utils;
 import org.apache.log4j.Logger;
 
@@ -41,7 +42,7 @@ public class Producer<K,V> {
     }
 
     public Producer(ProducerConfig config){
-      this(config,new DefaultEventHandler(config, new DefaultPartitioner<K>(), new DefaultEncoder(), new DefaultEncoder(),new ProducerPool(config), new HashMap<>()));
+      this(config,new DefaultEventHandler(config, new DefaultPartitioner<K>(), new StringEncoder(config.props), new StringEncoder(config.props),new ProducerPool(config), new HashMap<>()));
     }
 
     AtomicBoolean hasShutdown = new AtomicBoolean(false);

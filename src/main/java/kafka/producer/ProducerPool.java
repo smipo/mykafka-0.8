@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ProducerPool<V> {
+public class ProducerPool {
 
     private static Logger logger = Logger.getLogger(ProducerPool.class);
 
