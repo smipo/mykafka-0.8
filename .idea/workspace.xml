@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
+    <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="   修改 序列化bug">
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/service/IsrExpirationTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/service/ReplicaFetchTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/service/RequestPurgatoryTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/service/SimpleFetchTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/kafka/zk/ZooKeeperTestHarness.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/Producer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/Producer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerPool.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,6 +128,9 @@
       <workItem from="1586988432338" duration="2585000" />
       <workItem from="1587131035112" duration="12836000" />
       <workItem from="1587187628601" duration="8596000" />
+      <workItem from="1587422219900" duration="11000" />
+      <workItem from="1587476747770" duration="2687000" />
+      <workItem from="1587508816781" duration="1152000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -229,7 +237,14 @@
       <option name="project" value="LOCAL" />
       <updated>1587275530895</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="   修改 序列化bug">
+      <created>1587280378762</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1587280378762</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -258,31 +273,32 @@
     <MESSAGE value="  梳理controller层" />
     <MESSAGE value="  梳理service层" />
     <MESSAGE value=" 梳理完成第一版待测试肯定有bug" />
-    <option name="LAST_COMMIT_MESSAGE" value=" 梳理完成第一版待测试肯定有bug" />
+    <MESSAGE value="   修改 序列化bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="   修改 序列化bug" />
   </component>
   <component name="WindowStateProjectService">
     <state x="361" y="71" key="#Auto_Import" timestamp="1587269939458">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1587269939458" />
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1587272850076">
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1587479086603">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1587272850076" />
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1587479086603" />
     <state x="981" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1587192071915" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes/0.0.1536.824@0.0.1536.824" timestamp="1585378574061" />
-    <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1587263856424">
+    <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1587479453075">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587263856424" />
+    <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587479453075" />
     <state x="624" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1587187547676" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587275526377">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587280400965">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587275526377" />
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587280400965" />
     <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -328,10 +344,10 @@
     </state>
     <state x="270" y="0" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1587274207952" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1587187616585" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587275533843">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587280380265">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587275533843" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587280380265" />
     <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1587131039134">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -340,10 +356,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1536.824@0.0.1536.824" timestamp="1585605117971" />
-    <state x="447" y="145" width="642" height="534" key="find.popup" timestamp="1587274282627">
+    <state x="447" y="145" width="642" height="534" key="find.popup" timestamp="1587477173502">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="447" y="145" width="642" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1587274282627" />
+    <state x="447" y="145" width="642" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1587477173502" />
     <state x="470" y="39" key="refactoring.ChangeSignatureDialog" timestamp="1586600324930">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
