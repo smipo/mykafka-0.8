@@ -471,6 +471,10 @@ public class Utils {
         rm(new File(file));
     }
 
+    public static void rm(List<String> files){
+        files.forEach(f->rm(f));
+    }
+
 
 
     /**

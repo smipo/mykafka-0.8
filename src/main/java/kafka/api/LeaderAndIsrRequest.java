@@ -127,6 +127,16 @@ public class LeaderAndIsrRequest extends RequestOrResponse{
         public LeaderAndIsr(int leader,List<Integer> isr) {
             this(leader, LeaderAndIsr.initialLeaderEpoch, isr, LeaderAndIsr.initialZKVersion);
         }
+
+        @Override
+        public String toString() {
+            return "LeaderAndIsr{" +
+                    "leader=" + leader +
+                    ", leaderEpoch=" + leaderEpoch +
+                    ", isr=" + isr +
+                    ", zkVersion=" + zkVersion +
+                    '}';
+        }
     }
 
     public static class PartitionStateInfo{

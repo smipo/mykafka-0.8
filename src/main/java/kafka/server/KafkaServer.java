@@ -27,8 +27,8 @@ public class KafkaServer {
 
     private static Logger logger = Logger.getLogger(KafkaServer.class);
 
-    KafkaConfig config;
-    long millis;
+    public KafkaConfig config;
+    public long millis;
 
     public KafkaServer(KafkaConfig config,long millis) {
         this.config = config;
