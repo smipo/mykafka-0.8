@@ -2,6 +2,8 @@ package kafka.utils;
 
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
+import org.I0Itec.zkclient.ZkClient;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,9 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+
+
 public class TestUtils {
+
+    private static Logger logger = Logger.getLogger(TestUtils.class);
 
     public static final String zookeeperConnect = "127.0.0.1:2182";
 
@@ -87,6 +96,50 @@ public class TestUtils {
         props.put("zookeeper.connect", zookeeperConnect);
         props.put("replica.socket.timeout.ms", "1500");
         return props;
+    }
+
+    public static Integer waitUntilLeaderIsElectedOrChanged(ZkClient zkClient,String topic,int partition,long timeoutMs, Integer oldLeaderOpt) throws IOException,InterruptedException{
+        ReentrantLock leaderLock = new ReentrantLock();
+        Condition leaderExistsOrChanged = leaderLock.newCondition();
+
+        if(oldLeaderOpt == null)
+            logger.info("Waiting for leader to be elected for partition [%s,%d]".format(topic, partition));
+        else
+            logger.info("Waiting for leader for partition [%s,%d] to be changed from old leader %d".format(topic, partition, oldLeaderOpt));
+        leaderLock.lock();
+        try{
+            zkClient.subscribeDataChanges(ZkUtils.getTopicPartitionLeaderAndIsrPath(topic, partition), new ZkUtils.LeaderExistsOrChangedListener(topic, partition, leaderLock, leaderExistsOrChanged, oldLeaderOpt, zkClient));
+            leaderExistsOrChanged.await(timeoutMs, TimeUnit.MILLISECONDS);
+            // check if leader is elected
+            Integer leader = ZkUtils.getLeaderForPartition(zkClient, topic, partition);
+            if(leader == null){
+                logger.error("Timing out after %d ms since leader is not elected for partition [%s,%d]"
+                        .format(timeoutMs+"", topic, partition));
+            }else{
+                if(oldLeaderOpt == null)
+                    logger.info("Leader %d is elected for partition [%s,%d]".format(leader+"", topic, partition));
+                else
+                    logger.info("Leader for partition [%s,%d] is changed from %d to %d".format(topic, partition, oldLeaderOpt, leader));
+
+            }
+            return leader;
+        }finally {
+            leaderLock.unlock();
+        }
+    }
+
+    /**
+     * Wait until the given condition is true or the given wait time ellapses
+     */
+    public static boolean waitUntilTrue(boolean condition,long waitTime) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
+        while (true) {
+            if (condition)
+                return true;
+            if (System.currentTimeMillis() > startTime + waitTime)
+                return false;
+            Thread.sleep(Math.min(waitTime,100L));
+        }
     }
 
 }

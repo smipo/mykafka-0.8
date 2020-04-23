@@ -1,6 +1,8 @@
 package kafka.controller;
 
-public interface Callback<T> {
+import kafka.api.RequestOrResponse;
+
+public interface Callback<T extends RequestOrResponse> {
 
     void onCallback(T t);
 }

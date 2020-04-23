@@ -3,12 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="   修改 序列化bug">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/LeaderAndIsrRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/LeaderAndIsrRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/Callback.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/Callback.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/zk/ZooKeeperTestHarness.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/zk/ZooKeeperTestHarness.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,6 +129,13 @@
       <workItem from="1587476747770" duration="2687000" />
       <workItem from="1587508816781" duration="1152000" />
       <workItem from="1587595219328" duration="2510000" />
+      <workItem from="1587651248051" duration="368000" />
+      <workItem from="1587651993741" duration="345000" />
+      <workItem from="1587652763226" duration="294000" />
+      <workItem from="1587653267258" duration="434000" />
+      <workItem from="1587653866706" duration="378000" />
+      <workItem from="1587654642528" duration="251000" />
+      <workItem from="1587681184811" duration="397000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -281,10 +286,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1587269939458" />
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1587597601935">
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser" timestamp="1587652204282">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1587597601935" />
+    <state x="858" y="112" key="#com.intellij.ide.util.MemberChooser/0.0.1536.824@0.0.1536.824" timestamp="1587652204282" />
     <state x="981" y="128" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1587192071915" />
     <state x="548" y="297" width="439" height="239" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1585378574061">
       <screen x="0" y="0" width="1536" height="824" />
@@ -295,10 +300,10 @@
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587479453075" />
     <state x="624" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1587187547676" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587512549937">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587597881231">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587512549937" />
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587597881231" />
     <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -344,14 +349,18 @@
     </state>
     <state x="270" y="0" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1587274207952" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1587187616585" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587512555208">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587597883869">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587512555208" />
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1587595287915">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587597883869" />
+    <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1587652927478">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1587595287915" />
+    <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1536.824@0.0.1536.824" timestamp="1587652927478" />
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1587681189123">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1587681189123" />
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1585605117971">
       <screen x="0" y="0" width="1536" height="824" />
     </state>

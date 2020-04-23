@@ -12,6 +12,7 @@ import kafka.consumer.TopicCount;
 import kafka.consumer.TopicCountFactory;
 import kafka.controller.KafkaController;
 import kafka.controller.LeaderIsrAndControllerEpoch;
+import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkMarshallingError;
 import org.I0Itec.zkclient.exception.ZkNoNodeException;
@@ -23,6 +24,8 @@ import org.apache.zookeeper.data.Stat;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ZkUtils {
@@ -53,7 +56,7 @@ public class ZkUtils {
         if(controller == null){
             throw new KafkaException("Controller doesn't exist");
         }
-       return KafkaController.parseControllerId(controller);
+        return KafkaController.parseControllerId(controller);
     }
 
     public static String getTopicPartitionPath(String topic, int partitionId){
@@ -838,7 +841,59 @@ public class ZkUtils {
 
         /** how far a ZK follower can be behind a ZK leader */
         public int zkSyncTimeMs ;
+    }
 
+    public  static   class LeaderExistsOrChangedListener implements IZkDataListener {
 
+        public String topic;
+        public int partition;
+        public ReentrantLock leaderLock;
+        public Condition leaderExistsOrChanged;
+        public Integer oldLeaderOpt;
+        public ZkClient zkClient = null;
+
+        public LeaderExistsOrChangedListener(String topic, int partition, ReentrantLock leaderLock, Condition leaderExistsOrChanged, Integer oldLeaderOpt, ZkClient zkClient) {
+            this.topic = topic;
+            this.partition = partition;
+            this.leaderLock = leaderLock;
+            this.leaderExistsOrChanged = leaderExistsOrChanged;
+            this.oldLeaderOpt = oldLeaderOpt;
+            this.zkClient = zkClient;
+        }
+
+        @Override
+        public void handleDataChange(String dataPath, Object data) throws Exception {
+            String[] arr = dataPath.split("/");
+            String t = arr[3];
+            int p = Integer.parseInt(arr[2]);
+            leaderLock.lock();
+            try{
+                if(t == topic && p == partition){
+                    if(oldLeaderOpt == null){
+                        logger.trace("In leader existence listener on partition [%s, %d], leader has been created".format(topic, partition));
+                        leaderExistsOrChanged.signal();
+                    }
+                    else {
+                        Integer newLeaderOpt = ZkUtils.getLeaderForPartition(zkClient, t, p);
+                        if(newLeaderOpt!=null && newLeaderOpt.intValue() != oldLeaderOpt.intValue()){
+                            logger.trace("In leader change listener on partition [%s, %d], leader has been moved from %d to %d".format(topic, partition, oldLeaderOpt, newLeaderOpt));
+                            leaderExistsOrChanged.signal();
+                        }
+                    }
+                }
+            }finally {
+                leaderLock.unlock();
+            }
+        }
+
+        @Override
+        public void handleDataDeleted(String s) throws Exception {
+            leaderLock.lock();
+            try{
+                leaderExistsOrChanged.signal();
+            }finally {
+                leaderLock.unlock();
+            }
+        }
     }
 }

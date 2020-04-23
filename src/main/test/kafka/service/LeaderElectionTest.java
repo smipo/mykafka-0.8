@@ -6,6 +6,7 @@ import kafka.api.LeaderAndIsrResponse;
 import kafka.api.RequestOrResponse;
 import kafka.cluster.Broker;
 import kafka.common.ErrorMapping;
+import kafka.controller.Callback;
 import kafka.controller.ControllerChannelManager;
 import kafka.controller.ControllerContext;
 import kafka.controller.LeaderIsrAndControllerEpoch;
@@ -73,7 +74,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         CreateTopicCommand.createTopic(zkClient, topic, 1, 2, "0:1");
 
         // wait until leader is elected
-        Integer leader1 = waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500);
+        Integer leader1 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500,null);
         int leaderEpoch1 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("leader Epoc: " + leaderEpoch1);
         logger.debug("Leader is elected to be: %s".format(leader1+""));
@@ -89,7 +90,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         if(leader1 != null && leader1 == 1){
             oldLeaderOpt1 = null;
         }
-        Integer leader2 = waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 1500, oldLeaderOpt1);
+        Integer leader2 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 1500, oldLeaderOpt1);
         int leaderEpoch2 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("Leader is elected to be: %s".format(leader1+""));
         logger.debug("leader Epoc: " + leaderEpoch2);
@@ -106,7 +107,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         if(leader2 != null && leader2 == 1){
             oldLeaderOpt2 = null;
         }
-        Integer leader3 = waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 1500, oldLeaderOpt2);
+        Integer leader3 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 1500, oldLeaderOpt2);
         int leaderEpoch3 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("leader Epoc: " + leaderEpoch3);
         logger.debug("Leader is elected to be: %s".format(leader3+""));
@@ -118,7 +119,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
     }
 
     @Test
-    public void testLeaderElectionWithStaleControllerEpoch() throws IOException {
+    public void testLeaderElectionWithStaleControllerEpoch() throws IOException, InterruptedException {
         // start 2 brokers
         String topic = "new-topic";
         int partitionId = 0;
@@ -127,7 +128,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         CreateTopicCommand.createTopic(zkClient, topic, 1, 2, "0:1");
 
         // wait until leader is elected
-        Integer leader1 = waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500);
+        Integer leader1 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500,null);
         int leaderEpoch1 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("leader Epoc: " + leaderEpoch1);
         logger.debug("Leader is elected to be: %s".format(leader1+""));
@@ -151,14 +152,37 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         Map<Pair<String,Integer>, LeaderIsrAndControllerEpoch> leaderAndIsr = new HashMap<>();
         leaderAndIsr.put(new Pair<>(topic, partitionId),
                 new LeaderIsrAndControllerEpoch(new LeaderAndIsrRequest.LeaderAndIsr(brokerId2,  isr), 2));
-        val partitionStateInfo = leaderAndIsr.mapValues(l => new LeaderAndIsrRequest.PartitionStateInfo(l, Set(0,1))).toMap
-        val leaderAndIsrRequest = new LeaderAndIsrRequest(partitionStateInfo, brokers.toSet, controllerId,
+        Map<Pair<String,Integer>,LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfo = new HashMap<>();
+        for(Map.Entry<Pair<String,Integer>, LeaderIsrAndControllerEpoch> entry : leaderAndIsr.entrySet()){
+            Set<Integer> allReplicas = new HashSet<>();
+            allReplicas.add(0);
+            allReplicas.add(1);
+            partitionStateInfo.put(entry.getKey(),new LeaderAndIsrRequest.PartitionStateInfo(entry.getValue(), allReplicas));
+        }
+        LeaderAndIsrRequest leaderAndIsrRequest = new LeaderAndIsrRequest(partitionStateInfo, brokers.stream().collect(Collectors.toSet()), controllerId,
                 staleControllerEpoch, 0, "");
 
-        controllerChannelManager.sendRequest(brokerId2, leaderAndIsrRequest, staleControllerEpochCallback);
-        TestUtils.waitUntilTrue(() => staleControllerEpochDetected == true, 1000);
+        controllerChannelManager.sendRequest(brokerId2, leaderAndIsrRequest, new Callback<RequestOrResponse>() {
+            @Override
+            public void onCallback(RequestOrResponse response) {
+                staleControllerEpochCallback(response);
+            }
+        });
+        long startTime = System.currentTimeMillis();
+        boolean isS = false;
+        while (true) {
+            if (staleControllerEpochDetected == true) {
+                isS = true;
+                break;
+            }
+            if (System.currentTimeMillis() > startTime + 1000) {
+                isS = false;
+                break;
+            }
+            Thread.sleep(Math.min(1000,100L));
+        }
+        logger.info("isS res:"+isS);
         assertTrue("Stale controller epoch not detected by the broker", staleControllerEpochDetected);
-
         controllerChannelManager.shutdown();
     }
 
