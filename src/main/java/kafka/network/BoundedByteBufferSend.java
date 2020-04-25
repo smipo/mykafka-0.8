@@ -8,7 +8,7 @@ import java.nio.channels.GatheringByteChannel;
 
 public class BoundedByteBufferSend extends Send {
 
-    private ByteBuffer buffer;
+    public ByteBuffer buffer;
 
     private ByteBuffer sizeBuffer = ByteBuffer.allocate(4);
 

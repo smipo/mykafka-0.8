@@ -16,12 +16,12 @@ public class ZooKeeperTestHarness {
     public int zkSessionTimeout = 6000;
 
 
-    public void setUp() throws IOException, Exception {
+    public void setUp() throws Exception {
         zkClient = new ZkClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, new ZKStringSerializer());
     }
 
 
-    public void tearDown() {
+    public void tearDown()throws Exception  {
         zkClient.close();
     }
 }

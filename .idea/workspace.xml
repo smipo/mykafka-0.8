@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="   修改 序列化bug">
+    <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/Callback.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/Callback.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/LogManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/LogManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/network/BoundedByteBufferSend.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/network/BoundedByteBufferSend.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/IsrExpirationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/IsrExpirationTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/ReplicaFetchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/ReplicaFetchTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/RequestPurgatoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/RequestPurgatoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/SimpleFetchTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/SimpleFetchTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/zk/ZooKeeperTestHarness.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/zk/ZooKeeperTestHarness.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -136,6 +142,8 @@
       <workItem from="1587653866706" duration="378000" />
       <workItem from="1587654642528" duration="251000" />
       <workItem from="1587681184811" duration="397000" />
+      <workItem from="1587681833093" duration="863000" />
+      <workItem from="1587778111776" duration="9968000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -249,7 +257,14 @@
       <option name="project" value="LOCAL" />
       <updated>1587280378762</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="选举测试用例完成">
+      <created>1587682079350</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1587682079350</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -279,7 +294,8 @@
     <MESSAGE value="  梳理service层" />
     <MESSAGE value=" 梳理完成第一版待测试肯定有bug" />
     <MESSAGE value="   修改 序列化bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="   修改 序列化bug" />
+    <MESSAGE value="选举测试用例完成" />
+    <option name="LAST_COMMIT_MESSAGE" value="选举测试用例完成" />
   </component>
   <component name="WindowStateProjectService">
     <state x="361" y="71" key="#Auto_Import" timestamp="1587269939458">
@@ -300,10 +316,10 @@
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587479453075" />
     <state x="624" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1587187547676" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587597881231">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587682078315">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587597881231" />
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587682078315" />
     <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -349,18 +365,18 @@
     </state>
     <state x="270" y="0" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1587274207952" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1587187616585" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587597883869">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587682081392">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587597883869" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587682081392" />
     <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1587652927478">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1536.824@0.0.1536.824" timestamp="1587652927478" />
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1587681189123">
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1587778157100">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1587681189123" />
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1587778157100" />
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1585605117971">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -377,9 +393,9 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="425" y="187" key="run.anything.popup/0.0.1536.824@0.0.1536.824" timestamp="1586688111709" />
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1587262875726">
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1587780770443">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1587262875726" />
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1587780770443" />
   </component>
 </project>

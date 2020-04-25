@@ -1,5 +1,10 @@
 package kafka.utils;
 
+import kafka.api.RequestOrResponse;
+import kafka.producer.Producer;
+import kafka.producer.ProducerConfig;
+import kafka.serializer.DefaultEncoder;
+import kafka.serializer.Encoder;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServer;
 import org.I0Itec.zkclient.ZkClient;
@@ -8,6 +13,7 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -142,4 +148,46 @@ public class TestUtils {
         }
     }
 
+    /**
+     * Create a test config for the given node id
+     */
+    public static List<Properties> createBrokerConfigs(int numConfigs) throws IOException {
+        List<Properties> res = new ArrayList<>();
+        List<Integer> list = choosePorts(numConfigs);
+        for(int i = 0;i < list.size();i++){
+            res.add(createBrokerConfig(i, list.get(i)));
+        }
+        return res;
+    }
+
+    /**
+     * Create a producer for the given host and port
+     */
+    public static <K,V> Producer<K, V> createProducer(String brokerList, Encoder<V> encoder, Encoder<K> keyEncoder) {
+        Properties props = new Properties();
+        props.put("metadata.broker.list", brokerList);
+        props.put("send.buffer.bytes", "65536");
+        props.put("connect.timeout.ms", "100000");
+        props.put("reconnect.interval", "10000");
+        props.put("serializer.class", encoder.getClass().getCanonicalName());
+        props.put("key.serializer.class", keyEncoder.getClass().getCanonicalName());
+        return new Producer<>(new ProducerConfig(props));
+    }
+
+    public static String getBrokerListStrFromConfigs(List<KafkaConfig> configs) {
+        List<String> list = configs.stream().map(c -> c.hostName + ":" + c.port).collect(Collectors.toList());
+        StringBuilder sb = new StringBuilder();
+        for(String str:list){
+            sb.append(str+",");
+        }
+        return sb.toString().substring(0,sb.length() - 1);
+    }
+
+    public static ByteBuffer createRequestByteBuffer(RequestOrResponse request) throws IOException {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(request.sizeInBytes() + 2);
+        byteBuffer.putShort(request.requestId);
+        request.writeTo(byteBuffer);
+        byteBuffer.rewind();
+        return byteBuffer;
+    }
 }

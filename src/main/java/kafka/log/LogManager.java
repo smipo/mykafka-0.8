@@ -32,9 +32,9 @@ public class LogManager {
     public static final String CleanShutdownFile = ".kafka_cleanshutdown";
     public static final String LockFile = ".lock";
 
-    KafkaConfig config;
-    KafkaScheduler scheduler;
-    long milliseconds;
+    public KafkaConfig config;
+    public KafkaScheduler scheduler;
+    public long milliseconds;
 
     public LogManager(KafkaConfig config, KafkaScheduler scheduler, long milliseconds) throws IOException {
         this.config = config;

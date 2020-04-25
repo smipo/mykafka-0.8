@@ -56,7 +56,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         for(KafkaServer server:servers){
             server.shutdown();
             Utils.rm(server.config.logDirs);
