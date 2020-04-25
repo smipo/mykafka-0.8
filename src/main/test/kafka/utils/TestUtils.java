@@ -29,7 +29,7 @@ public class TestUtils {
 
     private static Logger logger = Logger.getLogger(TestUtils.class);
 
-    public static final String zookeeperConnect = "127.0.0.1:2182";
+    public static final String zookeeperConnect = "127.0.0.1:2181";
 
     public static Random random = new Random();
 
@@ -101,6 +101,7 @@ public class TestUtils {
         props.put("log.flush.interval.messages", "1");
         props.put("zookeeper.connect", zookeeperConnect);
         props.put("replica.socket.timeout.ms", "1500");
+        props.put("zk.connect",zookeeperConnect );
         return props;
     }
 

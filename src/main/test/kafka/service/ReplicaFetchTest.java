@@ -64,9 +64,16 @@ public class ReplicaFetchTest extends ZooKeeperTestHarness {
         Producer<String, String> producer = TestUtils.createProducer(TestUtils.getBrokerListStrFromConfigs(configs),
                 new StringEncoder(null),
                 new StringEncoder(null));
-        List<KeyedMessage<String,String>> messages = testMessageList1.stream().map(m -> new KeyedMessage(topic1, m, m)).collect(Collectors.toList());
-        List<KeyedMessage<String,String>> messages2 = testMessageList2.stream().map(m -> new KeyedMessage(topic1, m, m)).collect(Collectors.toList());
-        messages.addAll(messages2);
+        List<KeyedMessage<String,String>> messages = new ArrayList<>();
+        for(String str:testMessageList1){
+            messages.add(new KeyedMessage(topic1, str, str));
+        }
+        for(String str:testMessageList2){
+            messages.add(new KeyedMessage(topic1, str, str));
+        }
+       // List<KeyedMessage<String,String>> messages = testMessageList1.stream().map(m -> new KeyedMessage(topic1, m, m)).collect(Collectors.toList());
+       // List<KeyedMessage<String,String>> messages2 = testMessageList2.stream().map(m -> new KeyedMessage(topic1, m, m)).collect(Collectors.toList());
+      //  messages.addAll(messages2);
         producer.send(messages);
         producer.close();
         long startTime = System.currentTimeMillis();

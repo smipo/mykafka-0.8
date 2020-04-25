@@ -30,7 +30,7 @@ public class SocketServer {
     int recvBufferSize;
     int maxRequestSize = Integer.MAX_VALUE;
 
-    public SocketServer(int brokerId, String host, int maxQueuedRequests, int port, int numProcessorThreads,  int sendBufferSize, int recvBufferSize, int maxRequestSize) {
+    public SocketServer(int brokerId, String host, int port, int numProcessorThreads,int maxQueuedRequests,  int sendBufferSize, int recvBufferSize, int maxRequestSize) {
         this.brokerId = brokerId;
         this.host = host;
         this.maxQueuedRequests = maxQueuedRequests;
