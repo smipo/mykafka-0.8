@@ -6,6 +6,7 @@ import kafka.api.LeaderAndIsrResponse;
 import kafka.api.RequestOrResponse;
 import kafka.cluster.Broker;
 import kafka.common.ErrorMapping;
+import kafka.common.TopicExistsException;
 import kafka.controller.Callback;
 import kafka.controller.ControllerChannelManager;
 import kafka.controller.ControllerContext;
@@ -70,8 +71,12 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         String topic = "new-topic";
         int partitionId = 0;
 
+        try {
         // create topic with 1 partition, 2 replicas, one on each broker
-        CreateTopicCommand.createTopic(zkClient, topic, 1, 2, "0:1");
+            CreateTopicCommand.createTopic(zkClient, topic, 1, 2, "0:1");
+        } catch (TopicExistsException e){
+            // let it go, possibly another broker created this topic
+        }
 
         // wait until leader is elected
         Integer leader1 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500,null);

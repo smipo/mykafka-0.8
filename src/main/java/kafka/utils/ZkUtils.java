@@ -428,7 +428,11 @@ public class ZkUtils {
 
     public static Pair<String,Stat> readDataMaybeNull(ZkClient client, String path){
         Stat stat = new Stat();
-        return new Pair<>(client.readData(path, stat),stat);
+        try {
+            return new Pair<>(client.readData(path, stat),stat);
+        } catch (ZkNoNodeException e){
+            return new Pair<>(null, stat);
+        }
     }
 
     public static List<String>  getChildren(ZkClient client, String path){
