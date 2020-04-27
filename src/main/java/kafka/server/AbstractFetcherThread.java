@@ -48,7 +48,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
         this.maxWait = maxWait;
         this.minBytes = minBytes;
         simpleConsumer = new SimpleConsumer(sourceBroker.host(), sourceBroker.port(), socketTimeout, socketBufferSize, clientId);
-        brokerInfo = "host_%s-port_%s".format(sourceBroker.host(), sourceBroker.port());
+        brokerInfo = String.format("host_%s-port_%s",sourceBroker.host(), sourceBroker.port());
         metricId = new ClientIdAndBroker(clientId, brokerInfo);
 
         fetchRequestBuilder = new FetchRequest.FetchRequestBuilder().
@@ -107,11 +107,11 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
         Set<TopicAndPartition> partitionsWithError = new HashSet<>();
         FetchResponse response = null;
         try {
-            logger.info("issuing to broker %d of fetch request %s".format(sourceBroker.id()+"", fetchRequest));
+            logger.info(String.format("issuing to broker %d of fetch request %s",sourceBroker.id(), fetchRequest));
             response = simpleConsumer.fetch(fetchRequest);
         } catch (Throwable t){
                 if (isRunning.get()) {
-                    logger.warn("Error in fetch %s".format(fetchRequest.toString()), t);
+                    logger.warn(String.format("Error in fetch %s",fetchRequest.toString()), t);
                      synchronized(partitionMapLock) {
                         partitionsWithError.addAll(partitionMap.keySet());
                     }
@@ -148,22 +148,22 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
                                     logger.warn("Found invalid messages during fetch for partition [" + topic + "," + partitionId + "] offset " + currentOffset + " error " + ime.getMessage());
 
                             }catch (Throwable e){
-                                throw new KafkaException("error processing data for partition [%s,%d] offset %d"
-                                        .format(topic, partitionId, currentOffset), e);
+                                throw new KafkaException(String
+                                        .format("error processing data for partition [%s,%d] offset %d",topic, partitionId, currentOffset), e);
                             }
                         }else if(partitionData.error == ErrorMapping.OffsetOutOfRangeCode){
                             try {
                                 long newOffset = handleOffsetOutOfRange(topicAndPartition);
                                 partitionMap.put(topicAndPartition, newOffset);
-                                logger.warn("Current offset %d for partition [%s,%d] out of range; reset offset to %d"
-                                        .format(currentOffset+"", topic, partitionId, newOffset));
+                                logger.warn(String
+                                        .format("Current offset %d for partition [%s,%d] out of range; reset offset to %d",currentOffset, topic, partitionId, newOffset));
                             } catch (Throwable e){
-                                    logger.warn("Error getting offset for partition [%s,%d] to broker %d".format(topic, partitionId, sourceBroker.id()), e);
+                                    logger.warn(String.format("Error getting offset for partition [%s,%d] to broker %d",topic, partitionId, sourceBroker.id()), e);
                                     partitionsWithError .add(topicAndPartition);
                             }
                         }else{
                             if (isRunning.get()) {
-                                logger.warn("Error for partition [%s,%d] to broker %d:%s".format(topic, partitionId, sourceBroker.id()));
+                                logger.warn(String.format("Error for partition [%s,%d] to broker %d:%s",topic, partitionId, sourceBroker.id()));
                                 partitionsWithError.add(topicAndPartition);
                             }
                         }
@@ -175,7 +175,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
         }
 
         if(partitionsWithError.size() > 0) {
-            logger.debug("handling partitions with error for %s".format(partitionsWithError.toString()));
+            logger.debug(String.format("handling partitions with error for %s",partitionsWithError.toString()));
             handlePartitionsWithErrors(partitionsWithError);
         }
     }

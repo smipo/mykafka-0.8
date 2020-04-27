@@ -41,11 +41,9 @@ public class Replica {
         if (!isLocal()) {
             logEndOffsetValue.set(newLogEndOffset);
             logEndOffsetUpdateTimeMsValue.set(milliseconds);
-            logger.trace("Setting log end offset for replica %d for partition [%s,%d] to %d"
-                    .format(brokerId+"", topic, partitionId, logEndOffsetValue.get()));
+            logger.trace(String.format("Setting log end offset for replica %d for partition [%s,%d] to %d",brokerId, topic, partitionId, logEndOffsetValue.get()));
         } else
-            throw new KafkaException("Shouldn't set logEndOffset for replica %d partition [%s,%d] since it's local"
-                    .format(brokerId+"", topic, partitionId));
+            throw new KafkaException(String.format("Shouldn't set logEndOffset for replica %d partition [%s,%d] since it's local",brokerId, topic, partitionId));
 
     }
     public long logEndOffset() {
@@ -67,20 +65,17 @@ public class Replica {
 
     public void highWatermark_(long newHighWatermark) {
         if (isLocal()) {
-            logger.trace("Setting hw for replica %d partition [%s,%d] on broker %d to %d"
-                    .format(brokerId+"", topic, partitionId, brokerId, newHighWatermark));
+            logger.trace(String.format("Setting hw for replica %d partition [%s,%d] on broker %d to %d",brokerId, topic, partitionId, brokerId, newHighWatermark));
             highWatermarkValue.set(newHighWatermark);
         } else
-            throw new KafkaException("Unable to set highwatermark for replica %d partition [%s,%d] since it's not local"
-                    .format(brokerId+"", topic, partitionId));
+            throw new KafkaException(String.format("Unable to set highwatermark for replica %d partition [%s,%d] since it's not local",brokerId, topic, partitionId));
     }
 
     public long highWatermark(){
         if (isLocal())
             return highWatermarkValue.get();
         else
-            throw new KafkaException("Unable to get highwatermark for replica %d partition [%s,%d] since it's not local"
-                    .format(brokerId+"", topic, partitionId));
+            throw new KafkaException(String.format("Unable to get highwatermark for replica %d partition [%s,%d] since it's not local",brokerId, topic, partitionId));
     }
 
     @Override

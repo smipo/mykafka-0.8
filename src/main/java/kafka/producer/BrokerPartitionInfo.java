@@ -38,7 +38,7 @@ public class BrokerPartitionInfo {
      * sequence if no brokers are available.
      */
     public List<PartitionAndLeader> getBrokerPartitionInfo(String topic, int correlationId) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
-        logger.debug("Getting broker partition info for topic %s".format(topic));
+        logger.debug(String.format("Getting broker partition info for topic %s",topic));
         // check if the cache has metadata for this topic
         TopicMetadata topicMetadata = topicPartitionInfo.get(topic);
         TopicMetadata metadata = topicMetadata;
@@ -57,16 +57,16 @@ public class BrokerPartitionInfo {
             if(metadata.errorCode != ErrorMapping.NoError) {
                 throw new KafkaException(ErrorMapping.exceptionFor(metadata.errorCode) == null?"":ErrorMapping.exceptionFor(metadata.errorCode).getMessage());
             } else {
-                throw new KafkaException("Topic metadata %s has empty partition metadata and no error code".format(metadata.toString()));
+                throw new KafkaException(String.format("Topic metadata %s has empty partition metadata and no error code",metadata.toString()));
             }
         }
         List<PartitionAndLeader> res = new ArrayList<>();
         for(TopicMetadata.PartitionMetadata m : partitionMetadata){
             if(m.getLeader() == null){
-                logger.debug("Partition [%s,%d] does not have a leader yet".format(topic, m.partitionId));
+                logger.debug(String.format("Partition [%s,%d] does not have a leader yet",topic, m.partitionId));
                 res.add(new PartitionAndLeader(topic, m.partitionId, null));
             }else{
-                logger.debug("Partition [%s,%d] has leader %d".format(topic, m.partitionId, m.getLeader().id()));
+                logger.debug(String.format("Partition [%s,%d] has leader %d",topic, m.partitionId, m.getLeader().id()));
                 res.add(new PartitionAndLeader(topic, m.partitionId, m.getLeader().id()));
             }
         }
@@ -82,14 +82,14 @@ public class BrokerPartitionInfo {
         TopicMetadataResponse topicMetadataResponse = ClientUtils.fetchTopicMetadata(topics, brokers, producerConfig, correlationId);
         List<TopicMetadata> topicsMetadata = topicMetadataResponse.topicsMetadata;
         for(TopicMetadata tmd:topicsMetadata){
-            logger.trace("Metadata for topic %s is %s".format(tmd.topic, tmd));
+            logger.trace(String.format("Metadata for topic %s is %s",tmd.topic, tmd));
             if(tmd.errorCode == ErrorMapping.NoError) {
                 topicPartitionInfo.put(tmd.topic, tmd);
             } else
-                logger.warn("Error while fetching metadata [%s] for topic [%s]: %s ".format(tmd.toString(), tmd.topic, ErrorMapping.exceptionFor(tmd.errorCode).getClass().getName()));
+                logger.warn(String.format("Error while fetching metadata [%s] for topic [%s]: %s ",tmd.toString(), tmd.topic, ErrorMapping.exceptionFor(tmd.errorCode).getClass().getName()));
             for(TopicMetadata.PartitionMetadata pmd:tmd.partitionsMetadata){
                 if (pmd.errorCode != ErrorMapping.NoError && pmd.errorCode == ErrorMapping.LeaderNotAvailableCode) {
-                    logger.warn("Error while fetching metadata %s for topic partition [%s,%d]: [%s]".format(pmd.toString(), tmd.topic, pmd.partitionId,
+                    logger.warn(String.format("Error while fetching metadata %s for topic partition [%s,%d]: [%s]",pmd.toString(), tmd.topic, pmd.partitionId,
                             ErrorMapping.exceptionFor(pmd.errorCode).getClass().getName()));
                 } // any other error code (e.g. ReplicaNotAvailable) can be ignored since the producer does not need to access the replica and isr metadata
             }

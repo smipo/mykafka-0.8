@@ -154,8 +154,8 @@ public class KafkaServer {
                                 logger.info ("Controlled shutdown succeeded");
                             }
                             else {
-                                logger.info("Remaining partitions to move: %s".format(shutdownResponse.partitionsRemaining.toString()));
-                                logger.info("Error code from controller: %d".format(shutdownResponse.errorCode+""));
+                                logger.info(String.format("Remaining partitions to move: %s",shutdownResponse.partitionsRemaining.toString()));
+                                logger.info(String.format("Error code from controller: %d",shutdownResponse.errorCode));
                             }
                         }
                         catch (IOException ios){

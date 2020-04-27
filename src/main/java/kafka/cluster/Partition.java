@@ -125,9 +125,9 @@ public class Partition {
         synchronized(leaderIsrUpdateLock) {
             LeaderAndIsrRequest.LeaderAndIsr leaderAndIsr = leaderIsrAndControllerEpoch.leaderAndIsr;
             if (leaderEpoch >= leaderAndIsr.leaderEpoch){
-                logger.trace(("Broker %d discarded the become-leader request with correlation id %d from " +
-                        "controller %d epoch %d for partition [%s,%d] since current leader epoch %d is >= the request's leader epoch %d")
-                        .format(localBrokerId+"", correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch, topic,
+                logger.trace(String
+                        .format("Broker %d discarded the become-leader request with correlation id %d from " +
+                                        "controller %d epoch %d for partition [%s,%d] since current leader epoch %d is >= the request's leader epoch %d",localBrokerId, correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch, topic,
                                 partitionId, leaderEpoch, leaderAndIsr.leaderEpoch));
                 return false;
             }
@@ -166,9 +166,9 @@ public class Partition {
         synchronized(leaderIsrUpdateLock) {
             LeaderAndIsrRequest.LeaderAndIsr leaderAndIsr = leaderIsrAndControllerEpoch.leaderAndIsr;
             if (leaderEpoch >= leaderAndIsr.leaderEpoch) {
-                logger.trace(("Broker %d discarded the become-follower request with correlation id %d from " +
-                        "controller %d epoch %d for partition [%s,%d] since current leader epoch %d is >= the request's leader epoch %d")
-                        .format(localBrokerId+"", correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch, topic,
+                logger.trace(String
+                        .format("Broker %d discarded the become-follower request with correlation id %d from " +
+                                        "controller %d epoch %d for partition [%s,%d] since current leader epoch %d is >= the request's leader epoch %d",localBrokerId, correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch, topic,
                                 partitionId, leaderEpoch, leaderAndIsr.leaderEpoch));
                 return false;
             }
@@ -202,14 +202,14 @@ public class Partition {
                     replicaFetcherManager.addFetcher(topic, partitionId, localReplica.logEndOffset(), leaderBroker);
                 }
                 else {
-                    logger.trace(("Broker %d ignored the become-follower state change with correlation id %d from " +
-                            "controller %d epoch %d since it is shutting down")
-                            .format(localBrokerId+"", correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch));
+                    logger.trace(String
+                            .format("Broker %d ignored the become-follower state change with correlation id %d from " +
+                                    "controller %d epoch %d since it is shutting down",localBrokerId, correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch));
                 }
             }else{
-                logger.error(("Broker %d aborted the become-follower state change with correlation id %d from " +
-                        "controller %d epoch %d for partition [%s,%d] new leader %d")
-                        .format(localBrokerId+"", correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch,
+                logger.error(String
+                        .format("Broker %d aborted the become-follower state change with correlation id %d from " +
+                                        "controller %d epoch %d for partition [%s,%d] new leader %d",localBrokerId, correlationId, controllerId, leaderIsrAndControllerEpoch.controllerEpoch,
                                 topic, partitionId, newLeaderBrokerId));
             }
             return true;
@@ -218,7 +218,7 @@ public class Partition {
 
     public void updateLeaderHWAndMaybeExpandIsr(int replicaId,long offset) throws IOException {
          synchronized(leaderIsrUpdateLock) {
-            logger.debug("Recording follower %d position %d for partition [%s,%d].".format(replicaId+"", offset, topic, partitionId));
+            logger.debug(String.format("Recording follower %d position %d for partition [%s,%d].",replicaId, offset, topic, partitionId));
             getOrCreateReplica(replicaId).logEndOffset(offset);
 
             // check if this replica needs to be added to the ISR
@@ -229,8 +229,8 @@ public class Partition {
                  if (!inSyncReplicas.contains(replica) && replica.logEndOffset() >= leaderHW) {
                      // expand ISR
                      inSyncReplicas.add(replica);
-                     logger.info("Expanding ISR for partition [%s,%d] from %s to %s"
-                             .format(topic, partitionId, inSyncReplicas.toString(), inSyncReplicas.toString()));
+                     logger.info(String
+                             .format("Expanding ISR for partition [%s,%d] from %s to %s",topic, partitionId, inSyncReplicas.toString(), inSyncReplicas.toString()));
                      // update ISR in ZK and cache
                      updateIsr(inSyncReplicas);
                  }
@@ -251,7 +251,7 @@ public class Partition {
                     else
                         numAcks++; /* also count the local (leader) replica */
                 }
-               logger.trace("%d/%d acks satisfied for %s-%d".format(numAcks+"", requiredAcks, topic, partitionId));
+               logger.trace(String.format("%d/%d acks satisfied for %s-%d",numAcks, requiredAcks, topic, partitionId));
                 if ((requiredAcks < 0 && numAcks >= inSyncReplicas.size()) ||
                         (requiredAcks > 0 && numAcks >= requiredAcks)) {
                     /*
@@ -283,11 +283,11 @@ public class Partition {
         long oldHighWatermark = leaderReplica.highWatermark();
         if(newHighWatermark > oldHighWatermark) {
             leaderReplica.highWatermark_(newHighWatermark) ;
-            logger.debug("Highwatermark for partition [%s,%d] updated to %d".format(topic, partitionId, newHighWatermark));
+            logger.debug(String.format("Highwatermark for partition [%s,%d] updated to %d",topic, partitionId, newHighWatermark));
         }
         else
-            logger.debug("Old hw for partition [%s,%d] is %d. New hw is %d. All leo's are %s"
-                    .format(topic, partitionId, oldHighWatermark, newHighWatermark, allLogEndOffsets));
+            logger.debug(String
+                    .format("Old hw for partition [%s,%d] is %d. New hw is %d. All leo's are %s",topic, partitionId, oldHighWatermark, newHighWatermark, allLogEndOffsets));
     }
 
     public void maybeShrinkIsr(long replicaMaxLagTimeMs, long replicaMaxLagMessages) {
@@ -298,7 +298,7 @@ public class Partition {
                 if(outOfSyncReplicas.size() > 0) {
                     inSyncReplicas.remove(outOfSyncReplicas);
                     assert(inSyncReplicas.size() > 0);
-                    logger.info("Shrinking ISR for partition [%s,%d] from %s to %s".format(topic, partitionId,
+                    logger.info(String.format("Shrinking ISR for partition [%s,%d] from %s to %s",topic, partitionId,
                             inSyncReplicas.toString(), inSyncReplicas.toString()));
                     // update ISR in zk and in cache
                     updateIsr(inSyncReplicas);
@@ -322,15 +322,15 @@ public class Partition {
         // Case 1 above
         Set<Replica> possiblyStuckReplicas = inSyncReplicas.stream().filter(r -> r.logEndOffset() < leaderLogEndOffset).collect(Collectors.toSet());
         if(possiblyStuckReplicas.size() > 0)
-            logger.debug("Possibly stuck replicas for partition [%s,%d] are %s".format(topic, partitionId,
+            logger.debug(String.format("Possibly stuck replicas for partition [%s,%d] are %s",topic, partitionId,
                     possiblyStuckReplicas.toString()));
         Set<Replica> stuckReplicas = possiblyStuckReplicas.stream().filter(r -> r.logEndOffsetUpdateTimeMs() < (milliseconds - keepInSyncTimeMs)).collect(Collectors.toSet());
         if(stuckReplicas.size() > 0)
-            logger.debug("Stuck replicas for partition [%s,%d] are %s".format(topic, partitionId, stuckReplicas.toString()));
+            logger.debug(String.format("Stuck replicas for partition [%s,%d] are %s",topic, partitionId, stuckReplicas.toString()));
         // Case 2 above
         Set<Replica> slowReplicas = inSyncReplicas.stream().filter(r -> r.logEndOffset() >= 0 && (leaderLogEndOffset - r.logEndOffset()) > keepInSyncMessages).collect(Collectors.toSet());
         if(slowReplicas.size() > 0)
-            logger.debug("Slow replicas for partition [%s,%d] are %s".format(topic, partitionId, slowReplicas.toString()));
+            logger.debug(String.format("Slow replicas for partition [%s,%d] are %s",topic, partitionId, slowReplicas.toString()));
         stuckReplicas.addAll(slowReplicas);
         return stuckReplicas;
     }
@@ -339,8 +339,8 @@ public class Partition {
         synchronized(leaderIsrUpdateLock) {
             Replica leaderReplicaOpt = leaderReplicaIfLocal();
             if(leaderReplicaOpt == null){
-                throw new NotLeaderForPartitionException("Leader not local for partition [%s,%d] on broker %d"
-                        .format(topic, partitionId, localBrokerId));
+                throw new NotLeaderForPartitionException(String
+                        .format("Leader not local for partition [%s,%d] on broker %d",topic, partitionId, localBrokerId));
             }
             Log log = leaderReplicaOpt.log;
             Pair<Long,Long> pair = log.append(messages,  true);
@@ -351,7 +351,7 @@ public class Partition {
     }
 
     private void updateIsr(Set<Replica> newIsr) {
-        logger.debug("Updated ISR for partition [%s,%d] to %s".format(topic, partitionId, newIsr.toString()));
+        logger.debug(String.format("Updated ISR for partition [%s,%d] to %s",topic, partitionId, newIsr.toString()));
         LeaderAndIsrRequest.LeaderAndIsr newLeaderAndIsr = new LeaderAndIsrRequest.LeaderAndIsr(localBrokerId, leaderEpoch, newIsr.stream().map(r -> r.brokerId).collect(Collectors.toList()), zkVersion);
         // use the epoch of the controller that made the leadership decision, instead of the current controller epoch
         Pair<Boolean,Integer>  pair = ZkUtils.conditionalUpdatePersistentPath(zkClient,
@@ -360,9 +360,9 @@ public class Partition {
         if (pair.getKey()){
             inSyncReplicas = newIsr;
             zkVersion = pair.getValue();
-            logger.trace("ISR updated to [%s] and zkVersion updated to [%d]".format(newIsr.toString(), zkVersion));
+            logger.trace(String.format("ISR updated to [%s] and zkVersion updated to [%d]",newIsr.toString(), zkVersion));
         } else {
-            logger.info("Cached zkVersion [%d] not equal to that in zookeeper, skip updating ISR".format(zkVersion+""));
+            logger.info(String.format("Cached zkVersion [%d] not equal to that in zookeeper, skip updating ISR",zkVersion));
         }
     }
 

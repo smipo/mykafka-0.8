@@ -30,7 +30,7 @@ public class OfflinePartitionLeaderSelector implements PartitionLeaderSelector {
     public Pair<LeaderAndIsrRequest.LeaderAndIsr, List<Integer>> selectLeader(TopicAndPartition topicAndPartition, LeaderAndIsrRequest.LeaderAndIsr currentLeaderAndIsr){
         List<Integer> assignedReplicas = controllerContext.partitionReplicaAssignment.get(topicAndPartition);
         if(assignedReplicas == null){
-            throw new NoReplicaOnlineException("Partition %s doesn't have".format(topicAndPartition.toString()) + "replicas assigned to it");
+            throw new NoReplicaOnlineException(String.format("Partition %s doesn't have",topicAndPartition.toString()) + "replicas assigned to it");
         }
         List<Integer> liveAssignedReplicasToThisPartition = assignedReplicas.stream().filter(r -> controllerContext.liveBrokerIds().contains(r)).collect(Collectors.toList());
         List<Integer> liveBrokersInIsr = currentLeaderAndIsr.isr.stream().filter(r -> controllerContext.liveBrokerIds().contains(r)).collect(Collectors.toList());
@@ -38,27 +38,27 @@ public class OfflinePartitionLeaderSelector implements PartitionLeaderSelector {
         int currentLeaderIsrZkPathVersion = currentLeaderAndIsr.zkVersion;
         LeaderAndIsrRequest.LeaderAndIsr newLeaderAndIsr ;
         if(liveBrokersInIsr.isEmpty()){
-            logger.debug("No broker in ISR is alive for %s. Pick the leader from the alive assigned replicas: %s"
-                    .format(topicAndPartition.toString(), liveAssignedReplicasToThisPartition.toString()));
+            logger.debug(String
+                    .format("No broker in ISR is alive for %s. Pick the leader from the alive assigned replicas: %s",topicAndPartition.toString(), liveAssignedReplicasToThisPartition.toString()));
             if(liveAssignedReplicasToThisPartition.isEmpty()){
-                throw new NoReplicaOnlineException(("No replica for partition " +
-                        "%s is alive. Live brokers are: [%s],".format(topicAndPartition.toString(), controllerContext.liveBrokerIds().toString())) +
-                        " Assigned replicas are: [%s]".format(assignedReplicas.toString()));
+                throw new NoReplicaOnlineException((String.format("No replica for partition " +
+                        "%s is alive. Live brokers are: [%s],",topicAndPartition.toString(), controllerContext.liveBrokerIds().toString())) +
+                        String.format(" Assigned replicas are: [%s]",assignedReplicas.toString()));
             }else{
                 int newLeader = liveAssignedReplicasToThisPartition.get(0);
-                logger.warn("No broker in ISR is alive for %s. Elect leader %d from live brokers %s. There's potential data loss."
-                        .format(topicAndPartition.toString(), newLeader, liveAssignedReplicasToThisPartition.toString()));
+                logger.warn(String
+                        .format("No broker in ISR is alive for %s. Elect leader %d from live brokers %s. There's potential data loss.",topicAndPartition.toString(), newLeader, liveAssignedReplicasToThisPartition.toString()));
                 List<Integer> isr = new ArrayList<>();
                 isr.add(newLeader);
                 newLeaderAndIsr = new LeaderAndIsrRequest.LeaderAndIsr(newLeader, currentLeaderEpoch + 1, isr, currentLeaderIsrZkPathVersion + 1);
             }
         }else{
             int newLeader = liveBrokersInIsr.get(0);
-            logger.debug("Some broker in ISR is alive for %s. Select %d from ISR %s to be the leader."
-                    .format(topicAndPartition.toString(), newLeader, liveBrokersInIsr.toString()));
+            logger.debug(String
+                    .format("Some broker in ISR is alive for %s. Select %d from ISR %s to be the leader.",topicAndPartition.toString(), newLeader, liveBrokersInIsr.toString()));
             newLeaderAndIsr = new LeaderAndIsrRequest.LeaderAndIsr(newLeader, currentLeaderEpoch + 1, liveBrokersInIsr, currentLeaderIsrZkPathVersion + 1);
         }
-        logger.info("Selected new leader and ISR %s for offline partition %s".format(newLeaderAndIsr.toString(), topicAndPartition.toString()));
+        logger.info(String.format("Selected new leader and ISR %s for offline partition %s",newLeaderAndIsr.toString(), topicAndPartition.toString()));
         return new Pair<>(newLeaderAndIsr, liveAssignedReplicasToThisPartition);
     }
 }

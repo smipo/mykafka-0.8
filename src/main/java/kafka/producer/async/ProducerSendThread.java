@@ -67,8 +67,8 @@ public class ProducerSendThread<K,V> extends Thread{
             // returns a null object
             boolean expired = currentQueueItem == null;
             if(currentQueueItem != null) {
-                logger.trace("Dequeued item for topic %s, partition key: %s, data: %s"
-                        .format(currentQueueItem.topic, currentQueueItem.key, currentQueueItem.message));
+                logger.trace(String
+                        .format("Dequeued item for topic %s, partition key: %s, data: %s",currentQueueItem.topic, currentQueueItem.key, currentQueueItem.message));
                 events.add(currentQueueItem);
             }
 
@@ -89,8 +89,8 @@ public class ProducerSendThread<K,V> extends Thread{
         // send the last batch of events
         tryToHandle(events);
         if(queue.size() > 0)
-            throw new IllegalQueueStateException("Invalid queue state! After queue shutdown, %d remaining items in the queue"
-                    .format(queue.size()+""));
+            throw new IllegalQueueStateException(String
+                    .format("Invalid queue state! After queue shutdown, %d remaining items in the queue",queue.size()));
     }
 
     public void tryToHandle(List<KeyedMessage<K,V>> events) {

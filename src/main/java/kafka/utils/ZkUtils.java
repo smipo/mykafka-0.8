@@ -113,7 +113,7 @@ public class ZkUtils {
         List<Integer> isr = ( List<Integer>)leaderIsrAndEpochInfo.get("isr");
         int controllerEpoch = Integer.parseInt(leaderIsrAndEpochInfo.get("controller_epoch").toString());
         int zkPathVersion = stat.getVersion();
-        logger.debug("Leader %d, Epoch %d, Isr %s, Zk path version %d for partition [%s,%d]".format(leader + "", epoch,
+        logger.debug(String.format("Leader %d, Epoch %d, Isr %s, Zk path version %d for partition [%s,%d]",leader, epoch,
                 isr , zkPathVersion, topic, partition));
         return new LeaderIsrAndControllerEpoch(new LeaderAndIsrRequest.LeaderAndIsr(leader, epoch, isr, zkPathVersion), controllerEpoch);
     }
@@ -137,12 +137,12 @@ public class ZkUtils {
     public static int getEpochForPartition(ZkClient zkClient,String topic, int partition) throws IOException{
         String leaderAndIsrOpt = readDataMaybeNull(zkClient, getTopicPartitionLeaderAndIsrPath(topic, partition)).getKey();
         if(leaderAndIsrOpt == null){
-            throw new NoEpochForPartitionException("No epoch, ISR path for partition [%s,%d] is empty"
-                    .format(topic, partition));
+            throw new NoEpochForPartitionException(String
+                    .format("No epoch, ISR path for partition [%s,%d] is empty",topic, partition));
         }
         Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(leaderAndIsrOpt);
         String res = leaderIsrAndEpochInfo.get("leader_epoch") == null?null:leaderIsrAndEpochInfo.get("leader_epoch").toString();
-        if(res == null) throw new NoEpochForPartitionException("No epoch, leaderAndISR data for partition [%s,%d] is invalid".format(topic, partition));
+        if(res == null) throw new NoEpochForPartitionException(String.format("No epoch, leaderAndISR data for partition [%s,%d] is invalid",topic, partition));
         return Integer.parseInt(res);
     }
 
@@ -181,7 +181,7 @@ public class ZkUtils {
 
     public static boolean isPartitionOnBroker(ZkClient zkClient,String topic, int partition,int  brokerId)throws IOException{
         List<Integer> replicas = getReplicasForPartition(zkClient, topic, partition);
-        logger.debug("The list of replicas for partition [%s,%d] is %s".format(topic, partition, replicas));
+        logger.debug(String.format("The list of replicas for partition [%s,%d] is %s",topic, partition, replicas));
         return replicas.contains(String.valueOf(brokerId));
     }
 
@@ -210,7 +210,7 @@ public class ZkUtils {
                     + "else you have shutdown this broker and restarted it faster than the zookeeper "
                     + "timeout so it appears to be re-registering.");
         }
-        logger.info("Registered broker %d at path %s with address %s:%d.".format(String.valueOf(id), brokerIdPath, host, port));
+        logger.info(String.format("Registered broker %d at path %s with address %s:%d.",id, brokerIdPath, host, port));
     }
 
     /**
@@ -238,7 +238,7 @@ public class ZkUtils {
                 if(r != null) {
                     Broker b = (Broker)expectedCallerData;
                     if (Broker.createBroker(b.id(), r).equals(b)){
-                        logger.info("I wrote this conflicted ephemeral node [%s] at %s a while back in a different session, ".format(data, path)
+                        logger.info(String.format("I wrote this conflicted ephemeral node [%s] at %s a while back in a different session, ",data, path)
                                 + "hence I will backoff for this node to be deleted by Zookeeper and retry");
 
                         Thread.sleep(backoffTime);
@@ -261,7 +261,7 @@ public class ZkUtils {
                 String r = ZkUtils.readDataMaybeNull(zkClient, path).getKey();
                 if(r != null) {
                     if (KafkaController.parseControllerId(r) == leaderId){
-                        logger.info("I wrote this conflicted ephemeral node [%s] at %s a while back in a different session, ".format(data, path)
+                        logger.info(String.format("I wrote this conflicted ephemeral node [%s] at %s a while back in a different session, ",data, path)
                                 + "hence I will backoff for this node to be deleted by Zookeeper and retry");
 
                         Thread.sleep(backoffTime);
@@ -527,7 +527,7 @@ public class ZkUtils {
                     Map<String, List<Integer>> replicaMap = (Map<String, List<Integer>>)obj;
                     for(Map.Entry<String, List<Integer>> entry : replicaMap.entrySet()){
                         ret.put(new TopicAndPartition(topic, Integer.parseInt(entry.getKey())), entry.getValue());
-                        logger.debug("Replicas assigned to topic [%s], partition [%s] are [%s]".format(topic, entry.getKey(), entry.getValue().toString()));
+                        logger.debug(String.format("Replicas assigned to topic [%s], partition [%s] are [%s]",topic, entry.getKey(), entry.getValue().toString()));
 
                     }
                 }
@@ -577,7 +577,7 @@ public class ZkUtils {
             Map<String, List<Integer>> m1 = (Map<String, List<Integer>>)obj;
             m1.forEach((k,v)->valueMap.put(Integer.parseInt(k),v));
             ret.put(topic,valueMap);
-            logger.debug("Partition map for /brokers/topics/%s is %s".format(topic, ret.toString()));
+            logger.debug(String.format("Partition map for /brokers/topics/%s is %s",topic, ret.toString()));
         }
         return ret;
     }
@@ -603,7 +603,7 @@ public class ZkUtils {
             // { replica id -> partition 1, partition 2...
             List<Pair<String,Integer>> partitionsAssignedToThisBroker = getPartitionsAssignedToBroker(zkClient, topics, brokerId);
             if(partitionsAssignedToThisBroker.size() == 0)
-                logger.info("No state transitions triggered since no partitions are assigned to brokers %s".format(brokerIds.toString()));
+                logger.info(String.format("No state transitions triggered since no partitions are assigned to brokers %s",brokerIds.toString()));
             for(Pair<String,Integer> pair:partitionsAssignedToThisBroker){
                 res.add(new KafkaController.PartitionAndReplica(pair.getKey(), pair.getValue(), brokerId));
             }
@@ -618,13 +618,13 @@ public class ZkUtils {
     public static Pair<Boolean,Integer> conditionalUpdatePersistentPathIfExists(ZkClient client,String path,String data,int expectVersion){
         try {
             Stat stat = client.writeDataReturnStat(path, data, expectVersion);
-            logger.debug("Conditional update of path %s with value %s and expected version %d succeeded, returning the new version: %d"
-                    .format(path, data, expectVersion, stat.getVersion()));
+            logger.debug(String
+                    .format("Conditional update of path %s with value %s and expected version %d succeeded, returning the new version: %d",path, data, expectVersion, stat.getVersion()));
             return new Pair(true, stat.getVersion());
         } catch(ZkNoNodeException e) {
             throw e;
         }catch(Exception e1) {
-            logger.error("Conditional update of path %s with data %s and expected version %d failed due to %s".format(path, data,
+            logger.error(String.format("Conditional update of path %s with data %s and expected version %d failed due to %s",path, data,
                     expectVersion, e1.getMessage()));
             return new Pair(false, -1);
         }
@@ -713,11 +713,11 @@ public class ZkUtils {
     public static Pair<Boolean,Integer> conditionalUpdatePersistentPath(ZkClient client, String path, String data,int expectVersion) {
         try {
             Stat stat = client.writeDataReturnStat(path, data, expectVersion);
-            logger.debug("Conditional update of path %s with value %s and expected version %d succeeded, returning the new version: %d"
-                    .format(path, data, expectVersion, stat.getVersion()));
+            logger.debug(String
+                    .format("Conditional update of path %s with value %s and expected version %d succeeded, returning the new version: %d",path, data, expectVersion, stat.getVersion()));
             return  new Pair<>(true, stat.getVersion());
         } catch (Exception e){
-            logger.error("Conditional update of path %s with data %s and expected version %d failed due to %s".format(path, data,
+            logger.error(String.format("Conditional update of path %s with data %s and expected version %d failed due to %s",path, data,
                     expectVersion, e.getMessage()));
             return  new Pair<>(false, -1);
         }
@@ -745,15 +745,15 @@ public class ZkUtils {
         String zkPath = ZkUtils.ReassignPartitionsPath;
         if(partitionsToBeReassigned.size() == 0){
             deletePath(zkClient, zkPath);
-            logger.info("No more partitions need to be reassigned. Deleting zk path %s".format(zkPath));
+            logger.info(String.format("No more partitions need to be reassigned. Deleting zk path %s",zkPath));
         }else{
             String jsonData = getPartitionReassignmentZkData(partitionsToBeReassigned);
             try {
                 updatePersistentPath(zkClient, zkPath, jsonData);
-                logger.info("Updated partition reassignment path with %s".format(jsonData));
+                logger.info(String.format("Updated partition reassignment path with %s",jsonData));
             } catch (ZkNoNodeException nne){
                 createPersistentPath(zkClient, zkPath, jsonData);
-                logger.debug("Created path %s with %s for partition reassignment".format(zkPath, jsonData));
+                logger.debug(String.format("Created path %s with %s for partition reassignment",zkPath, jsonData));
             }catch (Throwable e2){
                 throw new AdministrationException(e2.toString());
             }
@@ -874,13 +874,13 @@ public class ZkUtils {
             try{
                 if(t == topic && p == partition){
                     if(oldLeaderOpt == null){
-                        logger.trace("In leader existence listener on partition [%s, %d], leader has been created".format(topic, partition));
+                        logger.trace(String.format("In leader existence listener on partition [%s, %d], leader has been created",topic, partition));
                         leaderExistsOrChanged.signal();
                     }
                     else {
                         Integer newLeaderOpt = ZkUtils.getLeaderForPartition(zkClient, t, p);
                         if(newLeaderOpt!=null && newLeaderOpt.intValue() != oldLeaderOpt.intValue()){
-                            logger.trace("In leader change listener on partition [%s, %d], leader has been moved from %d to %d".format(topic, partition, oldLeaderOpt, newLeaderOpt));
+                            logger.trace(String.format("In leader change listener on partition [%s, %d], leader has been moved from %d to %d",topic, partition, oldLeaderOpt, newLeaderOpt));
                             leaderExistsOrChanged.signal();
                         }
                     }

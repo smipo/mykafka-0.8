@@ -70,7 +70,7 @@ public class ZookeeperTopicEventWatcher {
                 try {
                     if (zkClient != null) {
                         List<String> latestTopics = zkClient.getChildren(ZkUtils.BrokerTopicsPath);
-                        logger.debug("all topics: %s".format(latestTopics.toString()));
+                        logger.debug(String.format("all topics: %s",latestTopics.toString()));
                         eventHandler.handleTopicEvent(latestTopics);
                     }
                 } catch (Exception e){

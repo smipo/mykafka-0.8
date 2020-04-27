@@ -78,9 +78,9 @@ public class AdminUtils {
                 logger.info("Topic update " + jsonPartitionData);
                 ZkUtils.updatePersistentPath(zkClient, zkPath, jsonPartitionData);
             }
-            logger.debug("Updated path %s with %s for replica assignment".format(zkPath, jsonPartitionData));
+            logger.debug(String.format("Updated path %s with %s for replica assignment",zkPath, jsonPartitionData));
         } catch(ZkNodeExistsException e) {
-             throw new TopicExistsException("topic %s already exists".format(topic));
+             throw new TopicExistsException(String.format("topic %s already exists",topic));
         }catch (Throwable e2){
             throw new AdministrationException(e2.toString());
         }

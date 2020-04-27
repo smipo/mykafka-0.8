@@ -130,12 +130,12 @@ public class VerifiableProperties {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 if(Integer.parseInt(value) <= 0)
-                    throw new IllegalArgumentException("Invalid entry '%s' = '%s' for property '%s'".format(key, value, name));
+                    throw new IllegalArgumentException(String.format("Invalid entry '%s' = '%s' for property '%s'",key, value, name));
 
             }
             return m;
         } catch (Exception e){
-            throw new IllegalArgumentException("Error parsing configuration property '%s': %s".format(name, e.getMessage()));
+            throw new IllegalArgumentException(String.format("Error parsing configuration property '%s': %s",name, e.getMessage()));
         }
     }
     public void verify() {
@@ -144,9 +144,9 @@ public class VerifiableProperties {
         while (specifiedProperties.hasMoreElements()) {
             String key = specifiedProperties.nextElement().toString();
             if (!referenceSet.contains(key))
-                logger.warn("Property %s is not valid".format(key));
+                logger.warn(String.format("Property %s is not valid",key));
             else
-                logger.info("Property %s is overridden to %s".format(key, props.getProperty(key)));
+                logger.info(String.format("Property %s is overridden to %s",key, props.getProperty(key)));
         }
     }
 

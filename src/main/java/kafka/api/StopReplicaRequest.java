@@ -32,7 +32,7 @@ public class StopReplicaRequest  extends RequestOrResponse{
         }else if(d == 0){
             deletePartitions = false;
         }else{
-            throw new InvalidRequestException("Invalid byte %d in delete partitions field. (Assuming false.)".format(d + ""));
+            throw new InvalidRequestException(String.format("Invalid byte %d in delete partitions field. (Assuming false.)",d));
         }
         int topicPartitionPairCount = buffer.getInt();
         Set<Pair<String, Integer>> topicPartitionPairSet = new HashSet<>();

@@ -84,10 +84,10 @@ public class ZookeeperLeaderElector implements LeaderElector{
                 leaderId = -1;
             }
             if (leaderId != -1)
-                logger.debug("Broker %d was elected as leader instead of broker %d".format(leaderId + "", brokerId));
+                logger.debug(String.format("Broker %d was elected as leader instead of broker %d",leaderId , brokerId));
 
         }catch (Throwable e2){
-            logger.error("Error while electing or becoming leader on broker %d".format(brokerId + ""), e2);
+            logger.error(String.format("Error while electing or becoming leader on broker %d",brokerId), e2);
             leaderId = -1;
         }
 
@@ -107,14 +107,14 @@ public class ZookeeperLeaderElector implements LeaderElector{
         public void handleDataChange(String dataPath, Object data) throws Exception{
             synchronized(controllerContext.controllerLock) {
                 leaderId = KafkaController.parseControllerId(data.toString());
-                logger.info("New leader is %d".format(leaderId + ""));
+                logger.info(String.format("New leader is %d",leaderId));
             }
         }
 
         public void handleDataDeleted(String dataPath) throws Exception{
             synchronized(controllerContext.controllerLock) {
-                logger.debug("%s leader change listener fired for path %s to handle data deleted: trying to elect as a leader"
-                        .format(brokerId + "", dataPath));
+                logger.debug(String
+                        .format("%s leader change listener fired for path %s to handle data deleted: trying to elect as a leader",brokerId, dataPath));
                 elect();
             }
         }

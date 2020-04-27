@@ -39,7 +39,7 @@ public class SimpleConsumer {
         this.clientId = clientId;
 
         blockingChannel = new BlockingChannel(host, port, bufferSize, BlockingChannel.UseDefaultBufferSize, soTimeout);
-        brokerInfo = "host_%s-port_%s".format(host, port);
+        brokerInfo = String.format("host_%s-port_%s",host, port);
     }
 
     private Object lock = new Object();
@@ -81,7 +81,7 @@ public class SimpleConsumer {
                 blockingChannel.send(request);
                 response = blockingChannel.receive();
             } catch(IOException e) {
-                    logger.info("Reconnect due to socket error: %s".format(e.getMessage()));
+                    logger.info(String.format("Reconnect due to socket error: %s",e.getMessage()));
                     // retry once
                     try {
                         reconnect();

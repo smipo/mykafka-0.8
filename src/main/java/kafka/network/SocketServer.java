@@ -214,9 +214,9 @@ public class SocketServer {
             serverChannel.configureBlocking(false);
             try {
                 serverChannel.socket().bind(socketAddress);
-                logger.info("Awaiting socket connections on %s:%d.".format(socketAddress.getHostName(), port));
+                logger.info(String.format("Awaiting socket connections on %s:%d.",socketAddress.getHostName(), port));
             } catch (SocketException e){
-                    throw new KafkaException("Socket server failed to bind to %s:%d: %s.".format(socketAddress.getHostName(), port, e.getMessage()), e);
+                    throw new KafkaException(String.format("Socket server failed to bind to %s:%d: %s.",socketAddress.getHostName(), port, e.getMessage()), e);
             }
             return serverChannel;
         }
@@ -286,10 +286,10 @@ public class SocketServer {
                                 else
                                     throw new IllegalStateException("Unrecognized key state for processor thread.");
                             } catch (EOFException e){
-                                logger.info("Closing socket connection to %s.".format(channelFor(key).socket().getInetAddress().toString()));
+                                logger.info(String.format("Closing socket connection to %s.",channelFor(key).socket().getInetAddress().toString()));
                                 close(key);
                             }catch (InvalidRequestException e){
-                                logger.info("Closing socket connection to %s due to invalid request: %s".format(channelFor(key).socket().getInetAddress().toString(), e.getMessage()));
+                                logger.info(String.format("Closing socket connection to %s due to invalid request: %s",channelFor(key).socket().getInetAddress().toString(), e.getMessage()));
                                 close(key);
                             }catch (Throwable e){
                                 logger.error("Closing socket for " + channelFor(key).socket().getInetAddress() + " because of error", e);

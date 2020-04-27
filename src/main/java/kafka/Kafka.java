@@ -14,7 +14,7 @@ public class Kafka {
 
     public static void main(String[] args) {
         if (args.length != 1) {
-            logger.error("USAGE: java [options] %s server.properties".format(KafkaServer.class.getSimpleName()));
+            logger.error(String.format("USAGE: java [options] %s server.properties",KafkaServer.class.getSimpleName()));
             System.exit(1);
         }
         try {

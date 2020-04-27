@@ -25,7 +25,7 @@ public class CreateTopicCommand {
                 AdminUtils.assignReplicasToBrokers(brokerList, numPartitions, replicationFactor,-1,-1)
                 :
                 getManualReplicaAssignment(replicaAssignmentStr, brokerList);
-        logger.debug("Replica assignment list for %s is %s".format(topic, partitionReplicaAssignment));
+        logger.debug(String.format("Replica assignment list for %s is %s",topic, partitionReplicaAssignment));
         AdminUtils.createOrUpdateTopicPartitionAssignmentPathInZK(topic, partitionReplicaAssignment, zkClient,false);
     }
 

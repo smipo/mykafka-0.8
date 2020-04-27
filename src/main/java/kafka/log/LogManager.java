@@ -146,7 +146,7 @@ public class LogManager {
                                 config.brokerId);
                         Log previous = this.logs.put(topicPartition, log);
                         if(previous != null)
-                            throw new IllegalArgumentException("Duplicate log directories found: %s, %s!".format(log.dir().getAbsolutePath(), previous.dir().getAbsolutePath()));
+                            throw new IllegalArgumentException(String.format("Duplicate log directories found: %s, %s!",log.dir().getAbsolutePath(), previous.dir().getAbsolutePath()));
                     }
                 }
             }
@@ -233,7 +233,7 @@ public class LogManager {
                     config.logIndexSizeMaxBytes,
                     config.logIndexIntervalBytes,
                     config.brokerId);
-            logger.info("Created log for partition [%s,%d] in %s.".format(topicAndPartition.topic(), topicAndPartition.partition(), dataDir.getAbsolutePath()));
+            logger.info(String.format("Created log for partition [%s,%d] in %s.",topicAndPartition.topic(), topicAndPartition.partition(), dataDir.getAbsolutePath()));
             logs.put(topicAndPartition, log);
             return log;
         }

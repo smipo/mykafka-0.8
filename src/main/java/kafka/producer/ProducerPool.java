@@ -58,7 +58,7 @@ public class ProducerPool {
         synchronized (lock){
             SyncProducer producer = syncProducers.get(brokerId);
             if(producer == null){
-                throw new UnavailableProducerException("Sync producer for broker id %d does not exist".format(brokerId+""));
+                throw new UnavailableProducerException(String.format("Sync producer for broker id %d does not exist",brokerId));
             }
             return producer;
         }

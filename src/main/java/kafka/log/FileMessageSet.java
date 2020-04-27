@@ -47,7 +47,7 @@ public class FileMessageSet extends MessageSet {
         _size = new AtomicInteger((int)(Math.min(channel.size(), limit) - start));
 
         if (initChannelPositionToEnd) {
-            logger.debug("Creating or reloading log segment %s".format(file.getAbsolutePath()));
+            logger.debug(String.format("Creating or reloading log segment %s",file.getAbsolutePath()));
             /* set the file position to the last byte in the file */
             channel.position(channel.size());
         }
@@ -88,8 +88,8 @@ public class FileMessageSet extends MessageSet {
         // Ensure that the underlying size has not changed.
         int newSize = Math.min((int)channel.size(), limit) - start;
         if (newSize < _size.get()) {
-            throw new KafkaException("Size of FileMessageSet %s has been truncated during write: old size %d, new size %d"
-                    .format(file.getAbsolutePath(), _size.get(), newSize));
+            throw new KafkaException(String
+                    .format("Size of FileMessageSet %s has been truncated during write: old size %d, new size %d",file.getAbsolutePath(), _size.get(), newSize));
         }
         long bytesTransferred = channel.transferTo(start + writePosition, Math.min(size, sizeInBytes()), destChannel);
         logger.info("FileMessageSet " + file.getAbsolutePath() + " : bytes transferred : " + bytesTransferred
@@ -160,8 +160,8 @@ public class FileMessageSet extends MessageSet {
             buffer.rewind();
             channel.read(buffer, position);
             if(buffer.hasRemaining())
-                throw new IllegalStateException("Failed to read complete buffer for targetOffset %d startPosition %d in %s"
-                        .format(targetOffset + "", startingPosition, file.getAbsolutePath()));
+                throw new IllegalStateException(String
+                        .format("Failed to read complete buffer for targetOffset %d startPosition %d in %s",targetOffset, startingPosition, file.getAbsolutePath()));
             buffer.rewind();
             long offset = buffer.getLong();
             if(offset >= targetOffset)
@@ -210,8 +210,8 @@ public class FileMessageSet extends MessageSet {
      */
     public void truncateTo(int targetSize) throws IOException{
         if(targetSize > sizeInBytes())
-            throw new KafkaException("Attempt to truncate log segment to %d bytes failed since the current ".format(targetSize + "") +
-                    " size of this log segment is only %d bytes".format(sizeInBytes() + ""));
+            throw new KafkaException(String.format(String.format("Attempt to truncate log segment to %d bytes failed since the current ",targetSize) +
+                    " size of this log segment is only %d bytes",sizeInBytes()));
         channel.truncate(targetSize);
         channel.position(targetSize);
         _size.set(targetSize);

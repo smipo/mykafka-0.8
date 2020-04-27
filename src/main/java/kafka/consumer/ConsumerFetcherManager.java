@@ -28,7 +28,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
     private ZkClient zkClient ;
 
     public ConsumerFetcherManager(String consumerIdString, ConsumerConfig config, ZkClient zkClient) {
-        super("ConsumerFetcherManager-%d".format(System.currentTimeMillis()+""),
+        super(String.format("ConsumerFetcherManager-%d",System.currentTimeMillis()),
                 config.clientId, 1);
         this.consumerIdString = consumerIdString;
         this.config = config;
@@ -60,7 +60,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
                     cond.await();
                 }
 
-                logger.trace("Partitions without leader %s".format(noLeaderPartitionSet.toString()));
+                logger.trace(String.format("Partitions without leader %s",noLeaderPartitionSet.toString()));
                 List<Broker> brokers = ZkUtils.getAllBrokersInCluster(zkClient);
                 List<TopicMetadata>  topicsMetadata = ClientUtils.fetchTopicMetadata(noLeaderPartitionSet.stream().map(m -> m.topic()).collect(Collectors.toSet()),
                         brokers,
@@ -82,7 +82,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
                 if (!isRunning.get())
                     throw t; /* If this thread is stopped, propagate this exception to kill the thread. */
                 else
-                    logger.warn("Failed to find leader for %s".format(noLeaderPartitionSet.toString()), t);
+                    logger.warn(String.format("Failed to find leader for %s",noLeaderPartitionSet.toString()), t);
             } finally {
                 lock.unlock();
             }
@@ -96,7 +96,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
                     if (!isRunning.get())
                         throw t; /* If this thread is stopped, propagate this exception to kill the thread. */
                     else {
-                        logger.warn("Failed to add leader for partition %s; will retry".format(topicAndPartition.toString()), t);
+                        logger.warn(String.format("Failed to add leader for partition %s; will retry",topicAndPartition.toString()), t);
                         lock.lock();
                         noLeaderPartitionSet.add(topicAndPartition);
                         lock.unlock();
@@ -110,7 +110,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
 
     public AbstractFetcherThread createFetcherThread(int fetcherId, Broker sourceBroker){
         return new ConsumerFetcherThread(
-                "ConsumerFetcherThread-%s-%d-%d".format(consumerIdString, fetcherId, sourceBroker.id()),
+                String.format("ConsumerFetcherThread-%s-%d-%d",consumerIdString, fetcherId, sourceBroker.id()),
                 config, sourceBroker, partitionMap, this);
     }
 
@@ -154,7 +154,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
     }
 
     public void addPartitionsWithError(Iterable<TopicAndPartition> partitionList) {
-        logger.debug("adding partitions with error %s".format(partitionList.toString()));
+        logger.debug(String.format("adding partitions with error %s",partitionList.toString()));
         lock.lock();
         try{
             if (partitionMap != null) {

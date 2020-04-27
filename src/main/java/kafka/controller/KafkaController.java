@@ -33,14 +33,14 @@ public class KafkaController {
     public static int parseControllerId(String controllerInfoString) {
         try {
             if(controllerInfoString== null || controllerInfoString.isEmpty()){
-                throw new KafkaException("Failed to parse the controller info json [%s].".format(controllerInfoString));
+                throw new KafkaException(String.format("Failed to parse the controller info json [%s].",controllerInfoString));
             }
             Map<String,Object> controllerInfo = JacksonUtils.strToMap(controllerInfoString);
             return Integer.parseInt(controllerInfo.get("brokerid").toString());
         } catch (Throwable t){
                 // It may be due to an incompatible controller register version
-                logger.warn("Failed to parse the controller info as json. "
-                        + "Probably this controller is still using the old format [%s] to store the broker id in zookeeper".format(controllerInfoString));
+                logger.warn(String.format("Failed to parse the controller info as json. "
+                        + "Probably this controller is still using the old format [%s] to store the broker id in zookeeper",controllerInfoString));
                 try {
                     return Integer.parseInt(controllerInfoString);
                 } catch (Throwable t1){
@@ -89,7 +89,7 @@ public class KafkaController {
     }
 
     public String clientId (){
-        return "id_%d-host_%s-port_%d".format(config.brokerId + "", config.hostName, config.port);
+        return String.format("id_%d-host_%s-port_%d",config.brokerId ,config.hostName, config.port);
     }
 
     /**
@@ -111,7 +111,7 @@ public class KafkaController {
 
             synchronized( controllerContext.controllerLock) {
                 if (!controllerContext.liveOrShuttingDownBrokerIds().contains(id))
-                    throw new BrokerNotAvailableException("Broker id %d does not exist.".format(id + ""));
+                    throw new BrokerNotAvailableException(String.format("Broker id %d does not exist.",id));
 
                 controllerContext.shuttingDownBrokerIds.add(id);
 
@@ -187,7 +187,7 @@ public class KafkaController {
      */
     public void onControllerFailover() throws IOException, InterruptedException {
         if(isRunning) {
-            logger.info("Broker %d starting become controller state transition".format(config.brokerId + ""));
+            logger.info(String.format("Broker %d starting become controller state transition",config.brokerId));
             // increment the controller epoch
             incrementControllerEpoch(zkClient);
             // before reading source of truth from zookeeper, register the listeners to get broker/topic callbacks
@@ -200,7 +200,7 @@ public class KafkaController {
             partitionStateMachine.startup();
             // register the partition change listeners for all existing topics on failover
             controllerContext.allTopics.forEach(topic -> partitionStateMachine.registerPartitionChangeListener(topic));
-            logger.info("Broker %d is ready to serve as the new controller with epoch %d".format(config.brokerId + "", epoch()));
+            logger.info(String.format("Broker %d is ready to serve as the new controller with epoch %d",config.brokerId, epoch()));
             initializeAndMaybeTriggerPartitionReassignment();
             initializeAndMaybeTriggerPreferredReplicaElection();
             /* send partition leadership info to all live brokers */
@@ -233,7 +233,7 @@ public class KafkaController {
      *    every broker that it is still valid.  Brokers check the leader epoch to determine validity of the request.
      */
     public void onBrokerStartup(List<Integer> newBrokers) throws IOException, InterruptedException {
-        logger.info("New broker startup callback for %s".format(newBrokers.toString()));
+        logger.info(String.format("New broker startup callback for %s",newBrokers.toString()));
 
         Set<Integer> newBrokersSet = newBrokers.stream().collect(Collectors.toSet());
         // send update metadata request for all partitions to the newly restarted brokers. In cases of controlled shutdown
@@ -273,11 +273,11 @@ public class KafkaController {
      * partitions coming online.
      */
     public void onBrokerFailure(List<Integer> deadBrokers) throws IOException {
-        logger.info("Broker failure callback for %s".format(deadBrokers.toString()));
+        logger.info(String.format("Broker failure callback for %s",deadBrokers.toString()));
 
         List<Integer> deadBrokersThatWereShuttingDown =
                 deadBrokers.stream().filter(id -> controllerContext.shuttingDownBrokerIds.remove(id)).collect(Collectors.toList());
-        logger.info("Removed %s from list of shutting down brokers.".format(deadBrokersThatWereShuttingDown.toString()));
+        logger.info(String.format("Removed %s from list of shutting down brokers.",deadBrokersThatWereShuttingDown.toString()));
 
         Set<Integer> deadBrokersSet = deadBrokers.stream().collect(Collectors.toSet());
         // trigger OfflinePartition state for all partitions whose current leader is one amongst the dead brokers

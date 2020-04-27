@@ -44,7 +44,7 @@ public class IsrExpirationTest {
 
         // create one partition and all replicas
         Partition partition0 = getPartitionWithAllReplicasInIsr(topic, 0, time, configs.get(0), log);
-        assertEquals("All replicas should be in ISR", configs.stream().map(c->c.brokerId).collect(Collectors.toSet()), partition0.inSyncReplicas.stream().map(x->x.brokerId));
+        assertEquals("All replicas should be in ISR", configs.stream().map(c->c.brokerId).collect(Collectors.toSet()), partition0.inSyncReplicas.stream().map(x->x.brokerId).collect(Collectors.toSet()));
         Replica leaderReplica = partition0.getReplica(configs.get(0).brokerId);
 
                 // let the follower catch up to 10

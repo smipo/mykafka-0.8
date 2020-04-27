@@ -82,7 +82,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         Integer leader1 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500,null);
         int leaderEpoch1 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("leader Epoc: " + leaderEpoch1);
-        logger.debug("Leader is elected to be: %s".format(leader1+""));
+        logger.debug(String.format("Leader is elected to be: %s",leader1));
         assertTrue("Leader should get elected", leader1 != null);
         // NOTE: this is to avoid transient test failures
         assertTrue("Leader could be broker 0 or broker 1", ((leader1 == null?-1:leader1) == 0) || ((leader1== null?-1:leader1) == 1));
@@ -97,13 +97,13 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         }
         Integer leader2 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 1500, oldLeaderOpt1);
         int leaderEpoch2 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
-        logger.debug("Leader is elected to be: %s".format(leader1+""));
+        logger.debug(String.format("Leader is elected to be: %s",leader1));
         logger.debug("leader Epoc: " + leaderEpoch2);
         assertEquals("Leader must move to broker 0", 0, leader2 == null?-1:leader2);
         if(leader1.equals(leader2))
             assertEquals("Second epoch value should be " + leaderEpoch1+1, leaderEpoch1+1, leaderEpoch2);
         else
-            assertEquals("Second epoch value should be %d".format((leaderEpoch1+1) +"") , leaderEpoch1+1, leaderEpoch2);
+            assertEquals(String.format("Second epoch value should be %d",(leaderEpoch1+1)) , leaderEpoch1+1, leaderEpoch2);
 
         servers.get(servers.size() - 1).startup();
         servers.get(0).shutdown();
@@ -115,12 +115,12 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         Integer leader3 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 1500, oldLeaderOpt2);
         int leaderEpoch3 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("leader Epoc: " + leaderEpoch3);
-        logger.debug("Leader is elected to be: %s".format(leader3+""));
+        logger.debug(String.format("Leader is elected to be: %s",leader3));
         assertEquals("Leader must return to 1", 1, leader3+"");
         if(leader2.equals(leader3))
            assertEquals("Second epoch value should be " + leaderEpoch2, leaderEpoch2, leaderEpoch3);
         else
-            assertEquals("Second epoch value should be %d".format((leaderEpoch2+1)+"") , leaderEpoch2+1, leaderEpoch3);
+            assertEquals(String.format("Second epoch value should be %d",(leaderEpoch2+1)) , leaderEpoch2+1, leaderEpoch3);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class LeaderElectionTest extends ZooKeeperTestHarness {
         Integer leader1 = TestUtils.waitUntilLeaderIsElectedOrChanged(zkClient, topic, partitionId, 500,null);
         int leaderEpoch1 = ZkUtils.getEpochForPartition(zkClient, topic, partitionId);
         logger.debug("leader Epoc: " + leaderEpoch1);
-        logger.debug("Leader is elected to be: %s".format(leader1+""));
+        logger.debug(String.format("Leader is elected to be: %s",leader1));
         assertTrue("Leader should get elected", leader1 != null);
         // NOTE: this is to avoid transient test failures
         assertTrue("Leader could be broker 0 or broker 1", ((leader1==null?-1:leader1) == 0) || ((leader1==null?-1:leader1) == 1));

@@ -199,10 +199,10 @@ public abstract class RequestPurgatory<T extends  DelayedRequest, R> {
                     if (requestCounter.get() >= purgeInterval) { // see if we need to force a full purge
                         requestCounter.set(0);
                         int purged = purgeSatisfied();
-                        logger.debug("Purged %d requests from delay queue.".format(purged+""));
+                        logger.debug(String.format("Purged %d requests from delay queue.",purged));
                         List<Integer> list = watchersForKey.values().stream().map(x->purgeSatisfied()).collect(Collectors.toList());
                         int numPurgedFromWatchers = list.stream().mapToInt(x->x).sum();
-                        logger.debug("Purged %d (watcher) requests.".format(numPurgedFromWatchers+""));
+                        logger.debug(String.format("Purged %d (watcher) requests.",numPurgedFromWatchers));
                     }
                 } catch (Exception e){
                     logger.error("Error in long poll expiry thread: ", e);

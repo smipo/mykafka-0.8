@@ -49,9 +49,9 @@ public class BoundedByteBufferReceive extends Receive {
             sizeBuffer.rewind();
             int size = sizeBuffer.getInt();
             if(size <= 0)
-                throw new InvalidRequestException("%d is not a valid request size.".format(String.valueOf(size)));
+                throw new InvalidRequestException(String.format("%d is not a valid request size.",size));
             if(size > maxSize)
-                throw new InvalidRequestException("Request of length %d is not valid, it is larger than the maximum size of %d bytes.".format(String.valueOf(size), maxSize));
+                throw new InvalidRequestException(String.format("Request of length %d is not valid, it is larger than the maximum size of %d bytes.",size, maxSize));
             contentBuffer = byteBufferAllocate(size);
         }
         // if we have a buffer read some stuff into it

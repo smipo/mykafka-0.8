@@ -37,12 +37,12 @@ public class ControlledShutdownLeaderSelector implements PartitionLeaderSelector
         List<Integer> newIsr = currentLeaderAndIsr.isr.stream().filter(brokerId -> brokerId != currentLeader &&
                 !controllerContext.shuttingDownBrokerIds.contains(brokerId)).collect(Collectors.toList());
         if(newIsr == null || newIsr.isEmpty()){
-            throw new StateChangeFailedException(("No other replicas in ISR %s for %s besides current leader %d and" +
-                    " shutting down brokers %s").format(currentLeaderAndIsr.isr.toString(), topicAndPartition, currentLeader, controllerContext.shuttingDownBrokerIds.toString()));
+            throw new StateChangeFailedException(String.format("No other replicas in ISR %s for %s besides current leader %d and" +
+                    " shutting down brokers %s",currentLeaderAndIsr.isr.toString(), topicAndPartition, currentLeader, controllerContext.shuttingDownBrokerIds.toString()));
 
         }else{
-            logger.debug("Partition %s : current leader = %d, new leader = %d"
-                    .format(topicAndPartition.toString(), currentLeader, newIsr.get(0)));
+            logger.debug(String
+                    .format("Partition %s : current leader = %d, new leader = %d",topicAndPartition.toString(), currentLeader, newIsr.get(0)));
            return new Pair<>(new LeaderAndIsrRequest.LeaderAndIsr(newIsr.get(0), currentLeaderEpoch + 1, newIsr, currentLeaderIsrZkPathVersion + 1),
                     liveAssignedReplicas);
         }

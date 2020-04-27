@@ -163,7 +163,7 @@ public class Log {
                         // ensure that we have a corresponding log file for this index file
                         File log = new File(file.getAbsolutePath().replace(IndexFileSuffix, LogFileSuffix));
                         if(!log.exists()) {
-                            logger.warn("Found an orphaned index file, %s, with no corresponding log file.".format(file.getAbsolutePath()));
+                            logger.warn(String.format("Found an orphaned index file, %s, with no corresponding log file.",file.getAbsolutePath()));
                             file.delete();
                         }
                     } else if(filename.endsWith(LogFileSuffix)) {
@@ -217,8 +217,8 @@ public class Log {
         // Check for the index file of every segment, if it's empty or its last offset is greater than its base offset.
         for (LogSegment s : segments.view()) {
             checkArgument(s.index.entries() == 0 || s.index.lastOffset > s.index.baseOffset,
-                    "Corrupt index found, index file (%s) has non-zero size but the last offset is %d and the base offset is %d"
-                            .format(s.index.file.getAbsolutePath(), s.index.lastOffset, s.index.baseOffset));
+                           String.format("Corrupt index found, index file (%s) has non-zero size but the last offset is %d and the base offset is %d"
+                                   ,s.index.file.getAbsolutePath(), s.index.lastOffset, s.index.baseOffset));
         }
 
         return  new SegmentList(segments.view());
@@ -228,7 +228,7 @@ public class Log {
      * Run recovery on the given segment. This will rebuild the index from the log file and lop off any invalid bytes from the end of the log.
      */
     private void recoverSegment(LogSegment segment) throws IOException{
-        logger.info("Recovering log segment %s".format(segment.messageSet.file.getAbsolutePath()));
+        logger.info(String.format("Recovering log segment %s",segment.messageSet.file.getAbsolutePath()));
         segment.index.truncate();
         int validBytes = 0;
         int lastIndexEntry = 0;
@@ -314,7 +314,7 @@ public class Log {
                         try {
                             validMessages = validMessages.assignOffsets(offsetCounter, messageSetInfo.codec);
                         } catch (IOException e){
-                            throw new KafkaException("Error in validating messages while appending to log '%s'".format(name), e);
+                            throw new KafkaException(String.format("Error in validating messages while appending to log '%s'",name), e);
                         }
                         long assignedLastOffset = offsetCounter.get() - 1;
                         long numMessages = assignedLastOffset - firstOffset + 1;
@@ -322,8 +322,8 @@ public class Log {
                     } else {
                         checkArgument(messageSetInfo.offsetsMonotonic, "Out of order offsets found in " + messages);
                         checkArgument(messageSetInfo.firstOffset >= nextOffset.get(),
-                                "Attempt to append a message set beginning with offset %d to a log with log end offset %d."
-                                        .format(messageSetInfo.firstOffset + "", nextOffset.get()));
+                                   String.format("Attempt to append a message set beginning with offset %d to a log with log end offset %d."
+                                           ,messageSetInfo.firstOffset, nextOffset.get()));
                         lastOffset = messageSetInfo.lastOffset;
                     }
 
@@ -333,8 +333,8 @@ public class Log {
                     while (iterator.hasNext()){
                         MessageAndOffset  messageAndOffset = iterator.next();
                         if(MessageSet.entrySize(messageAndOffset.message()) > maxMessageSize)
-                            throw new MessageSizeTooLargeException("Message size is %d bytes which exceeds the maximum configured message size of %d."
-                                    .format(MessageSet.entrySize(messageAndOffset.message()) + "", maxMessageSize));
+                            throw new MessageSizeTooLargeException(String
+                                    .format("Message size is %d bytes which exceeds the maximum configured message size of %d.",MessageSet.entrySize(messageAndOffset.message()) , maxMessageSize));
                     }
 
                     // now append to the log
@@ -343,8 +343,8 @@ public class Log {
                     // advance the log end offset
                     nextOffset.set(lastOffset + 1);
 
-                    logger.info("Appended message set to log %s with first offset: %d, next offset: %d, and messages: %s"
-                            .format(this.name, firstOffset, nextOffset.get(), validMessages));
+                    logger.info(String
+                            .format("Appended message set to log %s with first offset: %d, next offset: %d, and messages: %s",this.name, firstOffset, nextOffset.get(), validMessages));
 
                     // return the offset at which the messages were appended
                     offsets = new Pair<> (firstOffset, lastOffset);
@@ -357,7 +357,7 @@ public class Log {
                 // return the first and last offset
                 return offsets;
             } catch (IOException e){
-                throw new KafkaStorageException("I/O exception in append to log '%s'".format(name), e);
+                throw new KafkaStorageException(String.format("I/O exception in append to log '%s'",name), e);
             }
         }
     }
@@ -446,7 +446,7 @@ public class Log {
      * maxOffset - The first offset not included in the read
      */
     public MessageSet read(long startOffset, int maxLength, Long maxOffset) throws IOException {
-        logger.trace("Reading %d bytes from offset %d in log %s of length %d bytes".format(maxLength + "", startOffset, name, size()));
+        logger.trace(String.format("Reading %d bytes from offset %d in log %s of length %d bytes",maxLength, startOffset, name, size()));
         List<LogSegment> view = segments.view();
 
         // check if the offset is valid and in range
@@ -455,7 +455,7 @@ public class Log {
         if(startOffset == next)
             return MessageSet.Empty;
         else if(startOffset > next || startOffset < first)
-            throw new OffsetOutOfRangeException("Request for offset %d but we only have log segments in the range %d to %d.".format(startOffset + "", first, next));
+            throw new OffsetOutOfRangeException(String.format("Request for offset %d but we only have log segments in the range %d to %d.",startOffset , first, next));
 
         // Do the read on the segment with a base offset less than the target offset
         // TODO: to handle sparse offsets, we need to skip to the next segment if this read doesn't find anything
@@ -514,14 +514,14 @@ public class Log {
      */
     private LogSegment maybeRoll(LogSegment segment) throws IOException{
         if(segment.messageSet.sizeInBytes() > maxLogFileSize) {
-            logger.info("Rolling %s due to full data log".format(name));
+            logger.info(String.format("Rolling %s due to full data log",name));
             return  roll();
         } else if((segment.firstAppendTime == null) && (milliseconds - segment.firstAppendTime > rollIntervalMs)) {
-            logger.info("Rolling %s due to time based rolling".format(name));
+            logger.info(String.format("Rolling %s due to time based rolling",name));
             return roll();
         } else if(segment.index.isFull()) {
-            logger.info("Rolling %s due to full index maxIndexSize = %d, entries = %d, maxEntries = %d"
-                    .format(name, segment.index.maxIndexSize, segment.index.entries(), segment.index.maxEntries));
+            logger.info(String
+                    .format("Rolling %s due to full index maxIndexSize = %d, entries = %d, maxEntries = %d",name, segment.index.maxIndexSize, segment.index.entries(), segment.index.maxEntries));
             return roll();
         } else
             return segment;
@@ -557,7 +557,7 @@ public class Log {
 
         List<LogSegment> segmentsView = segments.view();
         if(segmentsView.size() > 0 && segmentsView.get(segmentsView.size() - 1).start == newOffset)
-            throw new KafkaException("Trying to roll a new log segment for topic partition %s with start offset %d while it already exists".format(dir.getName(), newOffset));
+            throw new KafkaException(String.format("Trying to roll a new log segment for topic partition %s with start offset %d while it already exists",dir.getName(), newOffset));
 
         LogSegment segment = new LogSegment(dir,
                 newOffset,

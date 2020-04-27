@@ -55,7 +55,7 @@ public class ControllerChannelManager {
              if(stateInfoOpt != null){
                  stateInfoOpt.messageQueue.put(new Pair<>(request, callback));
              }else{
-                 logger.warn("Not sending request %s to broker %d, since it is offline.".format(request + "", brokerId));
+                 logger.warn(String.format("Not sending request %s to broker %d, since it is offline.",request , brokerId));
              }
         }
     }
@@ -78,7 +78,7 @@ public class ControllerChannelManager {
 
     private void addNewBroker(Broker broker) throws IOException {
         BlockingQueue messageQueue = new LinkedBlockingQueue<Pair<RequestOrResponse,Callback>>(config.controllerMessageQueueSize);
-        logger.debug("Controller %d trying to connect to broker %d".format(config.brokerId + "",broker.id()));
+        logger.debug(String.format("Controller %d trying to connect to broker %d",config.brokerId,broker.id()));
         BlockingChannel channel = new BlockingChannel(broker.host(), broker.port(),
                 BlockingChannel.UseDefaultBufferSize,
                 BlockingChannel.UseDefaultBufferSize,
@@ -113,7 +113,7 @@ public class ControllerChannelManager {
         public BlockingChannel channel;
 
         public RequestSendThread(int controllerId, ControllerContext controllerContext, int toBrokerId, BlockingQueue<Pair<RequestOrResponse, Callback<RequestOrResponse>>> queue, BlockingChannel channel) {
-            super("Controller-%d-to-broker-%d-send-thread".format(controllerId + "", toBrokerId),true);
+            super(String.format("Controller-%d-to-broker-%d-send-thread",controllerId, toBrokerId),true);
             this.controllerId = controllerId;
             this.controllerContext = controllerContext;
             this.toBrokerId = toBrokerId;
@@ -149,7 +149,7 @@ public class ControllerChannelManager {
                     }
                 }
             } catch (Throwable e){
-                logger.warn("Controller %d fails to send a request to broker %d".format(controllerId + "", toBrokerId), e);
+                logger.warn(String.format("Controller %d fails to send a request to broker %d",controllerId, toBrokerId), e);
                 // If there is any socket error (eg, socket timeout), the channel is no longer usable and needs to be recreated.
                 channel.disconnect();
             }
@@ -175,16 +175,16 @@ public class ControllerChannelManager {
             // raise error if the previous batch is not empty
             if(leaderAndIsrRequestMap.size() > 0)
                 throw new IllegalStateException("Controller to broker state change requests batch is not empty while creating " +
-                        "a new one. Some LeaderAndIsr state changes %s might be lost ".format(leaderAndIsrRequestMap.toString()));
+                        String.format("a new one. Some LeaderAndIsr state changes %s might be lost ",leaderAndIsrRequestMap.toString()));
             if(stopReplicaRequestMap.size() > 0)
                 throw new IllegalStateException("Controller to broker state change requests batch is not empty while creating a " +
-                        "new one. Some StopReplica state changes %s might be lost ".format(stopReplicaRequestMap.toString()));
+                        String.format("new one. Some StopReplica state changes %s might be lost ",stopReplicaRequestMap.toString()));
             if(updateMetadataRequestMap.size() > 0)
                 throw new IllegalStateException("Controller to broker state change requests batch is not empty while creating a " +
-                        "new one. Some UpdateMetadata state changes %s might be lost ".format(updateMetadataRequestMap.toString()));
+                        String.format("new one. Some UpdateMetadata state changes %s might be lost ",updateMetadataRequestMap.toString()));
             if(stopAndDeleteReplicaRequestMap.size() > 0)
                 throw new IllegalStateException("Controller to broker state change requests batch is not empty while creating a " +
-                        "new one. Some StopReplica with delete state changes %s might be lost ".format(stopAndDeleteReplicaRequestMap.toString()));
+                        String.format("new one. Some StopReplica with delete state changes %s might be lost ",stopAndDeleteReplicaRequestMap.toString()));
             leaderAndIsrRequestMap.clear();
             stopReplicaRequestMap.clear();
             updateMetadataRequestMap.clear();
@@ -240,7 +240,7 @@ public class ControllerChannelManager {
                     }
 
                 }else{
-                    logger.info("Leader not assigned yet for partition %s. Skip sending udpate metadata request".format(partition.toString()));
+                    logger.info(String.format("Leader not assigned yet for partition %s. Skip sending udpate metadata request",partition.toString()));
                 }
             }
         }
@@ -260,8 +260,8 @@ public class ControllerChannelManager {
                     String typeOfRequest ;
                     if (broker == entryPartition.getValue().leaderIsrAndControllerEpoch.leaderAndIsr.leader) typeOfRequest = "become-leader" ;
                     else typeOfRequest = "become-follower";
-                    logger.trace(("Controller %d epoch %d sending %s LeaderAndIsr request with correlationId %d to broker %d " +
-                            "for partition [%s,%d]").format(controllerId + "", controllerEpoch, typeOfRequest, correlationId, broker,
+                    logger.trace(String.format("Controller %d epoch %d sending %s LeaderAndIsr request with correlationId %d to broker %d " +
+                                    "for partition [%s,%d]",controllerId , controllerEpoch, typeOfRequest, correlationId, broker,
                             entryPartition.getKey().getKey(), entryPartition.getKey().getValue()));
                 }
                 sendRequest(broker, leaderAndIsrRequest, null);
@@ -272,16 +272,16 @@ public class ControllerChannelManager {
                 Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo> partitionStateInfos = entry.getValue();
                 UpdateMetadataRequest updateMetadataRequest = new UpdateMetadataRequest(controllerId, controllerEpoch, correlationId, clientId,
                         partitionStateInfos, controllerContext.liveOrShuttingDownBrokers());
-                partitionStateInfos.forEach((k,v) -> logger.trace(("Controller %d epoch %d sending UpdateMetadata request with " +
-                        "correlationId %d to broker %d for partition %s").format(controllerId+"", controllerEpoch, correlationId, broker, k)));
+                partitionStateInfos.forEach((k,v) -> logger.trace(String.format("Controller %d epoch %d sending UpdateMetadata request with " +
+                        "correlationId %d to broker %d for partition %s",controllerId, controllerEpoch, correlationId, broker, k)));
                 sendRequest(broker, updateMetadataRequest, null);
             }
             updateMetadataRequestMap.clear();
 
             for(Map.Entry<Integer, List<Pair<String,Integer>>> entry : stopReplicaRequestMap.entrySet()){
                 if (entry.getValue().size() > 0) {
-                    logger.debug("The stop replica request (delete = %s) sent to broker %d is %s"
-                            .format(false + "", entry.getKey(), entry.getValue().toString()));
+                    logger.debug(String
+                            .format("The stop replica request (delete = %s) sent to broker %d is %s",false, entry.getKey(), entry.getValue().toString()));
                     StopReplicaRequest stopReplicaRequest = new StopReplicaRequest(false, entry.getValue().stream().collect(Collectors.toSet()), controllerId,
                             controllerEpoch, correlationId);
                     sendRequest(entry.getKey(), stopReplicaRequest, null);
@@ -289,8 +289,8 @@ public class ControllerChannelManager {
             }
             for(Map.Entry<Integer, List<Pair<String,Integer>>> entry : stopAndDeleteReplicaRequestMap.entrySet()){
                 if (entry.getValue().size() > 0) {
-                    logger.debug("The stop replica request (delete = %s) sent to broker %d is %s"
-                            .format(true + "", entry.getKey(), entry.getValue().toString()));
+                    logger.debug(String
+                            .format("The stop replica request (delete = %s) sent to broker %d is %s",true, entry.getKey(), entry.getValue().toString()));
                     StopReplicaRequest stopReplicaRequest = new StopReplicaRequest(true, entry.getValue().stream().collect(Collectors.toSet()), controllerId,
                             controllerEpoch, correlationId);
                     sendRequest(entry.getKey(), stopReplicaRequest, null);

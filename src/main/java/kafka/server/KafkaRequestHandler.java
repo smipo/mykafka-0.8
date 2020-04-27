@@ -30,11 +30,11 @@ public class KafkaRequestHandler implements Runnable{
             try {
                 RequestChannel.Request req = requestChannel.receiveRequest();
                 if(req == RequestChannel.AllDone) {
-                    logger.debug("Kafka request handler %d on broker %d received shut down command".format(
-                            id+"", brokerId));
+                    logger.debug(String.format("Kafka request handler %d on broker %d received shut down command",
+                            id, brokerId));
                     return;
                 }
-                logger.trace("Kafka request handler %d on broker %d handling request %s".format(id+"", brokerId, req));
+                logger.trace(String.format("Kafka request handler %d on broker %d handling request %s",id, brokerId, req));
                 apis.handle(req);
             } catch (Throwable e){
                 logger.error("Exception when handling request", e);

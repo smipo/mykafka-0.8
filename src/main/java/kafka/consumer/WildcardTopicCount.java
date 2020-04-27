@@ -38,6 +38,6 @@ public class WildcardTopicCount  extends TopicCount {
         if(topicFilter instanceof  Whitelist){
             marker = TopicCount.WHITELIST_MARKER;
         }
-        return "%s%d%s%s".format(marker, numStreams, marker, topicFilter.regex);
+        return String.format("%s%d%s%s",marker, numStreams, marker, topicFilter.regex);
     }
 }

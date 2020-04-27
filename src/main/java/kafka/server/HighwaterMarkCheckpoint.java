@@ -45,7 +45,7 @@ public class HighwaterMarkCheckpoint {
             hwFileWriter.write(highwaterMarksPerPartition.size()+"");
             hwFileWriter.newLine();
             for(Map.Entry<TopicAndPartition, Long> entry : highwaterMarksPerPartition.entrySet()){
-                hwFileWriter.write("%s %s %s".format(entry.getKey().topic(), entry.getKey().partition(), entry.getValue()));
+                hwFileWriter.write(String.format("%s %s %s",entry.getKey().topic(), entry.getKey().partition(), entry.getValue()));
                 hwFileWriter.newLine();
             }
             hwFileWriter.flush();
@@ -68,7 +68,7 @@ public class HighwaterMarkCheckpoint {
         hwFileLock.lock();
         try {
             if(hwFile.length() == 0){
-                logger.warn("No highwatermark file is found. Returning 0 as the highwatermark for partition [%s,%d]".format(topic, partition));
+                logger.warn(String.format("No highwatermark file is found. Returning 0 as the highwatermark for partition [%s,%d]",topic, partition));
                 return 0L;
             }else{
                 BufferedReader hwFileReader = new BufferedReader(new FileReader(hwFile));
@@ -88,11 +88,11 @@ public class HighwaterMarkCheckpoint {
                     hwFileReader.close();
                     Long hwOpt = partitionHighWatermarks.get(new TopicAndPartition(topic, partition));
                     if(hwOpt == null){
-                        logger.warn("No previously checkpointed highwatermark value found for topic %s ".format(topic) +
-                                "partition %d. Returning 0 as the highwatermark".format(partition+""));
+                        logger.warn(String.format("No previously checkpointed highwatermark value found for topic %s ".format(topic) +
+                                "partition %d. Returning 0 as the highwatermark",partition));
                        return  0L;
                     }else{
-                        logger.debug("Read hw %d for partition [%s,%d] from highwatermark checkpoint file".format(hwOpt+"", topic, partition));
+                        logger.debug(String.format("Read hw %d for partition [%s,%d] from highwatermark checkpoint file",hwOpt, topic, partition));
                         return hwOpt;
                     }
 

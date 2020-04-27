@@ -73,7 +73,7 @@ public class FetchResponse {
             return fetchResponsePartitionData;
         }else{
             throw new IllegalArgumentException(
-                    "No partition %s in fetch response %s".format(topicAndPartition + "", this.toString()));
+                    String.format("No partition %s in fetch response %s",topicAndPartition + "", this.toString()));
         }
     }
 

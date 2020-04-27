@@ -56,7 +56,7 @@ public class SegmentList<T> {
      */
     public List<T> truncLast(int newEnd) {
         if (newEnd < 0 || newEnd >= contents.get().size())
-            throw new KafkaException("Attempt to truncate segment list of length %d to %d.".format(String.valueOf(contents.get().size()), newEnd));
+            throw new KafkaException(String.format("Attempt to truncate segment list of length %d to %d.",contents.get().size(), newEnd));
         List<T> curr = contents.get();
         if (curr.size() > 0) {
             int newLength = newEnd + 1;
@@ -87,7 +87,7 @@ public class SegmentList<T> {
      * Nicer toString method
      */
     public String toString(){
-        return "SegmentList(%s)".format(view().toString());
+        return String.format("SegmentList(%s)",view().toString());
     }
 
 }

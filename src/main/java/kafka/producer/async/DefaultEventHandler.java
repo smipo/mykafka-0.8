@@ -59,7 +59,7 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
         List<KeyedMessage<K, Message>> outstandingProduceRequests = serializedData;
         int remainingRetries = config.messageSendMaxRetries + 1;
         int correlationIdStart = correlationId.get();
-        logger.debug("Handling %d events".format(events.size()+""));
+        logger.debug(String.format("Handling %d events",events.size()));
         while (remainingRetries > 0 && outstandingProduceRequests.size() > 0) {
             outstandingProduceRequests.forEach(t->topicMetadataToRefresh.add(t.topic));
             if (topicMetadataRefreshInterval >= 0 &&
@@ -71,7 +71,7 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
             }
             outstandingProduceRequests = dispatchSerializedData(outstandingProduceRequests);
             if (outstandingProduceRequests.size() > 0) {
-                logger.info("Back off for %d ms before retrying send. Remaining retries = %d".format(config.retryBackoffMs+"", remainingRetries-1));
+                logger.info(String.format("Back off for %d ms before retrying send. Remaining retries = %d",config.retryBackoffMs, remainingRetries-1));
                 // back off and update the topic metadata cache before attempting another send operation
                 Thread.sleep(config.retryBackoffMs);
                 // get topics of the outstanding produce requests and refresh metadata for those
@@ -82,8 +82,8 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
         }
         if(outstandingProduceRequests.size() > 0) {
             int correlationIdEnd = correlationId.get();
-            logger.error("Failed to send requests for topics %s with correlation ids in [%d,%d]"
-                    .format(outstandingProduceRequests.stream().map(t->t.topic).collect(Collectors.toSet()).toString(),
+            logger.error(String
+                    .format("Failed to send requests for topics %s with correlation ids in [%d,%d]",outstandingProduceRequests.stream().map(t->t.topic).collect(Collectors.toSet()).toString(),
                             correlationIdStart, correlationIdEnd-1));
             throw new FailedToSendMessageException("Failed to send messages after " + config.messageSendMaxRetries + " tries.");
         }
@@ -128,7 +128,7 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
                 } else {
                     // currently, if in async mode, we just log the serialization error. We need to revisit
                     // this when doing kafka-496
-                    logger.error("Error serializing message for topic %s".format(e.topic), t);
+                    logger.error(String.format("Error serializing message for topic %s",e.topic), t);
                 }
             }
         }
@@ -179,8 +179,8 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
 
     private List<BrokerPartitionInfo.PartitionAndLeader> getPartitionListForTopic(KeyedMessage<K, Message> m) throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         List<BrokerPartitionInfo.PartitionAndLeader> topicPartitionsList = brokerPartitionInfo.getBrokerPartitionInfo(m.topic, correlationId.getAndIncrement());
-        logger.debug("Broker partitions registered for topic: %s are %s"
-                .format(m.topic, topicPartitionsList.toString()));
+        logger.debug(String
+                .format("Broker partitions registered for topic: %s are %s",m.topic, topicPartitionsList.toString()));
         int totalNumPartitions = topicPartitionsList.size();
         if(totalNumPartitions == 0)
             throw new NoBrokersForPartitionException("Partition key = " + m.key);
@@ -221,7 +221,7 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
         if(partition < 0 || partition >= numPartitions)
             throw new UnknownTopicOrPartitionException("Invalid partition id: " + partition + " for topic " + topic +
                     "; Valid values are in the inclusive range of [0, " + (numPartitions-1) + "]");
-        logger.trace("Assigning message of topic %s and key %s to a selected partition %d".format(topic, key == null? "[none]" : key.toString(), partition));
+        logger.trace(String.format("Assigning message of topic %s and key %s to a selected partition %d",topic, key == null? "[none]" : key.toString(), partition));
         return partition;
     }
 
@@ -234,7 +234,7 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
      */
     private List<TopicAndPartition> send(int brokerId, Map<TopicAndPartition, ByteBufferMessageSet> messagesPerTopic)  {
         if(brokerId < 0) {
-            logger.warn("Failed to send data since partitions %s don't have a leader".format(messagesPerTopic.toString()));
+            logger.warn(String.format("Failed to send data since partitions %s don't have a leader",messagesPerTopic.toString()));
             return messagesPerTopic.keySet().stream().collect(Collectors.toList());
         } else if(messagesPerTopic.size() > 0) {
             int currentCorrelationId = correlationId.getAndIncrement();
@@ -243,28 +243,28 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
             List<TopicAndPartition>  failedTopicPartitions = new ArrayList<>();
             try {
                 SyncProducer syncProducer = producerPool.getProducer(brokerId);
-                logger.debug("Producer sending messages with correlation id %d for topics %s to broker %d on %s:%d"
-                        .format(currentCorrelationId+"", messagesPerTopic.keySet().toString(), brokerId, syncProducer.config.host, syncProducer.config.port));
+                logger.debug(String
+                        .format("Producer sending messages with correlation id %d for topics %s to broker %d on %s:%d",currentCorrelationId, messagesPerTopic.keySet().toString(), brokerId, syncProducer.config.host, syncProducer.config.port));
                 ProducerResponse response = syncProducer.send(producerRequest);
-                logger.debug("Producer sent messages with correlation id %d for topics %s to broker %d on %s:%d"
-                        .format(currentCorrelationId+"", messagesPerTopic.keySet().toString(), brokerId, syncProducer.config.host, syncProducer.config.port));
+                logger.debug(String
+                        .format("Producer sent messages with correlation id %d for topics %s to broker %d on %s:%d",currentCorrelationId, messagesPerTopic.keySet().toString(), brokerId, syncProducer.config.host, syncProducer.config.port));
                 if(response != null) {
                     if (response.status.size() != producerRequest.data.size())
-                        throw new KafkaException("Incomplete response (%s) for producer request (%s)".format(response.toString(), producerRequest.toString()));
+                        throw new KafkaException(String.format("Incomplete response (%s) for producer request (%s)",response.toString(), producerRequest.toString()));
                     for(Map.Entry<TopicAndPartition, ProducerResponse.ProducerResponseStatus> entry : response.status.entrySet()){
                         if(entry.getValue().error != ErrorMapping.NoError){
                             failedTopicPartitions.remove(entry.getKey());
                         }
                     }
                     if(failedTopicPartitions.size() > 0) {
-                        logger.warn("Produce request with correlation id %d failed due to %s".format(currentCorrelationId+"", failedTopicPartitions.toString()));
+                        logger.warn(String.format("Produce request with correlation id %d failed due to %s",currentCorrelationId, failedTopicPartitions.toString()));
                     }
                     return failedTopicPartitions;
                 } else
                     return new ArrayList<>();
             } catch (Throwable t){
-                logger.warn("Failed to send producer request with correlation id %d to broker %d with data for partitions %s"
-                        .format(currentCorrelationId+"", brokerId, messagesPerTopic.toString(), t));
+                logger.warn(String
+                        .format("Failed to send producer request with correlation id %d to broker %d with data for partitions %s",currentCorrelationId, brokerId, messagesPerTopic.toString(), t));
                 return messagesPerTopic.keySet().stream().collect(Collectors.toList());
             }
         } else {
@@ -285,25 +285,25 @@ public class DefaultEventHandler<K,V> implements  EventHandler<K,V>{
             List<KeyedMessage<K,Message>> messages= entry.getValue();
             List<Message> rawMessages = messages.stream().map(k->k.message).collect(Collectors.toList());
             if(config.compressionCodec instanceof NoCompressionCodec){
-                logger.debug("Sending %d messages with no compression to %s".format(messages.size()+"", topicAndPartition));
+                logger.debug(String.format("Sending %d messages with no compression to %s",messages.size(), topicAndPartition));
                 Message[] ms = new Message[rawMessages.size()];
                 messagesPerTopicPartition.put(topicAndPartition,new ByteBufferMessageSet(new NoCompressionCodec(), rawMessages.toArray(ms)));
             }else{
                 if(config.compressedTopics.size() == 0){
-                    logger.debug("Sending %d messages with compression codec %d to %s"
-                            .format(messages.size()+"", config.compressionCodec.codec(), topicAndPartition));
+                    logger.debug(String
+                            .format("Sending %d messages with compression codec %d to %s",messages.size(), config.compressionCodec.codec(), topicAndPartition));
                     Message[] ms = new Message[rawMessages.size()];
                     messagesPerTopicPartition.put(topicAndPartition,new ByteBufferMessageSet(config.compressionCodec, rawMessages.toArray(ms)));
                 }else{
                     if(config.compressedTopics.contains(topicAndPartition.topic())) {
-                        logger.debug("Sending %d messages with compression codec %d to %s"
-                                .format(messages.size()+"", config.compressionCodec.codec(), topicAndPartition));
+                        logger.debug(String
+                                .format("Sending %d messages with compression codec %d to %s",messages.size(), config.compressionCodec.codec(), topicAndPartition));
                         Message[] ms = new Message[rawMessages.size()];
                         messagesPerTopicPartition.put(topicAndPartition,new ByteBufferMessageSet(config.compressionCodec, rawMessages.toArray(ms)));
                     }
                     else {
-                        logger.debug("Sending %d messages to %s with no compression as it is not in compressed.topics - %s"
-                                .format(messages.size()+"", topicAndPartition, config.compressedTopics.toString()));
+                        logger.debug(String
+                                .format("Sending %d messages to %s with no compression as it is not in compressed.topics - %s",messages.size(), topicAndPartition, config.compressedTopics.toString()));
                         Message[] ms = new Message[rawMessages.size()];
                         messagesPerTopicPartition.put(topicAndPartition,new ByteBufferMessageSet(new NoCompressionCodec(), rawMessages.toArray(ms)));
                     }

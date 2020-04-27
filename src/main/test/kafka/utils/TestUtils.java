@@ -110,9 +110,9 @@ public class TestUtils {
         Condition leaderExistsOrChanged = leaderLock.newCondition();
 
         if(oldLeaderOpt == null)
-            logger.info("Waiting for leader to be elected for partition [%s,%d]".format(topic, partition));
+            logger.info(String.format("Waiting for leader to be elected for partition [%s,%d]",topic, partition));
         else
-            logger.info("Waiting for leader for partition [%s,%d] to be changed from old leader %d".format(topic, partition, oldLeaderOpt));
+            logger.info(String.format("Waiting for leader for partition [%s,%d] to be changed from old leader %d",topic, partition, oldLeaderOpt));
         leaderLock.lock();
         try{
             zkClient.subscribeDataChanges(ZkUtils.getTopicPartitionLeaderAndIsrPath(topic, partition), new ZkUtils.LeaderExistsOrChangedListener(topic, partition, leaderLock, leaderExistsOrChanged, oldLeaderOpt, zkClient));
@@ -120,13 +120,13 @@ public class TestUtils {
             // check if leader is elected
             Integer leader = ZkUtils.getLeaderForPartition(zkClient, topic, partition);
             if(leader == null){
-                logger.error("Timing out after %d ms since leader is not elected for partition [%s,%d]"
-                        .format(timeoutMs+"", topic, partition));
+                logger.error(String
+                        .format("Timing out after %d ms since leader is not elected for partition [%s,%d]",timeoutMs, topic, partition));
             }else{
                 if(oldLeaderOpt == null)
-                    logger.info("Leader %d is elected for partition [%s,%d]".format(leader+"", topic, partition));
+                    logger.info(String.format("Leader %d is elected for partition [%s,%d]",leader, topic, partition));
                 else
-                    logger.info("Leader for partition [%s,%d] is changed from %d to %d".format(topic, partition, oldLeaderOpt, leader));
+                    logger.info(String.format("Leader for partition [%s,%d] is changed from %d to %d",topic, partition, oldLeaderOpt, leader));
 
             }
             return leader;

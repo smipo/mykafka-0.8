@@ -58,7 +58,7 @@ public class BlockingChannel {
                 connected = true;
                 // settings may not match what we requested above
                 String msg = "Created socket with SO_TIMEOUT = %d (requested %d), SO_RCVBUF = %d (requested %d), SO_SNDBUF = %d (requested %d).";
-                logger.debug(msg.format(channel.socket().getSoTimeout() + "",
+                logger.debug(String.format(msg,channel.socket().getSoTimeout(),
                         readTimeoutMs,
                         channel.socket().getReceiveBufferSize(),
                         readBufferSize,

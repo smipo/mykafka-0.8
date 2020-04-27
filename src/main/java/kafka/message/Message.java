@@ -239,7 +239,7 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message(magic = %d, attributes = %d, crc = %d, key = %s, payload = %s)".format(String.valueOf(magic()), attributes(), checksum(), key(), payload());
+        return String.format("Message(magic = %d, attributes = %d, crc = %d, key = %s, payload = %s)",magic(), attributes(), checksum(), key(), payload());
     }
 
     @Override

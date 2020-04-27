@@ -79,7 +79,7 @@ public class KafkaZooKeeper {
             logger.info("re-registering broker info in ZK for broker " + config.brokerId);
             registerBrokerInZk();
             logger.info("done re-registering broker");
-            logger.info("Subscribing to %s path to watch for new topics".format(ZkUtils.BrokerTopicsPath));
+            logger.info(String.format("Subscribing to %s path to watch for new topics",ZkUtils.BrokerTopicsPath));
         }
         public void handleSessionEstablishmentError(Throwable var1) throws Exception{
 

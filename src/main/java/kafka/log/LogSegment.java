@@ -68,7 +68,7 @@ public class LogSegment {
      */
     public void append(long offset, ByteBufferMessageSet messages) throws IOException{
         if (messages.sizeInBytes() > 0) {
-            trace("Inserting %d bytes at offset %d at position %d".format(messages.sizeInBytes() + "", offset, messageSet.sizeInBytes()));
+            trace(String.format("Inserting %d bytes at offset %d at position %d",messages.sizeInBytes() , offset, messageSet.sizeInBytes()));
             // append an entry to the index (if needed)
             if(bytesSinceLastIndexEntry > indexIntervalBytes) {
                 index.append(offset, messageSet.sizeInBytes());
@@ -97,7 +97,7 @@ public class LogSegment {
      */
     public MessageSet read(long startOffset, int maxSize, Long maxOffset) throws IOException {
         if(maxSize < 0)
-            throw new IllegalArgumentException("Invalid max size for log read (%d)".format(maxSize + ""));
+            throw new IllegalArgumentException(String.format("Invalid max size for log read (%d)",maxSize));
         if(maxSize == 0)
             return MessageSet.Empty;
 
@@ -115,7 +115,7 @@ public class LogSegment {
         }else{
             // there is a max offset, translate it to a file position and use that to calculate the max read size
             if(maxOffset < startOffset)
-                throw new IllegalArgumentException("Attempt to read with a maximum offset (%d) less than the start offset (%d).".format(maxOffset + "", startOffset));
+                throw new IllegalArgumentException(String.format("Attempt to read with a maximum offset (%d) less than the start offset (%d).",maxOffset, startOffset));
             OffsetPosition mapping = translateOffset(maxOffset);
             int endPosition ;
             if(mapping == null)

@@ -38,13 +38,13 @@ public class ClientUtils {
         List<Broker> shuffledBrokers = brokers;
         while(i < shuffledBrokers.size() && !fetchMetaDataSucceeded) {
             SyncProducer producer = ProducerPool.createSyncProducer(producerConfig, shuffledBrokers.get(i));
-            logger.info("Fetching metadata from broker %s with correlation id %d for %d topic(s) %s".format(shuffledBrokers.get(i).toString(), correlationId, topics.size(), topics));
+            logger.info(String.format("Fetching metadata from broker %s with correlation id %d for %d topic(s) %s",shuffledBrokers.get(i).toString(), correlationId, topics.size(), topics));
             try {
                 topicMetadataResponse = producer.send(topicMetadataRequest);
                 fetchMetaDataSucceeded = true;
             }catch(Throwable e){
-                logger.warn("Fetching topic metadata with correlation id %d for topics [%s] from broker [%s] failed"
-                            .format(correlationId+"", topics, shuffledBrokers.get(i).toString()), e);
+                logger.warn(String
+                            .format("Fetching topic metadata with correlation id %d for topics [%s] from broker [%s] failed",correlationId, topics, shuffledBrokers.get(i).toString()), e);
                     t = e;
             } finally {
                 i = i + 1;
@@ -52,9 +52,9 @@ public class ClientUtils {
             }
         }
         if(!fetchMetaDataSucceeded) {
-            throw new KafkaException("fetching topic metadata for topics [%s] from broker [%s] failed".format(topics.toString(), shuffledBrokers.toString()), t);
+            throw new KafkaException(String.format("fetching topic metadata for topics [%s] from broker [%s] failed",topics.toString(), shuffledBrokers.toString()), t);
         } else {
-            logger.debug("Successfully fetched metadata for %d topic(s) %s".format(topics.size()+"", topics));
+            logger.debug(String.format("Successfully fetched metadata for %d topic(s) %s",topics.size()+"", topics));
         }
         return topicMetadataResponse;
     }

@@ -28,11 +28,11 @@ public class ReassignedPartitionLeaderSelector implements PartitionLeaderSelecto
         List<Integer>  aliveReassignedInSyncReplicas = reassignedInSyncReplicas.stream().filter(r -> controllerContext.liveBrokerIds().contains(r)).collect(Collectors.toList());
         if(aliveReassignedInSyncReplicas == null || aliveReassignedInSyncReplicas.isEmpty()){
             if(reassignedInSyncReplicas.size() == 0){
-                throw new StateChangeFailedException("List of reassigned replicas for partition " +
-                        " %s is empty. Current leader and ISR: [%s]".format(topicAndPartition.toString(), currentLeaderAndIsr));
+                throw new StateChangeFailedException(String.format("List of reassigned replicas for partition " +
+                        " %s is empty. Current leader and ISR: [%s]",topicAndPartition.toString(), currentLeaderAndIsr));
             }else{
-                throw new StateChangeFailedException("None of the reassigned replicas for partition " +
-                        "%s are alive. Current leader and ISR: [%s]".format(topicAndPartition.toString(), currentLeaderAndIsr));
+                throw new StateChangeFailedException(String.format("None of the reassigned replicas for partition " +
+                        "%s are alive. Current leader and ISR: [%s]",topicAndPartition.toString(), currentLeaderAndIsr));
             }
         }else{
            return  new Pair<>(new LeaderAndIsrRequest.LeaderAndIsr(aliveReassignedInSyncReplicas.get(0), currentLeaderEpoch + 1, currentLeaderAndIsr.isr,

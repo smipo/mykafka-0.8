@@ -2,9 +2,71 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/test/examples/KafkaConsumerDemo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/test/examples/KafkaProducerDemo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/Kafka.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/Kafka.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/admin/AdminUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/admin/AdminUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/admin/CreateTopicCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/admin/CreateTopicCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/FetchResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/FetchResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/RequestKeys.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/RequestKeys.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/StopReplicaRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/StopReplicaRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/cluster/Broker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/cluster/Broker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/cluster/Partition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/cluster/Partition.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/cluster/Replica.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/cluster/Replica.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/Blacklist.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/Blacklist.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerIterator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerIterator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/PartitionTopicInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/PartitionTopicInfo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/Whitelist.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/Whitelist.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/WildcardTopicCount.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/WildcardTopicCount.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperConsumerConnector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperConsumerConnector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperTopicEventWatcher.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperTopicEventWatcher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/ControlledShutdownLeaderSelector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ControlledShutdownLeaderSelector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/ControllerChannelManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ControllerChannelManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/OfflinePartitionLeaderSelector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/OfflinePartitionLeaderSelector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/PartitionStateMachine.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/PartitionStateMachine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/PreferredReplicaPartitionLeaderSelector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/PreferredReplicaPartitionLeaderSelector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/ReassignedPartitionLeaderSelector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ReassignedPartitionLeaderSelector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/ReplicaStateMachine.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ReplicaStateMachine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/FileMessageSet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/FileMessageSet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/Log.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/Log.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/LogManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/LogManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/LogSegment.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/LogSegment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/OffsetIndex.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/OffsetIndex.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/SegmentList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/SegmentList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/CompressionFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/CompressionFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/message/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/message/Message.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/network/BlockingChannel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/network/BlockingChannel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/network/BoundedByteBufferReceive.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/network/BoundedByteBufferReceive.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/network/SocketServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/network/SocketServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/BrokerPartitionInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/BrokerPartitionInfo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/ProducerPool.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/SyncProducer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/DefaultEventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/async/DefaultEventHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/producer/async/ProducerSendThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/producer/async/ProducerSendThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/AbstractFetcherThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/HighwaterMarkCheckpoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/HighwaterMarkCheckpoint.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaApis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaApis.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaRequestHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaRequestHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaZooKeeper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaZooKeeper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaFetcherManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaFetcherManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaFetcherThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaFetcherThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/RequestPurgatory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/RequestPurgatory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/ZookeeperLeaderElector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ZookeeperLeaderElector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/VerifiableProperties.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/log4j.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/log4j.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/IsrExpirationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/IsrExpirationTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/service/LeaderElectionTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/test/kafka/utils/TestUtils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,16 +129,32 @@
       <recent name="D:\ideawork\mykafka-0.8\src\main\java\kafka\message" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.LeaderElectionTest.testLeaderElectionAndEpoch">
-    <configuration name="KafkaConsumerProducerDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="examples.KafkaConsumerProducerDemo" />
+  <component name="RunManager" selected="Application.Kafka">
+    <configuration name="Kafka" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="kafka.Kafka" />
       <module name="mykafka-0.8" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="examples.*" />
+          <option name="PATTERN" value="kafka.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="IsrExpirationTest.testIsrExpirationForStuckFollowers" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="mykafka-0.8" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kafka.service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="kafka.service" />
+      <option name="MAIN_CLASS_NAME" value="kafka.service.IsrExpirationTest" />
+      <option name="METHOD_NAME" value="testIsrExpirationForStuckFollowers" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -92,6 +170,22 @@
       <option name="PACKAGE_NAME" value="kafka.service" />
       <option name="MAIN_CLASS_NAME" value="kafka.service.LeaderElectionTest" />
       <option name="METHOD_NAME" value="testLeaderElectionAndEpoch" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="LeaderElectionTest.testLeaderElectionWithStaleControllerEpoch" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="mykafka-0.8" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="kafka.service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="kafka.service" />
+      <option name="MAIN_CLASS_NAME" value="kafka.service.LeaderElectionTest" />
+      <option name="METHOD_NAME" value="testLeaderElectionWithStaleControllerEpoch" />
       <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -115,9 +209,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.Kafka" />
+        <item itemvalue="JUnit.IsrExpirationTest.testIsrExpirationForStuckFollowers" />
+        <item itemvalue="JUnit.LeaderElectionTest.testLeaderElectionWithStaleControllerEpoch" />
         <item itemvalue="JUnit.LeaderElectionTest.testLeaderElectionAndEpoch" />
         <item itemvalue="JUnit.ReplicaFetchTest.testReplicaFetcherThread" />
-        <item itemvalue="Application.KafkaConsumerProducerDemo" />
       </list>
     </recent_temporary>
   </component>
@@ -172,6 +268,7 @@
       <workItem from="1587778111776" duration="9968000" />
       <workItem from="1587855032456" duration="1522000" />
       <workItem from="1587941873488" duration="1965000" />
+      <workItem from="1588024547697" duration="6197000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -348,59 +445,59 @@
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587479453075" />
     <state x="624" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1587187547676" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587858224533">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1587944066975">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587858224533" />
-    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1585990498360">
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1587944066975" />
+    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1588025486514">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog/0.0.1536.824@0.0.1536.824" timestamp="1585990498360" />
+    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog/0.0.1536.824@0.0.1536.824" timestamp="1588025486514" />
     <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1585628628754">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="740" y="275" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1585628628754" />
-    <state width="1493" height="261" key="GridCell.Tab.0.bottom" timestamp="1587943660028">
+    <state width="1493" height="176" key="GridCell.Tab.0.bottom" timestamp="1588030779374">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1587943660028" />
-    <state width="1493" height="261" key="GridCell.Tab.0.center" timestamp="1587943660028">
+    <state width="1493" height="176" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588030779374" />
+    <state width="1493" height="176" key="GridCell.Tab.0.center" timestamp="1588030779374">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1587943660028" />
-    <state width="1493" height="261" key="GridCell.Tab.0.left" timestamp="1587943660028">
+    <state width="1493" height="176" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1588030779374" />
+    <state width="1493" height="176" key="GridCell.Tab.0.left" timestamp="1588030779374">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1587943660028" />
-    <state width="1493" height="261" key="GridCell.Tab.0.right" timestamp="1587943660028">
+    <state width="1493" height="176" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1588030779374" />
+    <state width="1493" height="176" key="GridCell.Tab.0.right" timestamp="1588030779374">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1587943660028" />
-    <state width="1493" height="261" key="GridCell.Tab.1.bottom" timestamp="1587943660029">
+    <state width="1493" height="176" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1588030779374" />
+    <state width="1493" height="261" key="GridCell.Tab.1.bottom" timestamp="1588025368308">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1587943660029" />
-    <state width="1493" height="261" key="GridCell.Tab.1.center" timestamp="1587943660029">
+    <state width="1493" height="261" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588025368308" />
+    <state width="1493" height="261" key="GridCell.Tab.1.center" timestamp="1588025368308">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1587943660029" />
-    <state width="1493" height="261" key="GridCell.Tab.1.left" timestamp="1587943660029">
+    <state width="1493" height="261" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1588025368308" />
+    <state width="1493" height="261" key="GridCell.Tab.1.left" timestamp="1588025368308">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1587943660029" />
-    <state width="1493" height="261" key="GridCell.Tab.1.right" timestamp="1587943660029">
+    <state width="1493" height="261" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1588025368308" />
+    <state width="1493" height="261" key="GridCell.Tab.1.right" timestamp="1588025368308">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="261" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1587943660029" />
+    <state width="1493" height="261" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1588025368308" />
     <state x="270" y="0" key="SettingsEditor" timestamp="1587274207952">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="270" y="0" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1587274207952" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1587187616585" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587858226687">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1587944069605">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587858226687" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1587944069605" />
     <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1587652927478">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -413,10 +510,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1536.824@0.0.1536.824" timestamp="1585605117971" />
-    <state x="447" y="145" width="642" height="534" key="find.popup" timestamp="1587597346612">
+    <state x="206" y="188" width="1007" height="534" key="find.popup" timestamp="1588028128893">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="447" y="145" width="642" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1587597346612" />
+    <state x="206" y="188" width="1007" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1588028128893" />
     <state x="470" y="39" key="refactoring.ChangeSignatureDialog" timestamp="1586600324930">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -443,7 +540,19 @@
           <line>894</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/kafka/cluster/Replica.java</url>
+          <line>40</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="JUnit">
+        <watch expression="configs.stream().map(c-&gt;c.brokerId).collect(Collectors.toSet())" />
+        <watch expression="partition0.inSyncReplicas.stream().map(x-&gt;x.brokerId)" />
+        <watch expression="&quot;Shouldn't set logEndOffset for replica %d partition [%s,%d] since it's local&quot;&#10;                    .format(brokerId+&quot;&quot;, topic, partitionId)" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

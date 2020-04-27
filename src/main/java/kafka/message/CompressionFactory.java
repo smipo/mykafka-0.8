@@ -25,14 +25,14 @@ public class CompressionFactory {
             case 2:
                 return new SnappyCompressionCodec();
             default:
-                throw new kafka.common.UnknownCodecException("%d is an unknown compression codec".format(String.valueOf(codec)));
+                throw new kafka.common.UnknownCodecException(String.format("%d is an unknown compression codec",codec));
         }
     }
     public static CompressionCodec  getCompressionCodec(String name) {
             if(name.equals("none"))return new NoCompressionCodec();
             else if(name.equals("gzip")) return new GZIPCompressionCodec();
             else if(name.equals("snappy")) return new SnappyCompressionCodec();
-            else throw new kafka.common.UnknownCodecException("%d is an unknown compression name".format(String.valueOf(name)));
+            else throw new kafka.common.UnknownCodecException(String.format("%d is an unknown compression name",name));
     }
 
     public static OutputStream getOutputStream(CompressionCodec compressionCodec, OutputStream stream) throws IOException {

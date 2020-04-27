@@ -55,7 +55,7 @@ public class PartitionTopicInfo {
 
     public void resetFetchOffset(long newFetchOffset)  {
         fetchedOffset.set(newFetchOffset);
-        logger.debug("reset fetch offset of ( %s ) to %d".format(this.toString(), newFetchOffset));
+        logger.debug(String.format("reset fetch offset of ( %s ) to %d",this.toString(), newFetchOffset));
     }
 
     /**
@@ -76,7 +76,7 @@ public class PartitionTopicInfo {
             chunkQueue.put(new FetchedDataChunk(messages, this, fetchedOffset.get()));
             long newOffset = fetchedOffset.addAndGet(size);
             fetchedOffset.set(next);
-            logger. debug("updated fetch offset of ( %s ) to %d".format(this.toString(), newOffset));
+            logger. debug(String.format("updated fetch offset of ( %s ) to %d",this.toString(), newOffset));
         }else if(messages.sizeInBytes() > 0) {
             chunkQueue.put(new FetchedDataChunk(messages, this, fetchedOffset.get()));
         }

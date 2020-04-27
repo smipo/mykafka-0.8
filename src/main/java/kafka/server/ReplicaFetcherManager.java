@@ -20,7 +20,7 @@ public class ReplicaFetcherManager  extends AbstractFetcherManager{
     }
 
     public AbstractFetcherThread createFetcherThread(int fetcherId, Broker sourceBroker){
-       return new ReplicaFetcherThread("ReplicaFetcherThread-%d-%d".format(fetcherId+"", sourceBroker.id()), sourceBroker, brokerConfig, replicaMgr);
+       return new ReplicaFetcherThread(String.format("ReplicaFetcherThread-%d-%d",fetcherId, sourceBroker.id()), sourceBroker, brokerConfig, replicaMgr);
     }
 
     public void shutdown() throws IOException, InterruptedException {

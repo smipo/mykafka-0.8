@@ -61,7 +61,7 @@ public class RequestKeys {
     public static String nameForKey(short key) {
         String name = keyToNameAndDeserializerMap(key);
         if(name == null){
-            throw new KafkaException("Wrong request type %d".format(key + ""));
+            throw new KafkaException(String.format("Wrong request type %d",key ));
         }
         return name;
     }
@@ -69,7 +69,7 @@ public class RequestKeys {
     public static RequestOrResponse deserializerForKey(short key,ByteBuffer buffer) throws IOException{
         RequestOrResponse response = keyToNameAndDeserializerMap(key,buffer);
         if(response == null){
-            throw new KafkaException("Wrong request type %d".format(key + ""));
+            throw new KafkaException(String.format("Wrong request type %d",key ));
         }
         return  response;
     }

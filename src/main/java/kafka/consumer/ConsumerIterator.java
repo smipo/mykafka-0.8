@@ -48,10 +48,10 @@ public class ConsumerIterator<K, V> extends IteratorTemplate<MessageAndMetadata<
     public MessageAndMetadata<K,V>  next(){
         MessageAndMetadata<K,V>  item = super.next();
         if(consumedOffset < 0)
-            throw new IllegalStateException("Offset returned by the message set is invalid %d".format(consumedOffset + ""));
+            throw new IllegalStateException(String.format("Offset returned by the message set is invalid %d",consumedOffset));
         currentTopicInfo.resetConsumeOffset(consumedOffset);
         String topic = currentTopicInfo.topic;
-        logger.trace("Setting %s consumed offset to %d".format(topic, consumedOffset));
+        logger.trace(String.format("Setting %s consumed offset to %d",topic, consumedOffset));
         return item;
     }
 
@@ -82,8 +82,8 @@ public class ConsumerIterator<K, V> extends IteratorTemplate<MessageAndMetadata<
             } else {
                 currentTopicInfo = currentDataChunk.topicInfo();
                 if (currentTopicInfo.getConsumeOffset() < currentDataChunk.fetchOffset) {
-                    logger.error("consumed offset: %d doesn't match fetch offset: %d for %s;\n Consumer may lose data"
-                            .format(currentTopicInfo.getConsumeOffset() + "", currentDataChunk.fetchOffset, currentTopicInfo));
+                    logger.error(String
+                            .format("consumed offset: %d doesn't match fetch offset: %d for %s;\n Consumer may lose data",currentTopicInfo.getConsumeOffset(), currentDataChunk.fetchOffset, currentTopicInfo));
                     currentTopicInfo.resetConsumeOffset(currentDataChunk.fetchOffset);
                 }
                 localCurrent = currentDataChunk.messages.iterator();
@@ -91,9 +91,9 @@ public class ConsumerIterator<K, V> extends IteratorTemplate<MessageAndMetadata<
             }
             // if we just updated the current chunk and it is empty that means the fetch size is too small!
             if(currentDataChunk.messages.validBytes() == 0)
-                throw new MessageSizeTooLargeException("Found a message larger than the maximum fetch size of this consumer on topic " +
-                        "%s partition %d at fetch offset %d. Increase the fetch size, or decrease the maximum message size the broker will allow."
-                                .format(currentDataChunk.topicInfo.topic, currentDataChunk.topicInfo.partitionId, currentDataChunk.fetchOffset));
+                throw new MessageSizeTooLargeException(String
+                                .format("Found a message larger than the maximum fetch size of this consumer on topic " +
+                                        "%s partition %d at fetch offset %d. Increase the fetch size, or decrease the maximum message size the broker will allow.",currentDataChunk.topicInfo.topic, currentDataChunk.topicInfo.partitionId, currentDataChunk.fetchOffset));
 
         }
         MessageAndOffset item = localCurrent.next();

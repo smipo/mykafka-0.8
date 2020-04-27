@@ -99,7 +99,7 @@ public class ReplicaManager {
     }
 
     public short stopReplica(String topic,int partitionId, boolean deletePartition) throws InterruptedException {
-        logger.trace("Broker %d handling stop replica for partition [%s,%d]".format(localBrokerId+"", topic, partitionId));
+        logger.trace(String.format("Broker %d handling stop replica for partition [%s,%d]",localBrokerId, topic, partitionId));
         short errorCode = ErrorMapping.NoError;
         Replica replica = getReplica(topic, partitionId,config.brokerId) ;
         if(replica != null){
@@ -113,15 +113,15 @@ public class ReplicaManager {
             if(deletePartition)
                 allPartitions.remove(new Pair<>(topic, partitionId));
         }
-        logger.trace("Broker %d finished handling stop replica for partition [%s,%d]".format(localBrokerId+"", topic, partitionId));
+        logger.trace(String.format("Broker %d finished handling stop replica for partition [%s,%d]",localBrokerId, topic, partitionId));
         return errorCode;
     }
 
     public Pair<Map<Pair<String, Integer>,Short>, Short> stopReplicas(StopReplicaRequest stopReplicaRequest) throws InterruptedException {
         Map<Pair<String, Integer>,Short> responseMap = new HashMap();
         if(stopReplicaRequest.controllerEpoch < controllerEpoch) {
-            logger.warn("Broker %d received stop replica request from an old controller epoch %d."
-                    .format(localBrokerId+"", stopReplicaRequest.controllerEpoch) +
+            logger.warn(String
+                    .format("Broker %d received stop replica request from an old controller epoch %d.",localBrokerId, stopReplicaRequest.controllerEpoch) +
                     " Latest known controller epoch is %d " + controllerEpoch);
             return new Pair<>(responseMap, ErrorMapping.StaleControllerEpochCode);
         } else {
@@ -153,7 +153,7 @@ public class ReplicaManager {
         if(replicaOpt != null)
             return replicaOpt;
         else
-            throw new ReplicaNotAvailableException("Replica %d is not available for partition [%s,%d]".format(config.brokerId+"", topic, partition));
+            throw new ReplicaNotAvailableException(String.format("Replica %d is not available for partition [%s,%d]",config.brokerId, topic, partition));
     }
 
     public Replica getLeaderReplicaIfLocal(String topic, int partitionId) {
@@ -162,8 +162,8 @@ public class ReplicaManager {
             throw new UnknownTopicOrPartitionException("Partition [%s,%d] doesn't exist on %d".format(topic, partitionId, config.brokerId));
         }
         if(partition.leaderReplicaIfLocal() == null){
-            throw new NotLeaderForPartitionException("Leader not local for partition [%s,%d] on broker %d"
-                    .format(topic, partitionId, config.brokerId));
+            throw new NotLeaderForPartitionException(String
+                    .format("Leader not local for partition [%s,%d] on broker %d",topic, partitionId, config.brokerId));
         }
         return partition.leaderReplicaIfLocal();
     }
@@ -182,8 +182,8 @@ public class ReplicaManager {
     public Pair<Map<Pair<String, Integer>,Short>, Short> becomeLeaderOrFollower(LeaderAndIsrRequest leaderAndISRRequest) throws IOException, InterruptedException {
         Map<Pair<String, Integer>,Short> responseMap = new HashMap<>();
         if(leaderAndISRRequest.controllerEpoch < controllerEpoch) {
-            logger.warn("Broker %d received LeaderAndIsr request correlation id %d with an old controller epoch %d. Latest known controller epoch is %d"
-                    .format(localBrokerId+"", leaderAndISRRequest.controllerEpoch, leaderAndISRRequest.correlationId, controllerEpoch));
+            logger.warn(String
+                    .format("Broker %d received LeaderAndIsr request correlation id %d with an old controller epoch %d. Latest known controller epoch is %d",localBrokerId, leaderAndISRRequest.controllerEpoch, leaderAndISRRequest.correlationId, controllerEpoch));
             return  new Pair<>(responseMap, ErrorMapping.StaleControllerEpochCode);
         }else {
             int controllerId = leaderAndISRRequest.controllerId;
@@ -201,18 +201,18 @@ public class ReplicaManager {
                         makeFollower(controllerId, controllerEpoch, topic, partitionId, entry.getValue(), leaderAndISRRequest.leaders,
                                 leaderAndISRRequest.correlationId);
                 } catch (Throwable e){
-                        String errorMsg = ("Error on broker %d while processing LeaderAndIsr request correlationId %d received from controller %d " +
-                                "epoch %d for partition %s").format(localBrokerId+"", leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId,
+                        String errorMsg = String.format("Error on broker %d while processing LeaderAndIsr request correlationId %d received from controller %d " +
+                                        "epoch %d for partition %s",localBrokerId, leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId,
                                 leaderAndISRRequest.controllerEpoch, entry.toString());
                         logger.error(errorMsg, e);
                         errorCode = ErrorMapping.codeFor(e.getClass().getName());
                 }
                 responseMap.put(entry.getKey(), errorCode);
-                logger.trace("Broker %d handled LeaderAndIsr request correlationId %d received from controller %d epoch %d for partition [%s,%d]"
-                        .format(localBrokerId+"", leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId, leaderAndISRRequest.controllerEpoch,
+                logger.trace(String
+                        .format("Broker %d handled LeaderAndIsr request correlationId %d received from controller %d epoch %d for partition [%s,%d]",localBrokerId, leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId, leaderAndISRRequest.controllerEpoch,
                                 entry.getKey().toString(), entry.getValue().toString()));
             }
-            logger.info("Handled leader and isr request %s".format(leaderAndISRRequest.toString()));
+            logger.info(String.format("Handled leader and isr request %s",leaderAndISRRequest.toString()));
             // we initialize highwatermark thread after the first leaderisrrequest. This ensures that all the partitions
             // have been completely populated before starting the checkpointing there by avoiding weird race conditions
             if (!hwThreadInitialized) {
@@ -227,9 +227,9 @@ public class ReplicaManager {
     private void makeLeader(int controllerId, int epoch, String topic, int partitionId,
                             LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo,int correlationId) throws IOException, InterruptedException {
         LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = partitionStateInfo.leaderIsrAndControllerEpoch;
-        logger.trace(("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
-                "starting the become-leader transition for partition [%s,%d]")
-                .format(localBrokerId+"", correlationId, controllerId, epoch, topic, partitionId));
+        logger.trace(String
+                .format("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
+                        "starting the become-leader transition for partition [%s,%d]",localBrokerId, correlationId, controllerId, epoch, topic, partitionId));
         Partition partition = getOrCreatePartition(topic, partitionId, partitionStateInfo.replicationFactor());
         if (partition.makeLeader(controllerId, topic, partitionId, leaderIsrAndControllerEpoch, correlationId)) {
             // also add this partition to the list of partitions for which the leader is the current broker
@@ -237,15 +237,15 @@ public class ReplicaManager {
                 leaderPartitions.add(partition);
             }
         }
-        logger.trace("Broker %d completed become-leader transition for partition [%s,%d]".format(localBrokerId+"", topic, partitionId));
+        logger.trace(String.format("Broker %d completed become-leader transition for partition [%s,%d]",localBrokerId, topic, partitionId));
     }
 
     private void makeFollower(int controllerId, int epoch, String topic, int partitionId,
                               LeaderAndIsrRequest.PartitionStateInfo partitionStateInfo, Set<Broker> leaders, int correlationId) throws Throwable {
         LeaderIsrAndControllerEpoch leaderIsrAndControllerEpoch = partitionStateInfo.leaderIsrAndControllerEpoch;
-        logger.trace(("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
-                "starting the become-follower transition for partition [%s,%d]")
-                .format(localBrokerId+"", correlationId, controllerId, epoch, topic, partitionId));
+        logger.trace(String
+                .format("Broker %d received LeaderAndIsr request correlationId %d from controller %d epoch %d " +
+                        "starting the become-follower transition for partition [%s,%d]",localBrokerId, correlationId, controllerId, epoch, topic, partitionId));
 
         Partition partition = getOrCreatePartition(topic, partitionId, partitionStateInfo.replicationFactor());
         if (partition.makeFollower(controllerId, topic, partitionId, leaderIsrAndControllerEpoch, leaders, correlationId)) {
@@ -254,7 +254,7 @@ public class ReplicaManager {
                 leaderPartitions.remove(partition);
             }
         }
-        logger.trace("Broker %d completed the become-follower transition for partition [%s,%d]".format(localBrokerId+"", topic, partitionId));
+        logger.trace(String.format("Broker %d completed the become-follower transition for partition [%s,%d]",localBrokerId, topic, partitionId));
     }
 
     private void maybeShrinkIsr() {
@@ -273,7 +273,7 @@ public class ReplicaManager {
         if(partitionOpt != null) {
             partitionOpt.updateLeaderHWAndMaybeExpandIsr(replicaId, offset);
         } else {
-            logger.warn("While recording the follower position, the partition [%s,%d] hasn't been created, skip updating leader HW".format(topic, partitionId));
+            logger.warn(String.format("While recording the follower position, the partition [%s,%d] hasn't been created, skip updating leader HW",topic, partitionId));
         }
     }
 

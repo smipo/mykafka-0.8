@@ -200,7 +200,7 @@ public class OffsetIndex {
         lock.lock();
         try{
             if(n >= entries())
-                throw new IllegalArgumentException("Attempt to fetch the %dth entry from an index of size %d.".format(n + "", entries()));
+                throw new IllegalArgumentException(String.format("Attempt to fetch the %dth entry from an index of size %d.",n, entries()));
             ByteBuffer idx = mmap.duplicate();
             return new OffsetPosition(relativeOffset(idx, n), physical(idx, n));
         }finally {
@@ -216,15 +216,15 @@ public class OffsetIndex {
         try{
             checkArgument(!isFull(), "Attempt to append to a full index (size = " + size + ").");
             if (size.get() == 0 || offset > lastOffset) {
-                logger.debug("Adding index entry %d => %d to %s.".format(offset + "", position, file.getName()));
+                logger.debug(String.format("Adding index entry %d => %d to %s.",offset, position, file.getName()));
                 this.mmap.putInt((int)(offset - baseOffset));
                 this.mmap.putInt(position);
                 this.size.incrementAndGet();
                 this.lastOffset = offset;
                 checkArgument(entries() * 8 == mmap.position(), entries() + " entries but file position in index is " + mmap.position() + ".");
             } else {
-                throw new InvalidOffsetException("Attempt to append an offset (%d) to position %d no larger than the last offset appended (%d) to %s."
-                        .format(offset + "", entries(), lastOffset, file.getName()));
+                throw new InvalidOffsetException(String
+                        .format("Attempt to append an offset (%d) to position %d no larger than the last offset appended (%d) to %s.",offset, entries(), lastOffset, file.getName()));
             }
         }finally {
             lock.unlock();

@@ -46,16 +46,16 @@ public class ReplicaFetcherThread  extends AbstractFetcherThread{
             ByteBufferMessageSet messageSet = (ByteBufferMessageSet)partitionData.messages;
 
             if (fetchOffset != replica.logEndOffset())
-                throw new RuntimeException("Offset mismatch: fetched offset = %d, log end offset = %d.".format(fetchOffset+"", replica.logEndOffset()));
-            logger.trace("Follower %d has replica log end offset %d for partition %s. Received %d messages and leader hw %d"
-                    .format(replica.brokerId+"", replica.logEndOffset(), topicAndPartition, messageSet.sizeInBytes(), partitionData.hw));
+                throw new RuntimeException(String.format("Offset mismatch: fetched offset = %d, log end offset = %d.",fetchOffset, replica.logEndOffset()));
+            logger.trace(String
+                    .format("Follower %d has replica log end offset %d for partition %s. Received %d messages and leader hw %d",replica.brokerId, replica.logEndOffset(), topicAndPartition, messageSet.sizeInBytes(), partitionData.hw));
             replica.log.append(messageSet,  false);
-            logger. trace("Follower %d has replica log end offset %d after appending %d bytes of messages for partition %s"
-                    .format(replica.brokerId+"", replica.logEndOffset(), messageSet.sizeInBytes(), topicAndPartition));
+            logger. trace(String
+                    .format("Follower %d has replica log end offset %d after appending %d bytes of messages for partition %s",replica.brokerId, replica.logEndOffset(), messageSet.sizeInBytes(), topicAndPartition));
             long followerHighWatermark = Math.min(replica.logEndOffset(),partitionData.hw);
             replica.highWatermark_(followerHighWatermark) ;
-            logger. trace("Follower %d set replica highwatermark for partition [%s,%d] to %d"
-                    .format(replica.brokerId+"", topic, partitionId, followerHighWatermark));
+            logger. trace(String
+                    .format("Follower %d set replica highwatermark for partition [%s,%d] to %d",replica.brokerId, topic, partitionId, followerHighWatermark));
         } catch (KafkaStorageException e){
                 logger.fatal("Disk error while replicating data.", e);
                 Runtime.getRuntime().halt(1);
@@ -82,8 +82,8 @@ public class ReplicaFetcherThread  extends AbstractFetcherThread{
         long leaderEndOffset = simpleConsumer.earliestOrLatestOffset(topicAndPartition, OffsetRequest.LatestTime, brokerConfig.brokerId);
         if (leaderEndOffset < log.logEndOffset()) {
             log.truncateTo(leaderEndOffset);
-            logger.warn("Replica %d for partition %s reset its fetch offset to current leader %d's latest offset %d"
-                    .format(brokerConfig.brokerId+"", topicAndPartition, sourceBroker.id(), leaderEndOffset));
+            logger.warn(String
+                    .format("Replica %d for partition %s reset its fetch offset to current leader %d's latest offset %d",brokerConfig.brokerId, topicAndPartition, sourceBroker.id(), leaderEndOffset));
             return leaderEndOffset;
         } else {
             /**
@@ -94,8 +94,8 @@ public class ReplicaFetcherThread  extends AbstractFetcherThread{
              */
             long leaderStartOffset = simpleConsumer.earliestOrLatestOffset(topicAndPartition, OffsetRequest.EarliestTime, brokerConfig.brokerId);
             log.truncateAndStartWithNewOffset(leaderStartOffset);
-            logger.warn("Replica %d for partition %s reset its fetch offset to current leader %d's start offset %d"
-                    .format(brokerConfig.brokerId+"", topicAndPartition, sourceBroker.id(), leaderStartOffset));
+            logger.warn(String
+                    .format("Replica %d for partition %s reset its fetch offset to current leader %d's start offset %d",brokerConfig.brokerId, topicAndPartition, sourceBroker.id(), leaderStartOffset));
             return leaderStartOffset;
         }
     }

@@ -21,7 +21,7 @@ public class SyncProducer {
         this.config = config;
         blockingChannel = new BlockingChannel(config.host, config.port, BlockingChannel.UseDefaultBufferSize,
                 config.sendBufferBytes, config.requestTimeoutMs);
-        brokerInfo = "host_%s-port_%s".format(config.host, config.port);
+        brokerInfo = String.format("host_%s-port_%s",config.host, config.port);
     }
 
     private BlockingChannel blockingChannel;

@@ -15,10 +15,10 @@ public class Broker {
 
     public  static  Broker createBroker(int id,String brokerInfoString) {
         if(brokerInfoString == null)
-            throw new BrokerNotAvailableException("Broker id %s does not exist".format(id + ""));
+            throw new BrokerNotAvailableException(String.format("Broker id %s does not exist",id));
         try {
             if(brokerInfoString == null || brokerInfoString.isEmpty()){
-                throw new BrokerNotAvailableException("Broker id %d does not exist".format(id + ""));
+                throw new BrokerNotAvailableException(String.format("Broker id %d does not exist",id));
             }else {
                 Map<String,Object> brokerInfo = JacksonUtils.strToMap(brokerInfoString);
                 String host = brokerInfo.get("host").toString();

@@ -46,13 +46,13 @@ public abstract class AbstractFetcherManager {
              }
 
             fetcherThread.addPartition(topic, partitionId, initialOffset);
-             logger.info("Adding fetcher for partition [%s,%d], initOffset %d to broker %d with fetcherId %d"
-                    .format(topic, partitionId, initialOffset, sourceBroker.id(), key.fetcherId));
+             logger.info(String
+                    .format("Adding fetcher for partition [%s,%d], initOffset %d to broker %d with fetcherId %d",topic, partitionId, initialOffset, sourceBroker.id(), key.fetcherId));
         }
     }
 
     public void removeFetcher(String topic, int partitionId) throws InterruptedException {
-        logger.info("Removing fetcher for partition [%s,%d]".format(topic, partitionId));
+        logger.info(String.format("Removing fetcher for partition [%s,%d]",topic, partitionId));
          synchronized(mapLock) {
              for(Map.Entry<BrokerAndFetcherId, AbstractFetcherThread> entry : fetcherThreadMap.entrySet()){
                  entry.getValue().removePartition(topic, partitionId);
