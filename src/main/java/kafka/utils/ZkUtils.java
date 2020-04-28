@@ -828,10 +828,10 @@ public class ZkUtils {
 
         public ZKConfig(VerifiableProperties props){
             this.props = props;
-            zkConnect = props.getString("zk.connect");
-            zkSessionTimeoutMs = props.getInt( "zk.sessiontimeout.ms", 6000);
-            zkConnectionTimeoutMs = props.getInt( "zk.connectiontimeout.ms",zkSessionTimeoutMs);
-            zkSyncTimeMs = props.getInt( "zk.synctime.ms", 2000);
+            zkConnect = props.getString("zookeeper.connect");
+            zkSessionTimeoutMs = props.getInt( "zookeeper.session.timeout.ms", 6000);
+            zkConnectionTimeoutMs = props.getInt( "zookeeper.connection.timeout.ms",zkSessionTimeoutMs);
+            zkSyncTimeMs = props.getInt( "zookeeper.sync.time.ms", 2000);
         }
 
         /** ZK host string */

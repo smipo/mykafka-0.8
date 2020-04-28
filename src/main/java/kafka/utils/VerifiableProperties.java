@@ -28,7 +28,7 @@ public class VerifiableProperties {
     }
 
     public String getProperty(String name) {
-        String value = props.getProperty(name);
+        String value = props.get(name).toString();
         referenceSet.add(name);
         return value;
     }
@@ -40,9 +40,7 @@ public class VerifiableProperties {
             throw new IllegalArgumentException("Missing required property '" + name + "'");
     }
     public  int getInt(String name, int defaultValue){
-        if(containsKey(name))
-            return Integer.parseInt(props.get(name).toString());
-        return defaultValue;
+        return getIntInRange(name, defaultValue,Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
     public  int getIntInRange(String name,int start,int end){
         return getIntInRange(name, -1,start, end);
@@ -50,7 +48,7 @@ public class VerifiableProperties {
     public  int getIntInRange(String name, int defaultValue, int start,int end){
         int v = -1;
         if(containsKey(name))
-            v = Integer.parseInt(props.get(name).toString());
+            v = Integer.parseInt(getProperty(name));
         else
             v = defaultValue;
 
@@ -72,12 +70,10 @@ public class VerifiableProperties {
         return  getLongInRange( name, defaultValue, Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
-
-
     public  long getLongInRange(String name, long defaultValue, long start,long end) {
         long v = -1;
         if(containsKey(name))
-            v = Long.parseLong(props.get(name).toString());
+            v = Long.parseLong(getProperty(name));
         else
             v = defaultValue;
 
@@ -90,7 +86,7 @@ public class VerifiableProperties {
      */
     public  String getString(String name, String defaultValue) {
         if(containsKey(name))
-            return props.get(name).toString();
+            return getProperty(name);
         return defaultValue;
     }
 
@@ -99,7 +95,7 @@ public class VerifiableProperties {
      */
     public  String getString(String name) {
         if(containsKey(name))
-            return  props.get(name).toString();
+            return getProperty(name);
         else
             throw new IllegalArgumentException("Missing required property '" + name + "'");
     }
