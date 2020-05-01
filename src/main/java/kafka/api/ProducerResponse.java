@@ -63,7 +63,8 @@ public class ProducerResponse  extends RequestOrResponse{
                 4 ;/* topic count */
         Map<String, List<Pair<TopicAndPartition, ProducerResponseStatus>>> groupedStatus = statusGroupedByTopic;
         for (Map.Entry<String,  List<Pair<TopicAndPartition, ProducerResponseStatus>>> entry : groupedStatus.entrySet()) {
-            size += ApiUtils.shortStringLength(entry.getKey())
+            size += ApiUtils.shortStringLength(entry.getKey())+
+            4 + /* partition count for this topic */
                     + entry.getValue().size()*(
                     4 + /* partition id */
                             2 + /* error code */

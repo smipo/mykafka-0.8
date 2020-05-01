@@ -19,6 +19,8 @@ public class BoundedByteBufferSend extends Send {
         if(request.requestId != null){
             buffer.putShort(request.requestId);
         }
+        request.writeTo(buffer);
+        buffer.rewind();
     }
     public BoundedByteBufferSend(int size) {
         this(ByteBuffer.allocate(size));

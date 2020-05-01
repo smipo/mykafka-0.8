@@ -161,7 +161,7 @@ public class LogSegment {
         while (iterator.hasNext()){
             messageAndOffset = iterator.next();
         }
-        if(ms == null)  return start;
+        if(messageAndOffset == null)  return start;
         else  return messageAndOffset.nextOffset();
     }
 

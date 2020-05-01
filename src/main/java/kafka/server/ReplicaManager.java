@@ -201,7 +201,7 @@ public class ReplicaManager {
                         makeFollower(controllerId, controllerEpoch, topic, partitionId, entry.getValue(), leaderAndISRRequest.leaders,
                                 leaderAndISRRequest.correlationId);
                 } catch (Throwable e){
-                        String errorMsg = String.format("Error on broker %d while processing LeaderAndIsr request correlationId %d received from controller %d " +
+                        String errorMsg = String.format("Error on broker %d while processing LeaderAndIsr request correlationId %d received from controller %s " +
                                         "epoch %d for partition %s",localBrokerId, leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId,
                                 leaderAndISRRequest.controllerEpoch, entry.toString());
                         logger.error(errorMsg, e);
@@ -210,7 +210,7 @@ public class ReplicaManager {
                 responseMap.put(entry.getKey(), errorCode);
                 logger.trace(String
                         .format("Broker %d handled LeaderAndIsr request correlationId %d received from controller %d epoch %d for partition [%s,%d]",localBrokerId, leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId, leaderAndISRRequest.controllerEpoch,
-                                entry.getKey().toString(), entry.getValue().toString()));
+                                entry.getKey().toString(), entry.getValue()));
             }
             logger.info(String.format("Handled leader and isr request %s",leaderAndISRRequest.toString()));
             // we initialize highwatermark thread after the first leaderisrrequest. This ensures that all the partitions

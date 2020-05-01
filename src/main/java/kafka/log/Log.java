@@ -151,7 +151,7 @@ public class Log {
     /* Load the log segments from the log files on disk */
     private SegmentList<LogSegment> loadSegments() throws IOException{
         // open all the segments read-only
-        ArrayList<LogSegment> logSegments = new ArrayList<LogSegment>();
+        ArrayList<LogSegment> logSegments = new ArrayList<>();
         File[] ls = dir.listFiles();
         if(ls != null) {
             for(File file:ls){
@@ -215,13 +215,13 @@ public class Log {
         }
 
         // Check for the index file of every segment, if it's empty or its last offset is greater than its base offset.
-        for (LogSegment s : segments.view()) {
+        for (LogSegment s : logSegments) {
             checkArgument(s.index.entries() == 0 || s.index.lastOffset > s.index.baseOffset,
                            String.format("Corrupt index found, index file (%s) has non-zero size but the last offset is %d and the base offset is %d"
                                    ,s.index.file.getAbsolutePath(), s.index.lastOffset, s.index.baseOffset));
         }
 
-        return  new SegmentList(segments.view());
+        return  new SegmentList(logSegments);
     }
 
     /**

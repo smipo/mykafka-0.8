@@ -67,8 +67,8 @@ public class LogManager {
     private Map<String,String> logFlushIntervals ;
     private Object logCreationLock = new Object();
     private Map<String,String> logRetentionSizeMap;
-    private Map<String,Long> logRetentionMsMap ; // convert hours to ms
-    private Map<String,Long> logRollMsMap ;
+    private Map<String,Long> logRetentionMsMap = new HashMap<>(); // convert hours to ms
+    private Map<String,Long> logRollMsMap = new HashMap<>();
     private long logRollDefaultIntervalMs ;
     private long logCleanupIntervalMs;
     private long logCleanupDefaultAgeMs;

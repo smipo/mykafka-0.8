@@ -155,12 +155,14 @@ public class ControllerChannelManager {
             }
         }
     }
-    public  class ControllerBrokerRequestBatch{
+    public static class ControllerBrokerRequestBatch{
         public ControllerContext controllerContext;
         public int controllerId;
         public String clientId;
+        KafkaController controller;
 
-        public ControllerBrokerRequestBatch(ControllerContext controllerContext,  int controllerId, String clientId) {
+        public ControllerBrokerRequestBatch(KafkaController controller,ControllerContext controllerContext,  int controllerId, String clientId) {
+            this.controller = controller;
             this.controllerContext = controllerContext;
             this.controllerId = controllerId;
             this.clientId = clientId;
@@ -264,7 +266,7 @@ public class ControllerChannelManager {
                                     "for partition [%s,%d]",controllerId , controllerEpoch, typeOfRequest, correlationId, broker,
                             entryPartition.getKey().getKey(), entryPartition.getKey().getValue()));
                 }
-                sendRequest(broker, leaderAndIsrRequest, null);
+                controller.sendRequest(broker, leaderAndIsrRequest, null);
             }
             leaderAndIsrRequestMap.clear();
             for(Map.Entry<Integer,Map<TopicAndPartition, LeaderAndIsrRequest.PartitionStateInfo>> entry : updateMetadataRequestMap.entrySet()){
@@ -274,7 +276,7 @@ public class ControllerChannelManager {
                         partitionStateInfos, controllerContext.liveOrShuttingDownBrokers());
                 partitionStateInfos.forEach((k,v) -> logger.trace(String.format("Controller %d epoch %d sending UpdateMetadata request with " +
                         "correlationId %d to broker %d for partition %s",controllerId, controllerEpoch, correlationId, broker, k)));
-                sendRequest(broker, updateMetadataRequest, null);
+                controller.sendRequest(broker, updateMetadataRequest, null);
             }
             updateMetadataRequestMap.clear();
 
@@ -284,7 +286,7 @@ public class ControllerChannelManager {
                             .format("The stop replica request (delete = %s) sent to broker %d is %s",false, entry.getKey(), entry.getValue().toString()));
                     StopReplicaRequest stopReplicaRequest = new StopReplicaRequest(false, entry.getValue().stream().collect(Collectors.toSet()), controllerId,
                             controllerEpoch, correlationId);
-                    sendRequest(entry.getKey(), stopReplicaRequest, null);
+                    controller.sendRequest(entry.getKey(), stopReplicaRequest, null);
                 }
             }
             for(Map.Entry<Integer, List<Pair<String,Integer>>> entry : stopAndDeleteReplicaRequestMap.entrySet()){
@@ -293,7 +295,7 @@ public class ControllerChannelManager {
                             .format("The stop replica request (delete = %s) sent to broker %d is %s",true, entry.getKey(), entry.getValue().toString()));
                     StopReplicaRequest stopReplicaRequest = new StopReplicaRequest(true, entry.getValue().stream().collect(Collectors.toSet()), controllerId,
                             controllerEpoch, correlationId);
-                    sendRequest(entry.getKey(), stopReplicaRequest, null);
+                    controller.sendRequest(entry.getKey(), stopReplicaRequest, null);
                 }
             }
         }

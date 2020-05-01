@@ -1,6 +1,7 @@
 package kafka.controller;
 
 import kafka.api.LeaderAndIsrRequest;
+import kafka.api.RequestOrResponse;
 import kafka.cluster.Broker;
 import kafka.common.*;
 import kafka.server.KafkaConfig;
@@ -57,7 +58,6 @@ public class KafkaController {
         this.zkClient = zkClient;
 
         controllerContext = new ControllerContext(zkClient, config.zkSessionTimeoutMs);
-        controllerContext.controllerChannelManager = new ControllerChannelManager(controllerContext, config);
         partitionStateMachine = new PartitionStateMachine(this);
         replicaStateMachine = new ReplicaStateMachine(this);
         controllerElector = new ZookeeperLeaderElector(controllerContext, ZkUtils.ControllerPath,
@@ -66,7 +66,7 @@ public class KafkaController {
         reassignedPartitionLeaderSelector = new ReassignedPartitionLeaderSelector(controllerContext);
         preferredReplicaPartitionLeaderSelector = new PreferredReplicaPartitionLeaderSelector(controllerContext);
         controlledShutdownPartitionLeaderSelector = new ControlledShutdownLeaderSelector(controllerContext);
-        brokerRequestBatch =  controllerContext.controllerChannelManager.new ControllerBrokerRequestBatch(controllerContext,  this.config.brokerId, this.clientId());
+        brokerRequestBatch =  new ControllerChannelManager.ControllerBrokerRequestBatch(this,controllerContext,  this.config.brokerId, this.clientId());
 
         registerControllerChangedListener();
     }
@@ -91,7 +91,9 @@ public class KafkaController {
     public String clientId (){
         return String.format("id_%d-host_%s-port_%d",config.brokerId ,config.hostName, config.port);
     }
-
+    public void sendRequest(int brokerId , RequestOrResponse request , Callback callback) throws InterruptedException {
+        controllerContext.controllerChannelManager.sendRequest(brokerId, request, callback);
+    }
     /**
      * On clean shutdown, the controller first determines the partitions that the
      * shutting down broker leads, and moves leadership of those partitions to another broker
@@ -512,8 +514,7 @@ public class KafkaController {
     }
 
     private void initializeControllerContext() throws IOException {
-        Set<Broker> brokerSet =  controllerContext.liveBrokers();
-        brokerSet = ZkUtils.getAllBrokersInCluster(zkClient).stream().collect(Collectors.toSet());
+        controllerContext.liveBrokers(ZkUtils.getAllBrokersInCluster(zkClient).stream().collect(Collectors.toSet()));
         controllerContext.allTopics = ZkUtils.getAllTopics(zkClient).stream().collect(Collectors.toSet());
         controllerContext.partitionReplicaAssignment = ZkUtils.getReplicaAssignmentForTopics(zkClient, controllerContext.allTopics.stream().collect(Collectors.toList()));
         controllerContext.partitionLeadershipInfo = new HashMap<>();
@@ -577,6 +578,7 @@ public class KafkaController {
     }
 
     private void startChannelManager() throws IOException {
+        controllerContext.controllerChannelManager = new ControllerChannelManager(controllerContext, config);
         controllerContext.controllerChannelManager.startup();
     }
 
