@@ -303,7 +303,7 @@ public class KafkaController {
      * 2. Invokes the new partition callback
      */
     public void onNewTopicCreation(List<String> topics,Set<TopicAndPartition> newPartitions) {
-        logger.info("New topic creation callback for %s".format(newPartitions.toString()));
+        logger.info(String.format("New topic creation callback for %s",newPartitions.toString()));
         // subscribe to partition changes
         topics.forEach(topic -> partitionStateMachine.registerPartitionChangeListener(topic));
         onNewPartitionCreation(newPartitions);
@@ -316,7 +316,7 @@ public class KafkaController {
      * 2. Move the newly created partitions from NewPartition->OnlinePartition state
      */
     public void onNewPartitionCreation(Set<TopicAndPartition> newPartitions) {
-        logger.info("New partition creation callback for %s".format(newPartitions.toString()));
+        logger.info(String.format("New partition creation callback for %s",newPartitions.toString()));
         partitionStateMachine.handleStateChanges(newPartitions, new PartitionStateMachine.NewPartition(),partitionStateMachine.noOpPartitionLeaderSelector);
         replicaStateMachine.handleStateChanges(getAllReplicasForPartition(newPartitions), new ReplicaStateMachine.NewReplica());
         partitionStateMachine.handleStateChanges(newPartitions, new PartitionStateMachine.OnlinePartition(), offlinePartitionSelector);
@@ -354,18 +354,18 @@ public class KafkaController {
             updateAssignedReplicasForPartition(topicAndPartition, reassignedPartitionContext);
             // update the /admin/reassign_partitions path to remove this partition
             removePartitionFromReassignedPartitions(topicAndPartition);
-            logger.info("Removed partition %s from the list of reassigned partitions in zookeeper".format(topicAndPartition.toString()));
+            logger.info(String.format("Removed partition %s from the list of reassigned partitions in zookeeper",topicAndPartition.toString()));
             controllerContext.partitionsBeingReassigned.remove(topicAndPartition);
             // after electing leader, the replicas and isr information changes, so resend the update metadata request
             Set<TopicAndPartition> set = new HashSet<>();
             set.add(topicAndPartition);
             sendUpdateMetadataRequest(controllerContext.liveOrShuttingDownBrokerIds().stream().collect(Collectors.toList()),set );
         }else{
-            logger.info("New replicas %s for partition %s being ".format(reassignedReplicas.toString(), topicAndPartition) +
+            logger.info(String.format("New replicas %s for partition %s being ",reassignedReplicas.toString(), topicAndPartition) +
                     "reassigned not yet caught up with the leader");
             // start new replicas
             startNewReplicasForReassignedPartition(topicAndPartition, reassignedPartitionContext);
-            logger.info("Waiting for new replicas %s for partition %s being ".format(reassignedReplicas.toString(), topicAndPartition) +
+            logger.info(String.format("Waiting for new replicas %s for partition %s being ",reassignedReplicas.toString(), topicAndPartition) +
                     "reassigned to catch up with the leader");
         }
     }
@@ -398,8 +398,8 @@ public class KafkaController {
                     }
                 }
                 if(isSame) {
-                    throw new KafkaException("Partition %s to be reassigned is already assigned to replicas".format(topicAndPartition.toString()) +
-                            " %s. Ignoring request for partition reassignment".format(newReplicas.toString()));
+                    throw new KafkaException(String.format("Partition %s to be reassigned is already assigned to replicas",topicAndPartition.toString()) +
+                            String.format(" %s. Ignoring request for partition reassignment",newReplicas.toString()));
                 } else {
                     boolean isSameAlive = true;
                     for(Integer r:aliveNewReplicas){
@@ -409,36 +409,36 @@ public class KafkaController {
                         }
                     }
                     if(isSame) {
-                        logger.info("Handling reassignment of partition %s to new replicas %s".format(topicAndPartition.toString(), newReplicas.toString()));
+                        logger.info(String.format("Handling reassignment of partition %s to new replicas %s",topicAndPartition.toString(), newReplicas.toString()));
                         // first register ISR change listener
                         watchIsrChangesForReassignedPartition(topic, partition, reassignedPartitionContext);
                         controllerContext.partitionsBeingReassigned.put(topicAndPartition, reassignedPartitionContext);
                         onPartitionReassignment(topicAndPartition, reassignedPartitionContext);
                     } else {
                         // some replica in RAR is not alive. Fail partition reassignment
-                        throw new KafkaException("Only %s replicas out of the new set of replicas".format(aliveNewReplicas.toString()) +
-                                " %s for partition %s to be reassigned are alive. ".format(newReplicas.toString(), topicAndPartition) +
+                        throw new KafkaException(String.format("Only %s replicas out of the new set of replicas",aliveNewReplicas.toString()) +
+                                String.format(" %s for partition %s to be reassigned are alive. ",newReplicas.toString(), topicAndPartition) +
                                 "Failing partition reassignment");
                     }
                 }
             }else{
-                throw new KafkaException("Attempt to reassign partition %s that doesn't exist"
-                        .format(topicAndPartition.toString()));
+                throw new KafkaException(String
+                        .format("Attempt to reassign partition %s that doesn't exist",topicAndPartition.toString()));
             }
         } catch (Throwable e){
-            logger.error("Error completing reassignment of partition %s".format(topicAndPartition.toString()), e);
+            logger.error(String.format("Error completing reassignment of partition %s",topicAndPartition.toString()), e);
             // remove the partition from the admin path to unblock the admin client
             removePartitionFromReassignedPartitions(topicAndPartition);
         }
     }
 
     public void onPreferredReplicaElection(Set<TopicAndPartition> partitions) {
-        logger.info("Starting preferred replica leader election for partitions %s".format(partitions.toString()));
+        logger.info(String.format("Starting preferred replica leader election for partitions %s",partitions.toString()));
         try {
             controllerContext.partitionsUndergoingPreferredReplicaElection.addAll(partitions);
             partitionStateMachine.handleStateChanges(partitions, new PartitionStateMachine.OnlinePartition(), preferredReplicaPartitionLeaderSelector);
         } catch(Throwable e) {
-            logger. error("Error completing preferred replica leader election for partitions %s".format(partitions.toString()), e);
+            logger. error(String.format("Error completing preferred replica leader election for partitions %s",partitions.toString()), e);
         } finally {
             removePartitionsFromPreferredReplicaElection(partitions);
         }
@@ -506,7 +506,7 @@ public class KafkaController {
         }catch (Throwable oe){
             logger.error("Error while incrementing controller epoch", oe);
         }
-        logger.info("Controller %d incremented epoch to %d".format(config.brokerId + "", controllerContext.epoch));
+        logger.info(String.format("Controller %d incremented epoch to %d",config.brokerId, controllerContext.epoch));
     }
 
     private void registerSessionExpirationListener()  {
@@ -523,9 +523,9 @@ public class KafkaController {
         updateLeaderAndIsrCache();
         // start the channel manager
         startChannelManager();
-        logger.info("Currently active brokers in the cluster: %s".format(controllerContext.liveBrokerIds().toString()));
-        logger.info("Currently shutting brokers in the cluster: %s".format(controllerContext.shuttingDownBrokerIds.toString()));
-        logger.info("Current list of topics in the cluster: %s".format(controllerContext.allTopics.toString()));
+        logger.info(String.format("Currently active brokers in the cluster: %s",controllerContext.liveBrokerIds().toString()));
+        logger.info(String.format("Currently shutting brokers in the cluster: %s",controllerContext.shuttingDownBrokerIds.toString()));
+        logger.info(String.format("Current list of topics in the cluster: %s",controllerContext.allTopics.toString()));
     }
 
     private void initializeAndMaybeTriggerPartitionReassignment() throws IOException {
@@ -554,9 +554,9 @@ public class KafkaController {
         partitionsToReassign.putAll(partitionsBeingReassigned);
         reassignedPartitions.forEach(p -> partitionsToReassign.remove(p));
 
-        logger.info("Partitions being reassigned: %s".format(partitionsBeingReassigned.toString()));
-        logger.info("Partitions already reassigned: %s".format(reassignedPartitions.toString()));
-        logger.info("Resuming reassignment of partitions: %s".format(partitionsToReassign.toString()));
+        logger.info(String.format("Partitions being reassigned: %s",partitionsBeingReassigned.toString()));
+        logger.info(String.format("Partitions already reassigned: %s",reassignedPartitions.toString()));
+        logger.info(String.format("Resuming reassignment of partitions: %s",partitionsToReassign.toString()));
 
         for(Map.Entry<TopicAndPartition, KafkaController.ReassignedPartitionsContext> entry : partitionsToReassign.entrySet()){
             initiateReassignReplicasForTopicPartition(entry.getKey(), entry.getValue());
@@ -571,9 +571,9 @@ public class KafkaController {
                 controllerContext.partitionLeadershipInfo.get(partition).leaderAndIsr.leader == controllerContext.partitionReplicaAssignment.get(partition).get(0)).collect(Collectors.toSet());
         controllerContext.partitionsUndergoingPreferredReplicaElection.addAll(partitionsUndergoingPreferredReplicaElection);
         controllerContext.partitionsUndergoingPreferredReplicaElection.removeAll(partitionsThatCompletedPreferredReplicaElection);
-        logger.info("Partitions undergoing preferred replica election: %s".format(partitionsUndergoingPreferredReplicaElection.toString()));
-        logger.info("Partitions that completed preferred replica election: %s".format(partitionsThatCompletedPreferredReplicaElection.toString()));
-        logger.info("Resuming preferred replica election for partitions: %s".format(controllerContext.partitionsUndergoingPreferredReplicaElection.toString()));
+        logger.info(String.format("Partitions undergoing preferred replica election: %s",partitionsUndergoingPreferredReplicaElection.toString()));
+        logger.info(String.format("Partitions that completed preferred replica election: %s",partitionsThatCompletedPreferredReplicaElection.toString()));
+        logger.info(String.format("Resuming preferred replica election for partitions: %s",controllerContext.partitionsUndergoingPreferredReplicaElection.toString()));
         onPreferredReplicaElection(controllerContext.partitionsUndergoingPreferredReplicaElection.stream().collect(Collectors.toSet()));
     }
 
@@ -600,8 +600,8 @@ public class KafkaController {
         List<Integer> reassignedReplicas = reassignedPartitionContext.newReplicas;
         int currentLeader = controllerContext.partitionLeadershipInfo.get(topicAndPartition).leaderAndIsr.leader;
         if(!reassignedPartitionContext.newReplicas.contains(currentLeader)) {
-            logger.info("Leader %s for partition %s being reassigned, ".format(currentLeader + "", topicAndPartition.toString()) +
-                    "is not in the new list of replicas %s. Re-electing leader".format(reassignedReplicas.toString()));
+            logger.info(String.format("Leader %s for partition %s being reassigned, ",currentLeader, topicAndPartition.toString()) +
+                    String.format("is not in the new list of replicas %s. Re-electing leader",reassignedReplicas.toString()));
             // move the leader to one of the alive and caught up new replicas
             Set<TopicAndPartition> partitions = new HashSet<>();
             partitions.add(topicAndPartition);
@@ -610,11 +610,11 @@ public class KafkaController {
             // check if the leader is alive or not
            boolean isContains = controllerContext.liveBrokerIds().contains(currentLeader);
            if(isContains){
-               logger.info("Leader %s for partition %s being reassigned, ".format(currentLeader+"", topicAndPartition.toString()) +
-                       "is already in the new list of replicas %s and is alive".format(reassignedReplicas.toString()));
+               logger.info(String.format("Leader %s for partition %s being reassigned, ", currentLeader, topicAndPartition.toString()) +
+                       String.format("is already in the new list of replicas %s and is alive",reassignedReplicas.toString()));
            }else{
-               logger.info("Leader %s for partition %s being reassigned, ".format(currentLeader+"", topicAndPartition.toString()) +
-                       "is already in the new list of replicas %s but is dead".format(reassignedReplicas.toString()));
+               logger.info(String.format("Leader %s for partition %s being reassigned, ",currentLeader, topicAndPartition.toString()) +
+                       String.format("is already in the new list of replicas %s but is dead",reassignedReplicas.toString()));
                Set<TopicAndPartition> partitions = new HashSet<>();
                partitions.add(topicAndPartition);
                partitionStateMachine.handleStateChanges(partitions, new PartitionStateMachine.OnlinePartition(), reassignedPartitionLeaderSelector);
@@ -646,7 +646,7 @@ public class KafkaController {
         Map<TopicAndPartition, List<Integer>> partitionsAndReplicasForThisTopic = controllerContext.partitionReplicaAssignment.entrySet().stream().filter(topic->topic.equals(topicAndPartition.topic())).collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
         partitionsAndReplicasForThisTopic.put(topicAndPartition, reassignedReplicas);
         updateAssignedReplicasForPartition(topicAndPartition, partitionsAndReplicasForThisTopic);
-        logger.info("Updated assigned replicas for partition %s being reassigned to %s ".format(topicAndPartition + "", reassignedReplicas.toString()));
+        logger.info(String.format("Updated assigned replicas for partition %s being reassigned to %s ",topicAndPartition.toString(), reassignedReplicas.toString()));
         // update the assigned replica list after a successful zookeeper write
         controllerContext.partitionReplicaAssignment.put(topicAndPartition, reassignedReplicas);
         // stop watching the ISR changes for this partition
@@ -712,9 +712,9 @@ public class KafkaController {
             }
             String jsonPartitionMap = ZkUtils.replicaAssignmentZkdata(map);
             ZkUtils.updatePersistentPath(zkClient, zkPath, jsonPartitionMap);
-            logger.debug("Updated path %s with %s for replica assignment".format(zkPath, jsonPartitionMap));
+            logger.debug(String.format("Updated path %s with %s for replica assignment",zkPath, jsonPartitionMap));
         } catch (ZkNoNodeException e){
-           throw new IllegalStateException("Topic %s doesn't exist".format(topicAndPartition.topic()));
+           throw new IllegalStateException(String.format("Topic %s doesn't exist",topicAndPartition.topic()));
         }catch(Throwable e2){
             throw new KafkaException(e2.toString());
         }
@@ -726,9 +726,9 @@ public class KafkaController {
             int currentLeader = controllerContext.partitionLeadershipInfo.get(partition).leaderAndIsr.leader;
             int preferredReplica = controllerContext.partitionReplicaAssignment.get(partition).get(0);
             if(currentLeader == preferredReplica) {
-                logger.info("Partition %s completed preferred replica leader election. New leader is %d".format(partition+"", preferredReplica));
+                logger.info(String.format("Partition %s completed preferred replica leader election. New leader is %d",partition, preferredReplica));
             } else {
-                logger.warn("Partition %s failed to complete preferred replica leader election. Leader is %d".format(partition+"", currentLeader));
+                logger.warn(String.format("Partition %s failed to complete preferred replica leader election. Leader is %d",partition, currentLeader));
             }
         }
         ZkUtils.deletePath(zkClient, ZkUtils.PreferredReplicaLeaderElectionPath);
@@ -769,7 +769,7 @@ public class KafkaController {
      */
     public LeaderIsrAndControllerEpoch removeReplicaFromIsr(String topic, int partition, int replicaId) throws IOException {
         TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
-        logger.debug("Removing replica %d from ISR %s for partition %s.".format(replicaId+"",
+        logger.debug(String.format("Removing replica %d from ISR %s for partition %s.",replicaId,
                 controllerContext.partitionLeadershipInfo.get(topicAndPartition).leaderAndIsr.isr.toString(), topicAndPartition));
         LeaderIsrAndControllerEpoch finalLeaderIsrAndControllerEpoch = null;
         boolean zkWriteCompleteOrUnnecessary = false;
@@ -781,8 +781,8 @@ public class KafkaController {
                 int controllerEpoch = leaderIsrAndEpoch.controllerEpoch;
                 if(controllerEpoch > epoch())
                     throw new StateChangeFailedException("Leader and isr path written by another controller. This probably" +
-                            "means the current controller with epoch %d went through a soft failure and another ".format(epoch()+"") +
-                            "controller was elected with epoch %d. Aborting state change by this controller".format(controllerEpoch+""));
+                           String.format( "means the current controller with epoch %d went through a soft failure and another ",epoch()) +
+                           String.format( "controller was elected with epoch %d. Aborting state change by this controller",controllerEpoch));
                 if (leaderAndIsr.isr.contains(replicaId)) {
                     // if the replica to be removed from the ISR is also the leader, set the new leader value to -1
                     int newLeader ;
@@ -800,17 +800,17 @@ public class KafkaController {
                     finalLeaderIsrAndControllerEpoch = new LeaderIsrAndControllerEpoch(newLeaderAndIsr, epoch());
                     controllerContext.partitionLeadershipInfo.put(topicAndPartition, finalLeaderIsrAndControllerEpoch);
                     if (pair.getKey())
-                        logger.info("New leader and ISR for partition %s is %s".format(topicAndPartition.toString(), newLeaderAndIsr.toString()));
+                        logger.info(String.format("New leader and ISR for partition %s is %s",topicAndPartition.toString(), newLeaderAndIsr.toString()));
                     zkWriteCompleteOrUnnecessary = pair.getKey();
                 } else {
-                    logger.warn("Cannot remove replica %d from ISR of %s. Leader = %d ; ISR = %s"
-                            .format(replicaId+"", topicAndPartition.toString(), leaderAndIsr.leader, leaderAndIsr.isr));
+                    logger.warn(String
+                            .format("Cannot remove replica %d from ISR of %s. Leader = %d ; ISR = %s",replicaId, topicAndPartition.toString(), leaderAndIsr.leader, leaderAndIsr.isr));
                     finalLeaderIsrAndControllerEpoch = new LeaderIsrAndControllerEpoch(leaderAndIsr, epoch());
                     controllerContext.partitionLeadershipInfo.put(topicAndPartition, finalLeaderIsrAndControllerEpoch);
                     zkWriteCompleteOrUnnecessary =  true;
                 }
             }else{
-                logger.warn("Cannot remove replica %d from ISR of %s - leaderAndIsr is empty.".format(replicaId+"", topicAndPartition));
+                logger.warn(String.format("Cannot remove replica %d from ISR of %s - leaderAndIsr is empty.",replicaId, topicAndPartition));
                 zkWriteCompleteOrUnnecessary = true;
             }
         }
@@ -861,7 +861,7 @@ public class KafkaController {
         public void handleDataChange(String dataPath, Object data) throws Exception{
             try {
                 synchronized(controllerContext.controllerLock ) {
-                    logger.debug("Reassigned partitions isr change listener fired for path %s with children %s".format(dataPath, data));
+                    logger.debug(String.format("Reassigned partitions isr change listener fired for path %s with children %s",dataPath, data));
                     // check if this partition is still being reassigned or not
                     TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
                     ReassignedPartitionsContext  reassignedPartitionContext = controllerContext.partitionsBeingReassigned.get(topicAndPartition);
@@ -878,14 +878,14 @@ public class KafkaController {
                             }
                             if(isSame) {
                                 // resume the partition reassignment process
-                                logger.info("%d/%d replicas have caught up with the leader for partition %s being reassigned."
-                                        .format(leaderAndIsr.isr.size() + "", reassignedReplicas.size(), topicAndPartition.toString()) +
+                                logger.info(String
+                                        .format("%d/%d replicas have caught up with the leader for partition %s being reassigned.",leaderAndIsr.isr.size(), reassignedReplicas.size(), topicAndPartition.toString()) +
                                         "Resuming partition reassignment");
                                 controller.onPartitionReassignment(topicAndPartition, reassignedPartitionContext);
                             }
                         }else{
-                            logger.error("Error handling reassignment of partition %s to replicas %s as it was never created"
-                                    .format(topicAndPartition.toString(), reassignedReplicas.toString()));
+                            logger.error(String
+                                    .format("Error handling reassignment of partition %s to replicas %s as it was never created",topicAndPartition.toString(), reassignedReplicas.toString()));
                         }
                     }
                 }
@@ -944,13 +944,13 @@ public class KafkaController {
          * @throws Exception On any error.
          */
         public void handleDataChange(String dataPath, Object data) throws Exception {
-            logger.debug("Preferred replica election listener fired for path %s. Record partitions to undergo preferred replica election %s"
-                    .format(dataPath, data.toString()));
+            logger.debug(String
+                    .format("Preferred replica election listener fired for path %s. Record partitions to undergo preferred replica election %s",dataPath, data.toString()));
             Set<TopicAndPartition> partitionsForPreferredReplicaElection = ZkUtils.parsePreferredReplicaElectionData(data.toString());
 
              synchronized(controllerContext.controllerLock) {
-                logger.info("These partitions are already undergoing preferred replica election: %s"
-                        .format(controllerContext.partitionsUndergoingPreferredReplicaElection.toString()));
+                logger.info(String
+                        .format("These partitions are already undergoing preferred replica election: %s",controllerContext.partitionsUndergoingPreferredReplicaElection.toString()));
                 partitionsForPreferredReplicaElection.removeAll(controllerContext.partitionsUndergoingPreferredReplicaElection);
                 controller.onPreferredReplicaElection(partitionsForPreferredReplicaElection);
             }
@@ -1001,7 +1001,7 @@ public class KafkaController {
                 Pair<String, Stat> epochData = ZkUtils.readDataAndStat(controllerContext.zkClient, ZkUtils.ControllerEpochPath);
                 controllerContext.epoch = Integer.parseInt(epochData.getKey());
                 controllerContext.epochZkVersion = epochData.getValue().getVersion();
-                logger.info("Initialized controller epoch to %d and zk version %d".format(controllerContext.epoch+"", controllerContext.epochZkVersion));
+                logger.info(String.format("Initialized controller epoch to %d and zk version %d",controllerContext.epoch, controllerContext.epochZkVersion));
             }
         }
     }
@@ -1032,8 +1032,8 @@ public class KafkaController {
          * @throws Exception On any error.
          */
         public void handleDataChange(String dataPath, Object data) throws Exception {
-            logger.debug("Partitions reassigned listener fired for path %s. Record partitions to be reassigned %s"
-                    .format(dataPath, data.toString()));
+            logger.debug(String
+                    .format("Partitions reassigned listener fired for path %s. Record partitions to be reassigned %s",dataPath, data.toString()));
             Map<TopicAndPartition, List<Integer>> partitionsReassignmentData = ZkUtils.parsePartitionReassignmentData(data.toString());
             for(Map.Entry<TopicAndPartition, List<Integer>> entry : partitionsReassignmentData.entrySet()){
                 if(!controllerContext.partitionsBeingReassigned.containsKey(entry.getKey())){

@@ -159,7 +159,7 @@ public class ReplicaManager {
     public Replica getLeaderReplicaIfLocal(String topic, int partitionId) {
         Partition partition = getPartition(topic, partitionId);
         if(partition == null){
-            throw new UnknownTopicOrPartitionException("Partition [%s,%d] doesn't exist on %d".format(topic, partitionId, config.brokerId));
+            throw new UnknownTopicOrPartitionException(String.format("Partition [%s,%d] doesn't exist on %d",topic, partitionId, config.brokerId));
         }
         if(partition.leaderReplicaIfLocal() == null){
             throw new NotLeaderForPartitionException(String
@@ -210,7 +210,7 @@ public class ReplicaManager {
                 responseMap.put(entry.getKey(), errorCode);
                 logger.trace(String
                         .format("Broker %d handled LeaderAndIsr request correlationId %d received from controller %d epoch %d for partition [%s,%d]",localBrokerId, leaderAndISRRequest.correlationId, leaderAndISRRequest.controllerId, leaderAndISRRequest.controllerEpoch,
-                                entry.getKey().toString(), entry.getValue()));
+                                entry.getKey().getKey(), entry.getKey().getValue()));
             }
             logger.info(String.format("Handled leader and isr request %s",leaderAndISRRequest.toString()));
             // we initialize highwatermark thread after the first leaderisrrequest. This ensures that all the partitions

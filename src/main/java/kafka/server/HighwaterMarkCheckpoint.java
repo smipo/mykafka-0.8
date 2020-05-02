@@ -88,7 +88,7 @@ public class HighwaterMarkCheckpoint {
                     hwFileReader.close();
                     Long hwOpt = partitionHighWatermarks.get(new TopicAndPartition(topic, partition));
                     if(hwOpt == null){
-                        logger.warn(String.format("No previously checkpointed highwatermark value found for topic %s ".format(topic) +
+                        logger.warn(String.format(String.format("No previously checkpointed highwatermark value found for topic %s ",topic) +
                                 "partition %d. Returning 0 as the highwatermark",partition));
                        return  0L;
                     }else{

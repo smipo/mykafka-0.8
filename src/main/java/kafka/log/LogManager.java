@@ -201,7 +201,7 @@ public class LogManager {
     public Log getOrCreateLog(String topic, int partition) throws IOException{
         TopicAndPartition topicAndPartition = new TopicAndPartition(topic, partition);
         Log log = logs.get(topicAndPartition) ;
-        if(log == null) createLogIfNotExists(topicAndPartition);
+        if(log == null) return createLogIfNotExists(topicAndPartition);
         return log;
     }
 

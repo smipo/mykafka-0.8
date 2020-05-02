@@ -54,7 +54,7 @@ public class ClientUtils {
         if(!fetchMetaDataSucceeded) {
             throw new KafkaException(String.format("fetching topic metadata for topics [%s] from broker [%s] failed",topics.toString(), shuffledBrokers.toString()), t);
         } else {
-            logger.debug(String.format("Successfully fetched metadata for %d topic(s) %s",topics.size()+"", topics));
+            logger.debug(String.format("Successfully fetched metadata for %d topic(s) %s",topics.size(), topics.toString()));
         }
         return topicMetadataResponse;
     }

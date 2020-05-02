@@ -558,7 +558,7 @@ public class KafkaApis {
         }
 
         public String keyLabel(){
-            return "%s-%d".format(topic, partition);
+            return String.format("%s-%d",topic, partition);
         }
 
         @Override
@@ -623,16 +623,16 @@ public class KafkaApis {
          * When a request expires just answer it with whatever data is present
          */
         public void expire(DelayedFetch delayed) throws UnsupportedEncodingException,InterruptedException{
-            logger.debug("Expiring fetch request %s.".format(delayed.fetch.toString()));
+            logger.debug(String.format("Expiring fetch request %s.",delayed.fetch.toString()));
             try {
                 Map<TopicAndPartition, FetchResponse.FetchResponsePartitionData> topicData = readMessageSets(delayed.fetch);
                 FetchResponse response = new FetchResponse(delayed.fetch.correlationId, topicData);
                 requestChannel.sendResponse(new RequestChannel.Response(delayed.request, new FetchResponse.FetchResponseSend(response)));
             }
             catch (LeaderNotAvailableException e1){
-                logger.debug("Leader changed before fetch request %s expired.".format(delayed.fetch.toString()));
+                logger.debug(String.format("Leader changed before fetch request %s expired.",delayed.fetch.toString()));
             }catch (UnknownTopicOrPartitionException e2){
-                logger.debug("Replica went offline before fetch request %s expired.".format(delayed.fetch.toString()));
+                logger.debug(String.format("Replica went offline before fetch request %s expired.",delayed.fetch.toString()));
             }
         }
     }
@@ -665,7 +665,7 @@ public class KafkaApis {
                     error = ErrorMapping.RequestTimedOutCode;
                 }
                 PartitionStatus initialStatus = new PartitionStatus(acksPending, error, nextOffset);
-                logger.trace("Initial partition status for %s = %s".format(requestKey.keyLabel(), initialStatus));
+                logger.trace(String.format("Initial partition status for %s = %s",requestKey.keyLabel(), initialStatus));
                 partitionStatus.put(requestKey, initialStatus);
             }
         }
@@ -699,8 +699,8 @@ public class KafkaApis {
             int partitionId = followerFetchRequestKey.partition;
             RequestKey key = new RequestKey(topic, partitionId);
             PartitionStatus fetchPartitionStatus = partitionStatus.get(key);
-            logger.trace("Checking producer request satisfaction for %s-%d, acksPending = %b"
-                    .format(topic, partitionId, fetchPartitionStatus.acksPending));
+            logger.trace(String
+                    .format("Checking producer request satisfaction for %s-%d, acksPending = %b",topic, partitionId, fetchPartitionStatus.acksPending));
             if (fetchPartitionStatus.acksPending) {
                 Partition partition = replicaManager.getPartition(topic, partitionId);
                 boolean hasEnough = false;
@@ -731,7 +731,7 @@ public class KafkaApis {
                     break;
                 }
             }
-            logger.trace("Producer request satisfaction for %s-%d = %b".format(topic, partitionId, satisfied));
+            logger.trace(String.format("Producer request satisfaction for %s-%d = %b",topic, partitionId, satisfied));
             return satisfied;
         }
 

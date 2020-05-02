@@ -647,16 +647,16 @@ public class Log {
                 total += 1;
             }
             if(segment.messageSet.file.exists())
-                logger.error("Data log file %s still exists".format(segment.messageSet.file.getAbsolutePath()));
+                logger.error(String.format("Data log file %s still exists",segment.messageSet.file.getAbsolutePath()));
             if(segment.index.file.exists())
-                logger.error("Index file %s still exists".format(segment.index.file.getAbsolutePath()));
+                logger.error(String.format("Index file %s still exists",segment.index.file.getAbsolutePath()));
         }
         return total;
     }
 
     public void truncateTo(long targetOffset)throws IOException {
         if(targetOffset < 0)
-            throw new IllegalArgumentException("Cannot truncate to a negative offset (%d).".format(targetOffset + ""));
+            throw new IllegalArgumentException(String.format("Cannot truncate to a negative offset (%d).",targetOffset ));
          synchronized(lock) {
             List<LogSegment> segmentsToBeDeleted = segments.view().stream().filter(segment -> segment.start > targetOffset).collect(Collectors.toList());
             int viewSize = segments.view().size();
@@ -670,8 +670,8 @@ public class Log {
                 this.nextOffset.set(targetOffset);
             } else {
                 if(targetOffset > logEndOffset()) {
-                    logger.error("Target offset %d cannot be greater than the last message offset %d in the log %s".
-                            format(targetOffset + "", logEndOffset(), segments.last().messageSet.file.getAbsolutePath()));
+                    logger.error(String.
+                            format("Target offset %d cannot be greater than the last message offset %d in the log %s",targetOffset , logEndOffset(), segments.last().messageSet.file.getAbsolutePath()));
                 } else {
                     // find the log segment that has this hw
                     LogSegment[] ranges = new LogSegment[segments.view().size()];
@@ -681,7 +681,7 @@ public class Log {
                         segments.truncLast(truncatedSegmentIndex);
                         segmentToBeTruncated.truncateTo(targetOffset);
                         this.nextOffset.set(targetOffset);
-                        logger.info("Truncated log segment %s to target offset %d".format(segments.last().messageSet.file.getAbsolutePath(), targetOffset));
+                        logger.info(String.format("Truncated log segment %s to target offset %d",segments.last().messageSet.file.getAbsolutePath(), targetOffset));
                     }
                 }
             }

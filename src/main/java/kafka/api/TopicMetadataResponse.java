@@ -4,10 +4,7 @@ import kafka.cluster.Broker;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TopicMetadataResponse extends RequestOrResponse{
@@ -66,18 +63,16 @@ public class TopicMetadataResponse extends RequestOrResponse{
     }
 
     Map<Integer, Broker> extractBrokers(List<TopicMetadata> topicMetadatas) {
-        List<TopicMetadata.PartitionMetadata> parts = topicsMetadata.stream()
-                .map(topicMetadata -> topicMetadata.getPartitionsMetadata())
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-        List<Broker> brokers = parts.stream()
-                .map(replica -> replica.getReplicas())
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-        List<Broker> leaderBrokers = parts.stream()
-                .map(replica -> replica.getLeader())
-                .collect(Collectors.toList());
-        brokers.addAll(leaderBrokers);
-        return brokers.stream().collect(Collectors.toMap(Broker::id, broker -> broker));
+        Map<Integer, Broker> res = new HashMap<>();
+        for(TopicMetadata topicMetadata:topicMetadatas){
+            for (TopicMetadata.PartitionMetadata partitionMetadata:topicMetadata.getPartitionsMetadata()){
+                Broker leader = partitionMetadata.getLeader();
+                if (leader != null) res.put(leader.id(),leader);
+                for(Broker broker:partitionMetadata.getReplicas()){
+                    res.put(broker.id(),broker);
+                }
+            }
+        }
+        return res;
     }
 }

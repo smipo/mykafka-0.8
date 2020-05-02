@@ -250,7 +250,7 @@ public class SocketServer {
         private int maxRequestSize;
         private RequestChannel requestChannel;
 
-        private ConcurrentLinkedQueue<SocketChannel> newConnections = new ConcurrentLinkedQueue<SocketChannel>();
+        private ConcurrentLinkedQueue<SocketChannel> newConnections = new ConcurrentLinkedQueue<>();
 
         public Processor(int id, long milliseconds,int maxRequestSize, RequestChannel requestChannel) throws IOException {
             this.id = id;
@@ -398,6 +398,7 @@ public class SocketServer {
                 key.interestOps(key.interestOps() & (~SelectionKey.OP_READ));
             } else {
                 // more reading to be done
+                logger.trace("Did not finish reading, registering for read again on connection " + socketChannel.socket().getRemoteSocketAddress());
                 key.interestOps(SelectionKey.OP_READ);
                 selector.wakeup();
             }
@@ -407,17 +408,21 @@ public class SocketServer {
          * Process writes to ready sockets
          */
         private void write(SelectionKey key) throws Exception{
-            Send response = (Send)key.attachment();
+            RequestChannel.Response response = (RequestChannel.Response)key.attachment();
+            Send responseSend = response.responseSend;
             SocketChannel socketChannel = channelFor(key);
-            long written = response.writeTo(socketChannel);
-            if (logger.isTraceEnabled())
-                logger.info(written + " bytes written to " + socketChannel.socket().getRemoteSocketAddress());
-            if (response.complete()) {
+            if(responseSend == null)
+                throw new IllegalStateException("Registered for write interest but no response attached to key.");
+            long written = responseSend.writeTo(socketChannel);
+            logger.trace(written + " bytes written to " + socketChannel.socket().getRemoteSocketAddress() + " using key " + key);
+            if(responseSend.complete()) {
                 key.attach(null);
+                logger.trace("Finished writing, registering for read on connection " + socketChannel.socket().getRemoteSocketAddress());
                 key.interestOps(SelectionKey.OP_READ);
             } else {
+                logger.trace("Did not finish writing, registering for write again on connection " + socketChannel.socket().getRemoteSocketAddress());
                 key.interestOps(SelectionKey.OP_WRITE);
-                selector.wakeup();
+                wakeup();
             }
         }
 
