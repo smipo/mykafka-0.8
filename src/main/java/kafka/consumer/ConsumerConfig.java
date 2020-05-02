@@ -66,7 +66,7 @@ public class ConsumerConfig extends ZkUtils.ZKConfig {
     public ConsumerConfig(VerifiableProperties props){
         super(props);
 
-        groupId = props.getString( "groupid");
+        groupId = props.getString( "group.id");
         consumerId = props.getString("consumer.id", null);
         socketTimeoutMs = props.getInt( "socket.timeout.ms", SocketTimeout);
         socketReceiveBufferBytes = props.getInt("socket.receive.buffer.bytes", SocketBufferSize);

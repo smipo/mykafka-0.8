@@ -470,25 +470,12 @@ public class ZkUtils {
         return cluster;
     }
 
-    public static Map<String, Map<Integer,List<Integer>>> getPartitionsForTopics(ZkClient zkClient, Collection<String> topics) throws JsonProcessingException {
-        Map<String, Map<Integer,List<Integer>>> ret = new HashMap<>();
-        for (String topic : topics) {
-            Map<Integer,List<Integer>> partitionMap = new HashMap<>();
-            String jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(topic)).getKey();
-            if(jsonPartitionMapOpt == null){
-                ret.put(topic,partitionMap);
-                continue;
-            }
-            Map<String,Object> leaderIsrAndEpochInfo = JacksonUtils.strToMap(jsonPartitionMapOpt);
-            Object partitions = leaderIsrAndEpochInfo.get("partitions");
-            if(partitions == null){
-                ret.put(topic,partitionMap);
-                continue;
-            }
-            for(Map.Entry<String, Object> entry : leaderIsrAndEpochInfo.entrySet()){
-                partitionMap.put(Integer.parseInt(entry.getKey()),(List<Integer>)entry.getValue());
-                ret.put(topic,partitionMap);
-            }
+    public static Map<String,List<Integer>> getPartitionsForTopics(ZkClient zkClient, Collection<String> topics) throws JsonProcessingException {
+        Map<String,List<Integer>> ret = new HashMap<>();
+        Map<String,Map<Integer, List<Integer>>> map = getPartitionAssignmentForTopics(zkClient, topics.stream().collect(Collectors.toList()));
+        for(Map.Entry<String, Map<Integer, List<Integer>>> entry : map.entrySet()){
+            logger.debug("partition assignment of /brokers/topics/%s is %s".format(entry.getKey(), entry.getValue().toString()));
+            ret.put(entry.getKey(),entry.getValue().keySet().stream().sorted().collect(Collectors.toList()));
         }
         return ret;
     }

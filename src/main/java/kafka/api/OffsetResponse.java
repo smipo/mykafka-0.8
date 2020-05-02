@@ -75,8 +75,10 @@ public class OffsetResponse extends RequestOrResponse{
             for(Pair<TopicAndPartition, PartitionOffsetsResponse> pair:entry.getValue()){
                 size += 4 + /* partition id */
                         2 + /* partition error */
-                        4 + /* offset array length */
-                        pair.getValue().offsets.size() * 8; /* offset */
+                        4;
+                        /* offset array length */
+                List<Long> offsets = pair.getValue().offsets;
+                size += offsets == null ? 0 : offsets.size() * 8; /* offset */
             }
         }
         return size;

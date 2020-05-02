@@ -98,6 +98,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
         connectZk();
         createFetcher();
         if (config.autoCommitEnable) {
+            scheduler.startup();
             logger.info("starting auto committer every " + config.autoCommitIntervalMs + " ms");
             scheduler.scheduleWithRate(new Runnable() {
                 @Override
@@ -105,7 +106,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
                     Thread.currentThread().setName(scheduler.currentThreadName("Kafka-consumer-autocommit-"));
                     autoCommit();
                 }
-            }, config.autoCommitIntervalMs, config.autoCommitIntervalMs,true);
+            }, config.autoCommitIntervalMs, config.autoCommitIntervalMs,false);
         }
     }
     public ZookeeperConsumerConnector(ConsumerConfig config)  throws UnknownHostException {
@@ -325,7 +326,8 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
             ZkUtils.ZKGroupTopicDirs topicDirs = new ZkUtils.ZKGroupTopicDirs(config.groupId, topic);
             for (PartitionTopicInfo info : infos.values()) {
                 long newOffset = info.getConsumeOffset();
-                if (newOffset != checkpointedOffsets.get(new TopicAndPartition(topic, info.partitionId))) {
+                Long offset = checkpointedOffsets.get(new TopicAndPartition(topic, info.partitionId));
+                if (offset == null || (offset != null && newOffset != offset.longValue())) {
                     try {
                         ZkUtils.updatePersistentPath(zkClient, topicDirs.consumerOffsetDir + "/" + info.partitionId,
                                 String.valueOf(newOffset));
@@ -507,7 +509,7 @@ public class ZookeeperConsumerConnector implements ConsumerConnector{
                 zkClient.subscribeChildChanges(ZkUtils.BrokerIdsPath, loadBalancerListener);
                 return true;
             }
-            Map<String, Map<Integer,List<Integer>>> partitionsAssignmentPerTopicMap = ZkUtils.getPartitionsForTopics(zkClient, myTopicThreadIdsMap.keySet());
+            Map<String, Map<Integer,List<Integer>>> partitionsAssignmentPerTopicMap = ZkUtils.getPartitionAssignmentForTopics(zkClient, myTopicThreadIdsMap.keySet().stream().collect(Collectors.toList()));
             Map<String,List<Integer>> partitionsPerTopicMap = new HashMap<>();
             for(Map.Entry<String, Map<Integer,List<Integer>>> entry : partitionsAssignmentPerTopicMap.entrySet()){
                 List<Integer> list = entry.getValue().keySet().stream().collect(Collectors.toList());

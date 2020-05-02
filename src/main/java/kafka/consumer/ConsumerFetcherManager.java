@@ -35,7 +35,7 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
         this.zkClient = zkClient;
     }
 
-    private Map<TopicAndPartition, PartitionTopicInfo> partitionMap= null;
+    private Map<TopicAndPartition, PartitionTopicInfo> partitionMap = null;
     private Cluster cluster = null;
     private Set<TopicAndPartition> noLeaderPartitionSet = new HashSet<>();
     private ReentrantLock lock = new ReentrantLock();
@@ -119,8 +119,10 @@ public class ConsumerFetcherManager  extends AbstractFetcherManager {
         leaderFinderThread.start();
         lock.lock();
         try{
-            while (topicInfos.iterator().hasNext()){
-                PartitionTopicInfo p =  topicInfos.iterator().next();
+            partitionMap = new HashMap<>();
+            Iterator<PartitionTopicInfo> iterator = topicInfos.iterator();
+            while (iterator.hasNext()){
+                PartitionTopicInfo p =  iterator.next();
                 partitionMap.put(new TopicAndPartition(p.topic, p.partitionId),p);
                 noLeaderPartitionSet.add(new TopicAndPartition(p.topic, p.partitionId));
             }
