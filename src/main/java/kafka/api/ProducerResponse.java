@@ -17,10 +17,10 @@ public class ProducerResponse  extends RequestOrResponse{
         int correlationId = buffer.getInt();
         int topicCount = buffer.getInt();
         Map<TopicAndPartition, ProducerResponseStatus> status = new HashMap<>();
-        for (int i = 1;i < topicCount;i++){
+        for (int i = 0;i < topicCount;i++){
             String topic = ApiUtils.readShortString(buffer);
             int partitionCount = buffer.getInt();
-            for (int j = 1;j < partitionCount;j++){
+            for (int j = 0;j < partitionCount;j++){
                 int partition = buffer.getInt();
                 short error = buffer.getShort();
                 long offset = buffer.getLong();

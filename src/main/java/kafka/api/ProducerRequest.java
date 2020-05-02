@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class ProducerRequest   extends RequestOrResponse{
+public class ProducerRequest extends RequestOrResponse{
 
     public static short CurrentVersion = 0;
 
@@ -32,7 +32,7 @@ public class ProducerRequest   extends RequestOrResponse{
         for(int i = 0;i < topicCount;i++){
             String topic = ApiUtils.readShortString(buffer);
             int partitionCount = buffer.getInt();
-            for(int j = 1;j < partitionCount;j++){
+            for(int j = 0;j < partitionCount;j++){
                 int partition = buffer.getInt();
                 int messageSetSize = buffer.getInt();
                 byte[] messageSetBuffer = new byte[messageSetSize];

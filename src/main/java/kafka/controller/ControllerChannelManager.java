@@ -45,7 +45,9 @@ public class ControllerChannelManager {
 
     public void shutdown()  {
          synchronized(brokerLock) {
-            brokerStateInfo.forEach((k,v) -> removeExistingBroker(k));
+             for(Map.Entry<Integer,ControllerBrokerStateInfo> entry : brokerStateInfo.entrySet()){
+                 removeExistingBroker(entry.getKey());
+             }
         }
     }
 

@@ -294,7 +294,7 @@ public class ReplicaManager {
             for(Replica r:entry.getValue()){
                 highwaterMarksPerPartition.put(new TopicAndPartition(r.topic, r.partitionId), r.highWatermark());
             }
-            highWatermarkCheckpoints.get(entry.getKey()).write(highwaterMarksPerPartition);
+            highWatermarkCheckpoints.get(entry.getKey().replace("\\","/")).write(highwaterMarksPerPartition);
         }
     }
 

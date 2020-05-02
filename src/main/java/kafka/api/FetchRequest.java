@@ -34,10 +34,10 @@ public class FetchRequest extends RequestOrResponse {
         int minBytes = buffer.getInt();
         int topicCount = buffer.getInt();
         Map<TopicAndPartition, PartitionFetchInfo> requestInfo = new HashMap<>();
-        for (int i = 1; i < topicCount; i++) {
+        for (int i = 0; i < topicCount; i++) {
             String topic = ApiUtils.readShortString(buffer);
             int partitionCount = buffer.getInt();
-            for (int j = 1; j < partitionCount; j++) {
+            for (int j = 0; j < partitionCount; j++) {
                 int partitionId = buffer.getInt();
                 long offset = buffer.getLong();
                 int fetchSize = buffer.getInt();

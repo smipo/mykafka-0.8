@@ -39,7 +39,7 @@ public class Producer extends Thread
   
   public void run() {
     int messageNo = 1;
-    while(true)
+    while(messageNo < 3)
     {
       String messageStr = new String("Message_" + messageNo);
       try {

@@ -36,7 +36,7 @@ public class StopReplicaRequest  extends RequestOrResponse{
         }
         int topicPartitionPairCount = buffer.getInt();
         Set<Pair<String, Integer>> topicPartitionPairSet = new HashSet<>();
-        for(int i = 1;i < topicPartitionPairCount;i++){
+        for(int i = 0;i < topicPartitionPairCount;i++){
             topicPartitionPairSet.add(new Pair<>(ApiUtils.readShortString(buffer), buffer.getInt()));
         }
         return new StopReplicaRequest(correlationId,versionId, clientId, controllerId, controllerEpoch,

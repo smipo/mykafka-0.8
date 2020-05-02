@@ -38,7 +38,7 @@ public class LeaderAndIsrRequest extends RequestOrResponse{
         int leadersCount = buffer.getInt();
         Set<Broker> leaders = new HashSet<>();
         for(int i = 0 ;i < leadersCount;i++){
-            leaders .add(Broker.readFrom(buffer));
+            leaders.add(Broker.readFrom(buffer));
         }
         return new LeaderAndIsrRequest(correlationId,versionId, clientId, controllerId, controllerEpoch, partitionStateInfos, leaders);
     }

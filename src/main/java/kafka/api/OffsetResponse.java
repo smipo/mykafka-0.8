@@ -19,10 +19,10 @@ public class OffsetResponse extends RequestOrResponse{
         int correlationId = buffer.getInt();
         int numTopics = buffer.getInt();
         Map<TopicAndPartition, PartitionOffsetsResponse> partitionErrorAndOffsets = new HashMap<>();
-        for(int i = 1;i < numTopics;i++){
+        for(int i = 0;i < numTopics;i++){
             String topic = ApiUtils.readShortString(buffer);
             int numPartitions = buffer.getInt();
-            for(int j = 1;j < numPartitions;i++){
+            for(int j = 0;j < numPartitions;i++){
                 int partition = buffer.getInt();
                 short error = buffer.getShort();
                 int numOffsets = buffer.getInt();

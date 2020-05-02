@@ -244,7 +244,7 @@ public class KafkaApis {
                 }
                 Pair<Long,Long> pair = partition.appendMessagesToLeader(messages);
                 logger.trace(String
-                        .format("%d bytes written to log %s-%d beginning at offset %d and ending at offset %d",messages.toString(), topicAndPartition.topic(), topicAndPartition.partition(), pair.getKey(), pair.getValue()));
+                        .format("%d bytes written to log %s-%d beginning at offset %d and ending at offset %d",messages.sizeInBytes(), topicAndPartition.topic(), topicAndPartition.partition(), pair.getKey(), pair.getValue()));
                 res.add(new ProduceResult(topicAndPartition, pair.getKey(), pair.getValue(),null));
             } catch (KafkaStorageException e){
                 // NOTE: Failed produce requests is not incremented for UnknownTopicOrPartitionException and NotLeaderForPartitionException

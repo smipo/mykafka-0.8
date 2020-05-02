@@ -516,7 +516,7 @@ public class Log {
         if(segment.messageSet.sizeInBytes() > maxLogFileSize) {
             logger.info(String.format("Rolling %s due to full data log",name));
             return  roll();
-        } else if((segment.firstAppendTime == null) && (milliseconds - segment.firstAppendTime > rollIntervalMs)) {
+        } else if((segment.firstAppendTime != null) && (milliseconds - segment.firstAppendTime > rollIntervalMs)) {
             logger.info(String.format("Rolling %s due to time based rolling",name));
             return roll();
         } else if(segment.index.isFull()) {

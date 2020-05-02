@@ -65,6 +65,7 @@ public class TopicMetadataResponse extends RequestOrResponse{
     Map<Integer, Broker> extractBrokers(List<TopicMetadata> topicMetadatas) {
         Map<Integer, Broker> res = new HashMap<>();
         for(TopicMetadata topicMetadata:topicMetadatas){
+            if(topicMetadata.getPartitionsMetadata() == null) continue;
             for (TopicMetadata.PartitionMetadata partitionMetadata:topicMetadata.getPartitionsMetadata()){
                 Broker leader = partitionMetadata.getLeader();
                 if (leader != null) res.put(leader.id(),leader);

@@ -3,13 +3,16 @@
   <component name="ChangeListManager">
     <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/FetchRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/FetchRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/LeaderAndIsrRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/LeaderAndIsrRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/OffsetResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/OffsetResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/ProducerResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/StopReplicaRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/StopReplicaRequest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/TopicMetadataResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/client/ClientUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/cluster/Partition.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/cluster/Partition.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/ControllerChannelManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/ControllerChannelManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/Log.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/Log.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/log/LogManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/log/LogManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/network/SocketServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/network/SocketServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/HighwaterMarkCheckpoint.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/HighwaterMarkCheckpoint.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaApis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/KafkaApis.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/server/ReplicaManager.java" afterDir="false" />
     </list>
@@ -152,10 +155,10 @@
     </configuration>
     <list>
       <item itemvalue="Application.Kafka" />
-      <item itemvalue="Application.KafkaProducerDemo" />
       <item itemvalue="JUnit.IsrExpirationTest.testIsrExpirationForStuckFollowers" />
       <item itemvalue="JUnit.LeaderElectionTest.testLeaderElectionAndEpoch" />
       <item itemvalue="JUnit.LeaderElectionTest.testLeaderElectionWithStaleControllerEpoch" />
+      <item itemvalue="Application.KafkaProducerDemo" />
     </list>
     <recent_temporary>
       <list>
@@ -220,7 +223,8 @@
       <workItem from="1587941873488" duration="1965000" />
       <workItem from="1588024547697" duration="6197000" />
       <workItem from="1588073034995" duration="1884000" />
-      <workItem from="1588335667960" duration="14015000" />
+      <workItem from="1588335667960" duration="21286000" />
+      <workItem from="1588424079788" duration="3621000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -348,7 +352,14 @@
       <option name="project" value="LOCAL" />
       <updated>1588347409056</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="修改 bug">
+      <created>1588391945508</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1588391945508</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -362,6 +373,42 @@
         <option value="3" />
         <option value="1" />
       </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="1">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:D:/ideawork/mykafka-0.8/src/main/java/kafka/api" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="OPEN_TABS">
+      <set>
+        <option value="1" />
+      </set>
     </option>
   </component>
   <component name="VcsManagerConfiguration">
@@ -387,10 +434,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="361" y="71" key="#Auto_Import/0.0.1536.824@0.0.1536.824" timestamp="1587269939458" />
-    <state x="331" y="135" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1588114103612">
+    <state x="331" y="135" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1588424126065">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="331" y="135" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1588114103612" />
+    <state x="331" y="135" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1588424126065" />
     <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1588073959778" />
     <state x="505" y="215" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1587855105641">
       <screen x="0" y="0" width="1536" height="824" />
@@ -410,87 +457,87 @@
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587479453075" />
     <state x="624" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1587187547676" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1588347408193">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1588391944682">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1588347408193" />
-    <state width="474" height="466" key="DebuggerActiveHint" timestamp="1588387687720">
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1588391944682" />
+    <state width="638" height="466" key="DebuggerActiveHint" timestamp="1588426089464">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="474" height="466" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1588387687720" />
-    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1588025486514">
+    <state width="638" height="466" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1588426089464" />
+    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1588426331516">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog/0.0.1536.824@0.0.1536.824" timestamp="1588025486514" />
+    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog/0.0.1536.824@0.0.1536.824" timestamp="1588426331516" />
     <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1588073194658">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="740" y="275" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1588073194658" />
-    <state width="1493" height="272" key="GridCell.Tab.0.bottom" timestamp="1588390794932">
+    <state width="1493" height="459" key="GridCell.Tab.0.bottom" timestamp="1588427910910">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
+    <state width="1493" height="459" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588427910910" />
     <state width="1877" height="399" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="272" key="GridCell.Tab.0.center" timestamp="1588390794932">
+    <state width="1493" height="459" key="GridCell.Tab.0.center" timestamp="1588427910909">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
+    <state width="1493" height="459" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1588427910909" />
     <state width="1877" height="399" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="272" key="GridCell.Tab.0.left" timestamp="1588390794932">
+    <state width="1493" height="459" key="GridCell.Tab.0.left" timestamp="1588427910909">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
+    <state width="1493" height="459" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1588427910909" />
     <state width="1877" height="399" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="272" key="GridCell.Tab.0.right" timestamp="1588390794932">
+    <state width="1493" height="459" key="GridCell.Tab.0.right" timestamp="1588427910910">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
+    <state width="1493" height="459" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1588427910910" />
     <state width="1877" height="399" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="272" key="GridCell.Tab.1.bottom" timestamp="1588390794932">
+    <state width="1493" height="409" key="GridCell.Tab.1.bottom" timestamp="1588427795569">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
-    <state width="1493" height="272" key="GridCell.Tab.1.center" timestamp="1588390794932">
+    <state width="1493" height="409" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588427795569" />
+    <state width="1493" height="409" key="GridCell.Tab.1.center" timestamp="1588427795568">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
-    <state width="1493" height="272" key="GridCell.Tab.1.left" timestamp="1588390794932">
+    <state width="1493" height="409" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1588427795568" />
+    <state width="1493" height="409" key="GridCell.Tab.1.left" timestamp="1588427795567">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
-    <state width="1493" height="272" key="GridCell.Tab.1.right" timestamp="1588390794932">
+    <state width="1493" height="409" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1588427795567" />
+    <state width="1493" height="409" key="GridCell.Tab.1.right" timestamp="1588427795568">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="272" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1588390794932" />
+    <state width="1493" height="409" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1588427795568" />
     <state x="338" y="68" key="SettingsEditor" timestamp="1588072435566">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="270" y="0" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1587274207952" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1588072435566" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1588347412716">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1588391947063">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1588347412716" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1588391947063" />
     <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1587652927478">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1536.824@0.0.1536.824" timestamp="1587652927478" />
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1587941872644">
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog" timestamp="1588424086066">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1587941872644" />
+    <state x="449" y="236" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1588424086066" />
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1585605117971">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1536.824@0.0.1536.824" timestamp="1585605117971" />
-    <state x="307" y="148" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1588390737226">
+    <state x="330" y="216" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1588427733092">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="307" y="148" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.1536.824@0.0.1536.824" timestamp="1588390737226" />
-    <state x="206" y="188" width="1007" height="534" key="find.popup" timestamp="1588391921446">
+    <state x="330" y="216" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.1536.824@0.0.1536.824" timestamp="1588427733092" />
+    <state x="208" y="185" width="1007" height="534" key="find.popup" timestamp="1588427668499">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="206" y="188" width="1007" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1588391921446" />
+    <state x="208" y="185" width="1007" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1588427668499" />
     <state x="258" y="237" width="1259" height="674" key="find.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1588074233762" />
     <state x="470" y="39" key="refactoring.ChangeSignatureDialog" timestamp="1586600324930">
       <screen x="0" y="0" width="1536" height="824" />
@@ -500,17 +547,37 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="425" y="187" key="run.anything.popup/0.0.1536.824@0.0.1536.824" timestamp="1588344904200" />
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1588346753335">
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup" timestamp="1588415070283">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1588346753335" />
+    <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1588415070283" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/kafka/cluster/Partition.java</url>
+          <line>345</line>
+          <option name="timeStamp" value="57" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/kafka/server/ReplicaFetcherThread.java</url>
+          <line>51</line>
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="JUnit">
         <watch expression="configs.stream().map(c-&gt;c.brokerId).collect(Collectors.toSet())" />
         <watch expression="partition0.inSyncReplicas.stream().map(x-&gt;x.brokerId)" />
         <watch expression="&quot;Shouldn't set logEndOffset for replica %d partition [%s,%d] since it's local&quot;&#10;                    .format(brokerId+&quot;&quot;, topic, partitionId)" />
+      </configuration>
+      <configuration name="Application">
+        <watch expression="log.dir().getParent()" />
+        <watch expression="log.logEndOffset()" />
+        <watch expression="replicaManager.highWatermarkCheckpoints.get(log.dir().getParent())" />
+        <watch expression="log.dir()" />
       </configuration>
     </watches-manager>
   </component>

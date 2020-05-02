@@ -78,7 +78,7 @@ public class Partition {
         }
         if (isReplicaLocal(replicaId)) {
             Log log = logManager.getOrCreateLog(topic, partitionId);
-            long offset = Math.min(log.logEndOffset(),replicaManager.highWatermarkCheckpoints.get(log.dir().getParent()).read(topic, partitionId));
+            long offset = Math.min(log.logEndOffset(),replicaManager.highWatermarkCheckpoints.get(log.dir().getParent().replace("\\","/")).read(topic, partitionId));
             Replica localReplica = new Replica(replicaId, this, milliseconds, offset, log);
             addReplicaIfNotExists(localReplica);
         }
