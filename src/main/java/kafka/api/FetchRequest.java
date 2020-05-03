@@ -100,7 +100,9 @@ public class FetchRequest extends RequestOrResponse {
         for (Map.Entry<String, List<Pair<TopicAndPartition,PartitionFetchInfo>>> entry : requestInfoGroupedByTopic.entrySet()) {
             String topic = entry.getKey();
             List<Pair<TopicAndPartition, PartitionFetchInfo>> partitionFetchInfos = entry.getValue();
-            sum += ApiUtils.shortStringLength(topic) + partitionFetchInfos.size() * (
+            sum += ApiUtils.shortStringLength(topic) +
+                    4 + /* partition count */
+                    partitionFetchInfos.size() * (
                     4 + /* partition id */
                             8 + /* offset */
                             4 /* fetch size */
@@ -210,7 +212,7 @@ public class FetchRequest extends RequestOrResponse {
 
         public FetchRequest build()  {
             FetchRequest fetchRequest = new FetchRequest(correlationId.getAndIncrement(),versionId, clientId, replicaId, maxWait, minBytes, requestMap);
-            requestMap.clear();
+            requestMap = new HashMap<>();
             return fetchRequest;
         }
     }

@@ -22,12 +22,12 @@ public class OffsetResponse extends RequestOrResponse{
         for(int i = 0;i < numTopics;i++){
             String topic = ApiUtils.readShortString(buffer);
             int numPartitions = buffer.getInt();
-            for(int j = 0;j < numPartitions;i++){
+            for(int j = 0;j < numPartitions;j++){
                 int partition = buffer.getInt();
                 short error = buffer.getShort();
                 int numOffsets = buffer.getInt();
                 List<Long> offsets = new ArrayList<>();
-                for(int k = 1;k < numOffsets;k++){
+                for(int k = 0;k < numOffsets;k++){
                     offsets.add(buffer.getLong());
                 }
                 partitionErrorAndOffsets.put(new TopicAndPartition(topic, partition),new PartitionOffsetsResponse(error, offsets));
@@ -71,7 +71,8 @@ public class OffsetResponse extends RequestOrResponse{
         int size =  4 + /* correlation id */
                 4 ; /* topic count */
         for (Map.Entry<String, List<Pair<TopicAndPartition, PartitionOffsetsResponse>>> entry : offsetsGroupedByTopic.entrySet()) {
-            size += ApiUtils.shortStringLength(entry.getKey());
+            size += ApiUtils.shortStringLength(entry.getKey()) +
+                    4  /* partition count */;
             for(Pair<TopicAndPartition, PartitionOffsetsResponse> pair:entry.getValue()){
                 size += 4 + /* partition id */
                         2 + /* partition error */
@@ -92,11 +93,16 @@ public class OffsetResponse extends RequestOrResponse{
             ApiUtils.writeShortString(buffer, topic);
             List<Pair<TopicAndPartition, PartitionOffsetsResponse>> list = entry.getValue();
             buffer.putInt(list.size()); // partition count
-            for(Pair<TopicAndPartition, PartitionOffsetsResponse> pair:entry.getValue()){
+            for(Pair<TopicAndPartition, PartitionOffsetsResponse> pair:list){
                 buffer.putInt(pair.getKey().partition());
                 buffer.putShort(pair.getValue().error);
-                buffer.putInt(pair.getValue().offsets.size()) ;// offset array length
-                pair.getValue().offsets.forEach(offset->buffer.putLong(offset));
+                List<Long> offsets = pair.getValue().offsets;
+                buffer.putInt(offsets == null?0:offsets.size()) ;// offset array length
+                if(offsets != null){
+                    for(Long offset:offsets){
+                        buffer.putLong(offset);
+                    }
+                }
             }
         }
     }

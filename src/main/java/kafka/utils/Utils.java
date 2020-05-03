@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
@@ -633,5 +634,13 @@ public class Utils {
         }
         Constructor<?> constructor = klass.getConstructor(parameterTypes);
         return constructor.newInstance(args);
+    }
+
+    public static int read(ReadableByteChannel channel, ByteBuffer buffer) throws IOException {
+        int read = channel.read(buffer) ;
+        if(read == -1){
+            throw new EOFException("Received -1 when reading from channel, socket has likely been closed.");
+        }
+        return read;
     }
 }

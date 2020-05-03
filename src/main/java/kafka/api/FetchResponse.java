@@ -247,6 +247,8 @@ public class FetchResponse {
             this.fetchResponse = fetchResponse;
 
             size = fetchResponse.sizeInBytes;
+            sendSize = 4 /* for size */ + size;
+            buffer = ByteBuffer.allocate(4 /* for size */ + FetchResponse.headerSize());
             buffer.putInt(size);
             buffer.putInt(fetchResponse.correlationId);
             buffer.putInt(fetchResponse.dataGroupedByTopic.size()); // topic count
@@ -272,13 +274,13 @@ public class FetchResponse {
 
         private int sent = 0;
 
-        private int sendSize = 4 /* for size */ + size;
+        private int sendSize ;
 
         public  boolean complete() {
             return sent >= sendSize;
         }
 
-        private ByteBuffer buffer = ByteBuffer.allocate(4 /* for size */ + FetchResponse.headerSize());
+        private ByteBuffer buffer ;
 
 
         MultiSend<Send> sends ;

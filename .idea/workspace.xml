@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="">
+    <list default="true" id="a73e94e6-7312-4550-b6e4-ba6743408fd3" name="Default Changelist" comment="修改 bug">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/FetchRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/FetchRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/FetchResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/FetchResponse.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/kafka/api/OffsetResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/api/OffsetResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ConsumerFetcherManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperConsumerConnector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/ZookeeperConsumerConnector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/ZkUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/controller/KafkaController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/network/MultiSend.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/network/MultiSend.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/kafka/utils/Utils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,7 +72,7 @@
       <recent name="D:\ideawork\mykafka-0.8\src\main\java\kafka\message" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Kafka">
+  <component name="RunManager" selected="Application.KafkaConsumerDemo">
     <configuration name="Kafka" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="kafka.Kafka" />
       <module name="mykafka-0.8" />
@@ -152,9 +154,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.Kafka" />
         <item itemvalue="Application.KafkaConsumerDemo" />
         <item itemvalue="Application.KafkaProducerDemo" />
+        <item itemvalue="Application.Kafka" />
         <item itemvalue="JUnit.IsrExpirationTest.testIsrExpirationForStuckFollowers" />
         <item itemvalue="JUnit.LeaderElectionTest.testLeaderElectionWithStaleControllerEpoch" />
       </list>
@@ -214,7 +216,7 @@
       <workItem from="1588024547697" duration="6197000" />
       <workItem from="1588073034995" duration="1884000" />
       <workItem from="1588335667960" duration="21286000" />
-      <workItem from="1588424079788" duration="6776000" />
+      <workItem from="1588424079788" duration="14051000" />
     </task>
     <task id="LOCAL-00001" summary="改写日志">
       <created>1585392066242</created>
@@ -356,7 +358,14 @@
       <option name="project" value="LOCAL" />
       <updated>1588427956503</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="修改 bug">
+      <created>1588431113111</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1588431113111</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -454,67 +463,67 @@
     </state>
     <state x="499" y="159" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1536.824@0.0.1536.824" timestamp="1587479453075" />
     <state x="624" y="201" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1587187547676" />
-    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1588427955147">
+    <state x="372" y="4" key="CommitChangelistDialog2" timestamp="1588511366405">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1588427955147" />
-    <state width="638" height="466" key="DebuggerActiveHint" timestamp="1588430768068">
+    <state x="372" y="4" key="CommitChangelistDialog2/0.0.1536.824@0.0.1536.824" timestamp="1588511366405" />
+    <state width="638" height="466" key="DebuggerActiveHint" timestamp="1588471314270">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="638" height="466" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1588430768068" />
-    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1588429203500">
+    <state width="638" height="466" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1588471314270" />
+    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog" timestamp="1588511364006">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog/0.0.1536.824@0.0.1536.824" timestamp="1588429203500" />
+    <state x="28" y="0" width="1228" height="687" key="DiffContextDialog/0.0.1536.824@0.0.1536.824" timestamp="1588511364006" />
     <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1588073194658">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="740" y="275" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1588073194658" />
-    <state width="1493" height="287" key="GridCell.Tab.0.bottom" timestamp="1588431069818">
+    <state width="1493" height="378" key="GridCell.Tab.0.bottom" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588431069818" />
+    <state width="1493" height="378" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
     <state width="1877" height="399" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="287" key="GridCell.Tab.0.center" timestamp="1588431069818">
+    <state width="1493" height="378" key="GridCell.Tab.0.center" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1588431069818" />
+    <state width="1493" height="378" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
     <state width="1877" height="399" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="287" key="GridCell.Tab.0.left" timestamp="1588431069818">
+    <state width="1493" height="378" key="GridCell.Tab.0.left" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1588431069818" />
+    <state width="1493" height="378" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
     <state width="1877" height="399" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="287" key="GridCell.Tab.0.right" timestamp="1588431069818">
+    <state width="1493" height="378" key="GridCell.Tab.0.right" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1588431069818" />
+    <state width="1493" height="378" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
     <state width="1877" height="399" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1588074921657" />
-    <state width="1493" height="287" key="GridCell.Tab.1.bottom" timestamp="1588431069703">
+    <state width="1493" height="378" key="GridCell.Tab.1.bottom" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588431069703" />
-    <state width="1493" height="287" key="GridCell.Tab.1.center" timestamp="1588431069703">
+    <state width="1493" height="378" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
+    <state width="1493" height="378" key="GridCell.Tab.1.center" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1588431069703" />
-    <state width="1493" height="287" key="GridCell.Tab.1.left" timestamp="1588431069703">
+    <state width="1493" height="378" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
+    <state width="1493" height="378" key="GridCell.Tab.1.left" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1588431069703" />
-    <state width="1493" height="287" key="GridCell.Tab.1.right" timestamp="1588431069703">
+    <state width="1493" height="378" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
+    <state width="1493" height="378" key="GridCell.Tab.1.right" timestamp="1588510889763">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1493" height="287" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1588431069703" />
+    <state width="1493" height="378" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1588510889763" />
     <state x="338" y="68" key="SettingsEditor" timestamp="1588072435566">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="270" y="0" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1587274207952" />
     <state x="338" y="68" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1588072435566" />
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1588427958953">
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1588431114350">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1588427958953" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1588431114350" />
     <state x="93" y="93" width="1350" height="638" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1587652927478">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -527,10 +536,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="336" y="15" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1536.824@0.0.1536.824" timestamp="1585605117971" />
-    <state x="330" y="216" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1588431064973">
+    <state x="330" y="216" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1588471863356">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="330" y="216" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.1536.824@0.0.1536.824" timestamp="1588431064973" />
+    <state x="330" y="216" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.1536.824@0.0.1536.824" timestamp="1588471863356" />
     <state x="208" y="185" width="1007" height="534" key="find.popup" timestamp="1588427668499">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -550,6 +559,15 @@
     <state x="431" y="145" width="672" height="678" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1588415070283" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/kafka/consumer/SimpleConsumer.java</url>
+          <line>119</line>
+          <option name="timeStamp" value="78" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="JUnit">
         <watch expression="configs.stream().map(c-&gt;c.brokerId).collect(Collectors.toSet())" />

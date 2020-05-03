@@ -739,6 +739,9 @@ public class KafkaController {
         Set<PartitionAndReplica> res = new HashSet<>();
         for(TopicAndPartition p : partitions){
             List<Integer> replicas = controllerContext.partitionReplicaAssignment.get(p);
+            if(replicas == null){
+                continue;
+            }
             for(Integer replica:replicas){
                 res.add(new PartitionAndReplica(p.topic(), p.partition(), replica));
             }

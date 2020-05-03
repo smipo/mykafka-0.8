@@ -116,7 +116,7 @@ public class SimpleConsumer {
      *  @return a set of fetched messages
      */
     public FetchResponse fetch(FetchRequest request) throws IOException {
-        Receive response = null;
+        Receive response = sendRequest(request);
         FetchResponse fetchResponse = FetchResponse.readFrom(response.buffer());
         return fetchResponse;
     }

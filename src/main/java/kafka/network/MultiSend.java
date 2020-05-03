@@ -26,16 +26,23 @@ public abstract class MultiSend<S extends Send> extends Send{
 
     public long writeTo(GatheringByteChannel channel) throws IOException {
         expectIncomplete();
-        long written = current.writeTo(channel);
-        totalWritten += written;
-        if(current.complete()) {
-            if(curIte.hasNext()){
-                current = curIte.next();
-            }else {
-                current = null;
+        long totalWrittenPerCall = 0;
+        boolean sendComplete = false;
+        do {
+            long written = current.writeTo(channel);
+            totalWritten += written;
+            totalWrittenPerCall += written;
+            sendComplete = current.complete();
+            if(sendComplete){
+                if(curIte.hasNext()){
+                    current = curIte.next();
+                }else {
+                    current = null;
+                }
             }
-        }
-        return written;
+        } while (!complete() && sendComplete);
+        logger.trace("Bytes written as part of multisend call : " + totalWrittenPerCall +  "Total bytes written so far : " + totalWritten + "Expected bytes to write : " + expectedBytesToWrite);
+        return totalWrittenPerCall;
     }
 
     public boolean complete() {

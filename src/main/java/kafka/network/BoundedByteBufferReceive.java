@@ -1,5 +1,7 @@
 package kafka.network;
 
+import kafka.utils.Utils;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -43,7 +45,7 @@ public class BoundedByteBufferReceive extends Receive {
         long read = 0;
         // have we read the request size yet?
         if(sizeBuffer.remaining() > 0)
-            read += channel.read(sizeBuffer);
+            read += Utils.read(channel,sizeBuffer);
         // have we allocated the request buffer yet?
         if(contentBuffer == null && !sizeBuffer.hasRemaining()) {
             sizeBuffer.rewind();
@@ -56,7 +58,7 @@ public class BoundedByteBufferReceive extends Receive {
         }
         // if we have a buffer read some stuff into it
         if(contentBuffer != null) {
-            read = channel.read(contentBuffer);
+            read = Utils.read(channel,contentBuffer);
             // did we get everything?
             if(!contentBuffer.hasRemaining()) {
                 contentBuffer.rewind();
