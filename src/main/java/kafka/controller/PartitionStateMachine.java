@@ -94,7 +94,7 @@ public class PartitionStateMachine {
             brokerRequestBatch.newBatch();
             // try to move all partitions in NewPartition or OfflinePartition state to OnlinePartition state
             for(Map.Entry<TopicAndPartition, PartitionState> entry : partitionState.entrySet()){
-                if(partitionState instanceof OfflinePartition || partitionState instanceof NewPartition)
+                if(entry.getValue() instanceof OfflinePartition || entry.getValue() instanceof NewPartition)
                     handleStateChange(entry.getKey().topic(), entry.getKey().partition(), new OnlinePartition(), controller.offlinePartitionSelector);
             }
             brokerRequestBatch.sendRequestsToBrokers(controller.epoch(), controllerContext.correlationId.getAndIncrement());
@@ -336,7 +336,7 @@ public class PartitionStateMachine {
             brokerRequestBatch.addLeaderAndIsrRequestForBrokers(replicasForThisPartition, topic, partition,
                     newLeaderIsrAndControllerEpoch, replicas);
         } catch(LeaderElectionNotNeededException lenne) {
-
+            logger.error(String.format("Controller %d epoch %d ",controllerId, controller.epoch()) + lenne);
         }catch (NoReplicaOnlineException nroe){
             throw nroe;
         }catch (Throwable sce){
