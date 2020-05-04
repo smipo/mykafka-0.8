@@ -188,7 +188,7 @@ public class FetchResponse {
             this.partitionData = partitionData;
 
             sizeInBytes = TopicData.headerSize(topic) +
-                    partitionData.values().stream().mapToInt(FetchResponsePartitionData::sizeInBytes).sum();
+                    partitionData.values().stream().mapToInt(f->f.sizeInBytes() + 4).sum();
             headerSize = TopicData.headerSize(topic);
         }
         public int sizeInBytes;

@@ -16,10 +16,7 @@ import kafka.utils.ShutdownableThread;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -107,7 +104,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
         Set<TopicAndPartition> partitionsWithError = new HashSet<>();
         FetchResponse response = null;
         try {
-            logger.info(String.format("issuing to broker %d of fetch request %s",sourceBroker.id(), fetchRequest));
+            logger.info(String.format("issuing to broker %d of fetch request %s",sourceBroker.id(), fetchRequest.toString()));
             response = simpleConsumer.fetch(fetchRequest);
         } catch (Throwable t){
                 if (isRunning.get()) {
@@ -128,14 +125,15 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
                     int partitionId = topicAndPartition.partition();
                     Long currentOffset = partitionMap.get(topicAndPartition);
                     // we append to the log if the current offset is defined and it is the same as the offset requested during fetch
-                    if (currentOffset == null && fetchRequest.requestInfo.get(topicAndPartition).offset == currentOffset) {
+                    if (currentOffset != null && fetchRequest.requestInfo.get(topicAndPartition).offset == currentOffset) {
                         if(partitionData.error ==  ErrorMapping.NoError){
                             try {
                                 ByteBufferMessageSet messages = (ByteBufferMessageSet)partitionData.messages;
-                                long validBytes = messages.validBytes();
+                                long size = messages.validBytes();
                                 Long newOffset = currentOffset;
-                                while (messages.shallowIterator().hasNext()){
-                                    newOffset = messages.shallowIterator().next().nextOffset();
+                                Iterator<MessageAndOffset> iterator = messages.shallowIterator();
+                                while (iterator.hasNext()){
+                                    newOffset = iterator.next().nextOffset();
                                 }
                                 partitionMap.put(topicAndPartition, newOffset);
                                 // Once we hand off the partition data to the subclass, we can't mess with it any more in this thread
@@ -159,7 +157,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
                                         .format("Current offset %d for partition [%s,%d] out of range; reset offset to %d",currentOffset, topic, partitionId, newOffset));
                             } catch (Throwable e){
                                     logger.warn(String.format("Error getting offset for partition [%s,%d] to broker %d",topic, partitionId, sourceBroker.id()), e);
-                                    partitionsWithError .add(topicAndPartition);
+                                    partitionsWithError.add(topicAndPartition);
                             }
                         }else{
                             if (isRunning.get()) {

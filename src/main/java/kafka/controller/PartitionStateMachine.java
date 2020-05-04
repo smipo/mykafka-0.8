@@ -372,12 +372,13 @@ public class PartitionStateMachine {
                 if (hasStarted.get()) {
                     try {
                         Set<String> currentChildren = children.stream().collect(Collectors.toSet());
+                        Set<String> allChildren = new HashSet<>(currentChildren);
                         currentChildren.removeAll(controllerContext.allTopics);
                         Set<String> newTopics = currentChildren ;
                         controllerContext.allTopics.removeAll(currentChildren);
                         Set<String> deletedTopics = controllerContext.allTopics ;
                         //        val deletedPartitionReplicaAssignment = replicaAssignment.filter(p => deletedTopics.contains(p._1._1))
-                        controllerContext.allTopics = currentChildren;
+                        controllerContext.allTopics = allChildren;
 
                         Map<TopicAndPartition,List<Integer>> addedPartitionReplicaAssignment = ZkUtils.getReplicaAssignmentForTopics(zkClient, newTopics.stream().collect(Collectors.toList()));
                         controllerContext.partitionReplicaAssignment = controllerContext.partitionReplicaAssignment.entrySet().stream().filter(p ->

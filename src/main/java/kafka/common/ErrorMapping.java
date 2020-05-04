@@ -69,6 +69,6 @@ public class ErrorMapping{
           return (Throwable)Class.forName(entry.getKey()).newInstance();
         }
     }
-    return null;
+    return new UnknownException(String.valueOf(code));
   }
 }

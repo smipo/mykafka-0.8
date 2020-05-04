@@ -289,10 +289,10 @@ public class ReplicaStateMachine {
                         curBrokerIds.removeAll(controllerContext.liveOrShuttingDownBrokerIds());
                         Set<Integer> newBrokerIds = curBrokerIds;
                         List<Broker> newBrokerInfo = newBrokerIds.stream().map(brokerId->ZkUtils.getBrokerInfo(zkClient, brokerId)).collect(Collectors.toList());
-                        List<Broker> newBrokers = newBrokerInfo.stream().filter(b->b == null).collect(Collectors.toList());
+                        List<Broker> newBrokers = newBrokerInfo.stream().filter(b->b != null).collect(Collectors.toList());
                         controllerContext.liveOrShuttingDownBrokerIds().removeAll(curBrokerIds);
                         Set<Integer> deadBrokerIds = controllerContext.liveOrShuttingDownBrokerIds() ;
-                        controllerContext.liveBrokersUnderlying = curBrokerIds.stream().map(x->ZkUtils.getBrokerInfo(zkClient, x)).filter(x->x == null).collect(Collectors.toSet());
+                        controllerContext.liveBrokersUnderlying = curBrokerIds.stream().map(x->ZkUtils.getBrokerInfo(zkClient, x)).filter(x->x != null).collect(Collectors.toSet());
                         logger.info(String
                                 .format("Newly added brokers: %s, deleted brokers: %s, all live brokers: %s",newBrokerIds.toString(), deadBrokerIds.toString(), controllerContext.liveBrokerIds().toString()));
                         for(Broker b:newBrokers){
