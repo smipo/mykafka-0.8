@@ -161,7 +161,7 @@ public abstract class AbstractFetcherThread extends ShutdownableThread {
                             }
                         }else{
                             if (isRunning.get()) {
-                                logger.warn(String.format("Error for partition [%s,%d] to broker %d:%s",topic, partitionId, sourceBroker.id()));
+                                logger.warn(String.format("Error for partition [%s,%d] to broker %d:%d",topic, partitionId, sourceBroker.id(),partitionData.error));
                                 partitionsWithError.add(topicAndPartition);
                             }
                         }
