@@ -390,25 +390,11 @@ public class KafkaController {
         try {
             List<Integer> assignedReplicas = controllerContext.partitionReplicaAssignment.get(topicAndPartition);
             if(assignedReplicas != null){
-                boolean isSame = true;
-                for(Integer r:assignedReplicas){
-                    if(!newReplicas.contains(r)){
-                        isSame = false;
-                        break;
-                    }
-                }
-                if(isSame) {
+                if(isEquals(assignedReplicas,newReplicas)) {
                     throw new KafkaException(String.format("Partition %s to be reassigned is already assigned to replicas",topicAndPartition.toString()) +
                             String.format(" %s. Ignoring request for partition reassignment",newReplicas.toString()));
                 } else {
-                    boolean isSameAlive = true;
-                    for(Integer r:aliveNewReplicas){
-                        if(!newReplicas.contains(r)){
-                            isSame = false;
-                            break;
-                        }
-                    }
-                    if(isSame) {
+                    if(isEquals(aliveNewReplicas , newReplicas)) {
                         logger.info(String.format("Handling reassignment of partition %s to new replicas %s",topicAndPartition.toString(), newReplicas.toString()));
                         // first register ISR change listener
                         watchIsrChangesForReassignedPartition(topic, partition, reassignedPartitionContext);
@@ -430,6 +416,15 @@ public class KafkaController {
             // remove the partition from the admin path to unblock the admin client
             removePartitionFromReassignedPartitions(topicAndPartition);
         }
+    }
+    private boolean isEquals(List<Integer> list1,List<Integer> list2) {
+        if (null != list1 && null != list2) {
+            if (list1.containsAll(list2) && list2.containsAll(list1)) {
+                return true;
+            }
+            return false;
+        }
+        return true;
     }
 
     public void onPreferredReplicaElection(Set<TopicAndPartition> partitions) {
@@ -535,17 +530,9 @@ public class KafkaController {
         List<TopicAndPartition> reassignedPartitions = new ArrayList<>();
         for (Map.Entry<TopicAndPartition, KafkaController.ReassignedPartitionsContext> entry : partitionsBeingReassigned.entrySet()) {
             List<Integer> list = controllerContext.partitionReplicaAssignment.get(entry.getKey());
-            boolean isSame = true;
-            for(Integer r:entry.getValue().newReplicas){
-                if(!list.contains(r)){
-                    isSame = false;
-                    break;
-                }
-            }
-            if(isSame){
+            if(isEquals(list,entry.getValue().newReplicas)){
                 reassignedPartitions.add(entry.getKey());
             }
-
         }
         for(TopicAndPartition p:reassignedPartitions){
             removePartitionFromReassignedPartitions(p);
