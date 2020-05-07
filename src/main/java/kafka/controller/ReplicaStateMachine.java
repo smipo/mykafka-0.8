@@ -133,6 +133,8 @@ public class ReplicaStateMachine {
                     brokerRequestBatch.addLeaderAndIsrRequestForBrokers(brokerIds,
                             topic, partition, leaderIsrAndControllerEpoch,
                             replicaAssignment);
+                }else{
+                    // new leader request will be sent to this replica when one gets elected
                 }
                 replicaState.put(new Three<>(topic, partition, replicaId),new NewReplica());
                 logger.trace(String
@@ -163,7 +165,7 @@ public class ReplicaStateMachine {
                     List<Integer> currentAssignedReplicas = controllerContext.partitionReplicaAssignment.get(topicAndPartition);
                     if(!currentAssignedReplicas.contains(replicaId)) {
                         currentAssignedReplicas.add(replicaId);
-                        controllerContext.partitionReplicaAssignment.put(topicAndPartition, currentAssignedReplicas);
+                       // controllerContext.partitionReplicaAssignment.put(topicAndPartition, currentAssignedReplicas);
                     }
                     logger.trace(String
                             .format("Controller %d epoch %d changed state of replica %d for partition %s to OnlineReplica",controllerId, controller.epoch(), replicaId, topicAndPartition));
@@ -178,9 +180,12 @@ public class ReplicaStateMachine {
                         replicaState.put(new Three<>(topic, partition, replicaId), new OnlineReplica());
                         logger.trace(String
                                 .format("Controller %d epoch %d changed state of replica %d for partition %s to OnlineReplica",controllerId, controller.epoch(), replicaId, topicAndPartition));
+                    }else{
+                        // that means the partition was never in OnlinePartition state, this means the broker never
+                        // started a log for that partition and does not have a high watermark value for this partition
                     }
-                    replicaState.put(new Three<>(topic, partition, replicaId), new OnlineReplica());
                 }
+                replicaState.put(new Three<>(topic, partition, replicaId), new OnlineReplica());
             }else if(targetState instanceof OfflineReplica){
                 List<ReplicaState> list = new ArrayList<>();
                 list.add(new NewReplica());
@@ -257,10 +262,10 @@ public class ReplicaStateMachine {
     private Set<KafkaController.PartitionAndReplica> getAllReplicasOnBroker(List<String> topics, List<Integer> brokerIds) {
         Set<KafkaController.PartitionAndReplica> set = new HashSet<>();
         for(Integer brokerId:brokerIds){
-            Map<TopicAndPartition, List<Integer>> partitionsAssignedToThisBroker = new HashMap<>();
+            //Map<TopicAndPartition, List<Integer>> partitionsAssignedToThisBroker = new HashMap<>();
             for(Map.Entry<TopicAndPartition, List<Integer>> entry : controllerContext.partitionReplicaAssignment.entrySet()){
                 if(!(topics.contains(entry.getKey().topic()) && entry.getValue().contains(brokerId))){
-                    partitionsAssignedToThisBroker.put(entry.getKey(),entry.getValue());
+                  //  partitionsAssignedToThisBroker.put(entry.getKey(),entry.getValue());
                     set.add(new KafkaController.PartitionAndReplica(entry.getKey().topic(), entry.getKey().partition(), brokerId));
                 }
             }
@@ -290,9 +295,9 @@ public class ReplicaStateMachine {
                         Set<Integer> newBrokerIds = curBrokerIds;
                         List<Broker> newBrokerInfo = newBrokerIds.stream().map(brokerId->ZkUtils.getBrokerInfo(zkClient, brokerId)).collect(Collectors.toList());
                         List<Broker> newBrokers = newBrokerInfo.stream().filter(b->b != null).collect(Collectors.toList());
-                        controllerContext.liveOrShuttingDownBrokerIds().removeAll(curBrokerIds);
-                        Set<Integer> deadBrokerIds = controllerContext.liveOrShuttingDownBrokerIds() ;
-                        controllerContext.liveBrokersUnderlying = curBrokerIds.stream().map(x->ZkUtils.getBrokerInfo(zkClient, x)).filter(x->x != null).collect(Collectors.toSet());
+                        Set<Integer> deadBrokerIds = new HashSet<>(controllerContext.liveOrShuttingDownBrokerIds());
+                        deadBrokerIds.removeAll(curBrokerIds);
+                        controllerContext.liveBrokers(curBrokerIds.stream().map(x->ZkUtils.getBrokerInfo(zkClient, x)).filter(x->x != null).collect(Collectors.toSet()));
                         logger.info(String
                                 .format("Newly added brokers: %s, deleted brokers: %s, all live brokers: %s",newBrokerIds.toString(), deadBrokerIds.toString(), controllerContext.liveBrokerIds().toString()));
                         for(Broker b:newBrokers){

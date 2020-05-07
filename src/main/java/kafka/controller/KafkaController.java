@@ -8,6 +8,7 @@ import kafka.server.KafkaConfig;
 import kafka.server.ZookeeperLeaderElector;
 import kafka.utils.JacksonUtils;
 import kafka.utils.Pair;
+import kafka.utils.Utils;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.IZkDataListener;
 import org.I0Itec.zkclient.IZkStateListener;
@@ -390,11 +391,11 @@ public class KafkaController {
         try {
             List<Integer> assignedReplicas = controllerContext.partitionReplicaAssignment.get(topicAndPartition);
             if(assignedReplicas != null){
-                if(isEquals(assignedReplicas,newReplicas)) {
+                if(Utils.isEquals(assignedReplicas,newReplicas)) {
                     throw new KafkaException(String.format("Partition %s to be reassigned is already assigned to replicas",topicAndPartition.toString()) +
                             String.format(" %s. Ignoring request for partition reassignment",newReplicas.toString()));
                 } else {
-                    if(isEquals(aliveNewReplicas , newReplicas)) {
+                    if(Utils.isEquals(aliveNewReplicas , newReplicas)) {
                         logger.info(String.format("Handling reassignment of partition %s to new replicas %s",topicAndPartition.toString(), newReplicas.toString()));
                         // first register ISR change listener
                         watchIsrChangesForReassignedPartition(topic, partition, reassignedPartitionContext);
@@ -417,15 +418,7 @@ public class KafkaController {
             removePartitionFromReassignedPartitions(topicAndPartition);
         }
     }
-    private boolean isEquals(List<Integer> list1,List<Integer> list2) {
-        if (null != list1 && null != list2) {
-            if (list1.containsAll(list2) && list2.containsAll(list1)) {
-                return true;
-            }
-            return false;
-        }
-        return true;
-    }
+
 
     public void onPreferredReplicaElection(Set<TopicAndPartition> partitions) {
         logger.info(String.format("Starting preferred replica leader election for partitions %s",partitions.toString()));
@@ -530,7 +523,7 @@ public class KafkaController {
         List<TopicAndPartition> reassignedPartitions = new ArrayList<>();
         for (Map.Entry<TopicAndPartition, KafkaController.ReassignedPartitionsContext> entry : partitionsBeingReassigned.entrySet()) {
             List<Integer> list = controllerContext.partitionReplicaAssignment.get(entry.getKey());
-            if(isEquals(list,entry.getValue().newReplicas)){
+            if(Utils.isEquals(list,entry.getValue().newReplicas)){
                 reassignedPartitions.add(entry.getKey());
             }
         }
@@ -859,14 +852,9 @@ public class KafkaController {
                         // need to re-read leader and isr from zookeeper since the zkclient callback doesn't return the Stat object
                         LeaderAndIsrRequest.LeaderAndIsr leaderAndIsr = ZkUtils.getLeaderAndIsrForPartition(zkClient, topic, partition);
                         if(leaderAndIsr != null){
-                            boolean isSame = true;
-                            for(Integer l : leaderAndIsr.isr){
-                                if(!reassignedReplicas.contains(l)){
-                                    isSame = false;
-                                    break;
-                                }
-                            }
-                            if(isSame) {
+                            Set<Integer> caughtUpReplicas = new HashSet<>();
+                            caughtUpReplicas.addAll(leaderAndIsr.isr);
+                            if(Utils.isEquals(caughtUpReplicas , reassignedReplicas)) {
                                 // resume the partition reassignment process
                                 logger.info(String
                                         .format("%d/%d replicas have caught up with the leader for partition %s being reassigned.",leaderAndIsr.isr.size(), reassignedReplicas.size(), topicAndPartition.toString()) +

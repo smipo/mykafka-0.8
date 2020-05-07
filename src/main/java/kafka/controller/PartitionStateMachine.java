@@ -187,7 +187,7 @@ public class PartitionStateMachine {
                 // pre: partition should be in Offline state
                 List<PartitionState> fromStates = new ArrayList<>();
                 fromStates.add(new OfflinePartition());
-                fromStates.add(new NonExistentPartition());
+                //fromStates.add(new NonExistentPartition());
                 assertValidPreviousStates(topicAndPartition, fromStates, new NonExistentPartition());
                 logger.trace(String
                         .format("Controller %d epoch %d changed partition %s state from Offline to NotExists",controllerId, controller.epoch(), topicAndPartition));
@@ -239,7 +239,7 @@ public class PartitionStateMachine {
      */
     private void assignReplicasToPartitions(String topic,int partition) throws IOException {
         List<Integer> assignedReplicas = ZkUtils.getReplicasForPartition(controllerContext.zkClient, topic, partition);
-        controllerContext.partitionReplicaAssignment .put(new TopicAndPartition(topic, partition) , assignedReplicas);
+        controllerContext.partitionReplicaAssignment.put(new TopicAndPartition(topic, partition) , assignedReplicas);
     }
 
     /**

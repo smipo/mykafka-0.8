@@ -1,6 +1,5 @@
 package kafka.utils;
 
-import kafka.cluster.Partition;
 import kafka.message.CompressionCodec;
 import kafka.message.CompressionFactory;
 import kafka.message.NoCompressionCodec;
@@ -642,5 +641,15 @@ public class Utils {
             throw new EOFException("Received -1 when reading from channel, socket has likely been closed.");
         }
         return read;
+    }
+
+    public static boolean isEquals(Collection<Integer> list1,Collection<Integer> list2) {
+        if (null != list1 && null != list2) {
+            if (list1.containsAll(list2) && list2.containsAll(list1)) {
+                return true;
+            }
+            return false;
+        }
+        return true;
     }
 }
