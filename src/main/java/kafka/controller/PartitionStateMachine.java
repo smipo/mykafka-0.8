@@ -56,6 +56,7 @@ public class PartitionStateMachine {
     public ControllerChannelManager.ControllerBrokerRequestBatch brokerRequestBatch ;
     public AtomicBoolean hasStarted = new AtomicBoolean(false);
     public NoOpLeaderSelector noOpPartitionLeaderSelector;
+    private AtomicBoolean hasShutDownStarted = new AtomicBoolean(false);
 
 
     /**
@@ -209,18 +210,22 @@ public class PartitionStateMachine {
             // check if leader and isr path exists for partition. If not, then it is in NEW state
             LeaderIsrAndControllerEpoch currentLeaderIsrAndEpoch = controllerContext.partitionLeadershipInfo.get(entry.getKey());
             if(currentLeaderIsrAndEpoch != null){
-                // else, check if the leader for partition is alive. If yes, it is in Online state, else it is in Offline state
-                boolean isAlive = controllerContext.liveBrokerIds().contains(currentLeaderIsrAndEpoch.leaderAndIsr.leader);
-                if(isAlive){
-                    partitionState.put(entry.getKey(), new OnlinePartition());
-                }else{
+                if(!hasShutDownStarted.get()){
                     partitionState.put(entry.getKey(), new OfflinePartition());
+                }else {
+                    // else, check if the leader for partition is alive. If yes, it is in Online state, else it is in Offline state
+                    boolean isAlive = controllerContext.liveBrokerIds().contains(currentLeaderIsrAndEpoch.leaderAndIsr.leader);
+                    if (isAlive) {
+                        partitionState.put(entry.getKey(), new OnlinePartition());
+                    } else {
+                        partitionState.put(entry.getKey(), new OfflinePartition());
+                    }
                 }
-
             }else {
                 partitionState.put(entry.getKey(), new NewPartition());
             }
         }
+        if(!hasShutDownStarted.get()) hasShutDownStarted.set(true);
     }
 
     private void assertValidPreviousStates(TopicAndPartition topicAndPartition, List<PartitionState> fromStates,
