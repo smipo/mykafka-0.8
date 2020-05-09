@@ -83,7 +83,7 @@ public class Broker {
         if(obj == null ) return false;
         if(obj instanceof Broker){
             Broker n = (Broker)obj;
-            return id == n.id && host == n.host && port == n.port;
+            return id == n.id && host .equals(n.host) && port == n.port;
         }
         return false;
     }

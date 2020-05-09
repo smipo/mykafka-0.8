@@ -4,10 +4,7 @@ import kafka.cluster.Broker;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractFetcherManager {
 
@@ -91,6 +88,28 @@ public abstract class AbstractFetcherManager {
         public BrokerAndFetcherId(Broker broker, int fetcherId) {
             this.broker = broker;
             this.fetcherId = fetcherId;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            BrokerAndFetcherId that = (BrokerAndFetcherId) o;
+            return fetcherId == that.fetcherId &&
+                    Objects.equals(broker, that.broker);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(broker, fetcherId);
+        }
+
+        @Override
+        public String toString() {
+            return "BrokerAndFetcherId{" +
+                    "broker=" + broker +
+                    ", fetcherId=" + fetcherId +
+                    '}';
         }
     }
 }
